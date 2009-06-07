@@ -1,9 +1,6 @@
 These are the things that remain to be done to make Atlast a workable VM
 for Roboto.
 
-* Get it to stop segfaulting under x86-64
-	* Fix pointer issues, esp. with arrays and strings
-
 * Get the tests to pass under x86-64
 	* Negation
 
