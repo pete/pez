@@ -1,0 +1,1983 @@
+%       Process with LaTeX (Tested with LaTeX2e <2002/06/01>)
+
+\documentclass[twocolumn]{article}
+\input{tm}
+\usepackage{aitech}
+\usepackage{atldoc}
+\usepackage{alltt}
+\newfont{\atlsub}{cmssi17}
+\newfont{\atlname}{cmssbx10 at 11pt}
+\title{
+ATLAST\\
+\vspace{3pt}
+$\overline{\makebox{\underline{\atlsub Autodesk Threaded Language Application
+System Toolkit}}}$
+}
+\author{John Walker}
+\date{Revision 1 by Duff Kurland---November 20, 1990}
+\abstract{
+        Open, programmable products are superior to and displace even
+        the best designed closed applications.  A threaded language,
+        implemented in a single portable C file, allows virtually any
+        program, existing or newly developed, to be made programmable,
+        extensible, and open to user enhancement.
+}
+
+\begin{document}
+\maketitle
+
+\newcommand{\atlast}{\underline{\underline{\sc Atlast}}}
+\hyphenation{Auto-CAD Auto-LISP}
+
+\dcap{Y}OU'D THINK WE'D HAVE LEARNED by now.  It was Autodesk's
+strategy for AutoCAD\rtm\ from inception that it should be an open,
+extensible system.  We waged a five-year uphill battle to bring such a
+heretical idea to eventual triumph.  Today, virtually every industry
+analyst agrees that AutoCAD's open architecture was, more than any
+other single aspect of its design, responsible for its success and the
+success that Autodesk has experienced.
+
+And yet, even today, we write program after program that is
+closed---that its users cannot program---that admits of no extensions
+without our adding to its source code.  If we believe intellectually,
+from a sound understanding of the economic incentives in the
+marketplace, that open systems are better, and have confirmed this
+supposition with the success of AutoCAD, then the only question that
+remains is {\em why?}  Why not make every program an open program?
+
+Well, because it's {\em hard\/}!  Writing a closed program has
+traditionally been much less work at every stage of the development
+cycle: easier to design, less code to write, simpler documentation,
+and far fewer considerations in the test phase.  In addition, closed
+products are believed to be less demanding of support,
+although I'll argue later that this assumption may be incorrect.
+
+\subsection{The painful path to programmability}
+
+Most programs start out as nonprogrammable, closed applications, then
+painfully claw their way to programmability through the introduction
+of a limited script or macro facility, succeeded by an increasingly
+comprehensive interpretive macro language which grows like topsy and
+without a coherent design as user demands upon it grow.  Finally,
+perhaps, the program is outfitted with bindings to existing languages
+such as C\@.
+
+An alternative to this is adopting a standard language as the macro
+language for a product.  After our initial foray into the awful menu
+macro language that still burdens us, AutoCAD took this
+approach, integrating David Betz' XLISP, a simple Lisp interpreter
+which was subsequently extended by Autodesk to add floating point,
+many additional Common Lisp functions, and, eventually, access to the
+AutoCAD database.
+
+This approach has many attractions.  First, choosing a standard
+language allows users to avail themselves of existing books and
+training resources to learn its basics.  The developer of a
+dedicated macro language must create all this material from scratch.
+Second, an interpretive language, where all programs are represented
+in ASCII code, is inherently portable across computers and operating
+systems.  Once the interpreter is gotten to work on a new system, all
+the programs it supports are pretty much guaranteed to work.  Third,
+most existing languages have evolved to the point that most of the
+rough edges have been taken off their design.  Extending an existing
+language along the lines laid down by its designers is much
+less likely to result in an incomprehensible disaster than growing an
+ad-hoc macro language feature by neat-o feature.
+
+Unfortunately, interpreters are {\em slow}, {\em slow}, {\em slow}.
+A simple calculation of the number of instructions of overhead per
+instruction that furthers the execution of the program quickly
+demonstrates that no interpreter is suitable for serious computation.
+As long as the interpreter is deployed in the role of a macro
+language, this may not be a substantial consideration.  Most early
+AutoLISP\rtm\ programs, for example, spent most of their time submitting
+commands to AutoCAD with the {\tt (command)} function.  The execution
+time of the program was overwhelmingly dominated by the time AutoCAD
+took to perform the commands, not the time AutoLISP spent constructing
+and submitting them.  However, as soon as applications tried to do
+substantial computation, for example the parametric object
+calculations in AutoCAD AEC, the overhead of AutoLISP became a
+crushing burden, verging on intolerable.  The obvious alternative
+was to provide a compiled language.  But that, too, has its problems.
+
+\section{Introducing \atlast}
+
+\atlast\tm\ is a toolkit that makes applications
+programmable.  Deliberately designed to be easy to integrate both
+into existing programs and newly-developed ones, \atlast\ provides
+any program that incorporates it most of the benefits of programmability
+with very little explicit effort on the part of the developer.
+Indeed, once you begin to ``think \atlast'' as part of the design
+cycle, you'll probably find that the way you design and build programs
+changes substantially.  I'm coming to think of \atlast\ as the
+``monster that feeds on programs,'' because including it in a program
+tends to shrink the amount of special-purpose code that would
+otherwise have to be written while resulting in finished applications
+that are open, extensible, and more easily adapted to other operating
+environments such as the event driven paradigm.
+
+The idea of a portable toolkit, integrated into a wide variety of
+products, all of which thereby share a common programming language
+seems obvious once you consider its advantages.  It's surprising
+that such packages aren't commonplace in the industry.  In fact,
+the only true antecedent to \atlast\ I've encountered in my whole twisted
+path through this industry was the universal macro package developed
+in the mid 1970's by Kern Sibbald and Ben Cranston at the University
+of Maryland.  That package, implemented on Univac mainframes, provided
+a common macro language shared by a wide variety of University of
+Maryland utilities, including a text editor, debugger, file dumper,
+and typesetting language.  While \atlast\ is entirely different in
+structure and operation from the Maryland package, which was an
+interpretive string language, the concept of a cross-product macro
+language and appreciation of the benefits to be had from such a
+package are directly traceable to those roots.
+
+So what {\em is} \atlast?  Well\ldots it's FORTH, more or less.
+Now I'm well aware that the mere mention of FORTH stimulates a violent
+immune reaction in many people second, perhaps, only to that induced by the
+utterance of the dreaded word ``LISP\@.''  Indeed, more that 12 years
+after my first serious encounter with FORTH, I am only now coming to
+feel that I am truly beginning to ``get it''---to understand what it's
+really about, what its true strengths (and weaknesses) are, and to what
+problems it can offer uniquely effective solutions.  PostScript had
+a lot to do with my coming to re-examine FORTH, as did my failed
+attempt in early 1988 to separate AutoCAD's user interface from the
+geometry engine.  That project, The Leto Protocol, ended with my
+concluding that to succeed: to create an interface that would not
+grow to unbounded size, bewildering complexity, and glacial
+performance, it would be necessary to embed programmability within the
+core---to provide a set of primitives that could be composed, by the
+user interface module, into higher-level operators that could be
+invoked across the link between the two components.  This
+programmability would, of course, have to be in a portable form and
+not involve linking user code into the AutoCAD core.
+
+In looking for parallels to the problem I faced, PostScript seemed
+similarly motivated and reasonably effective in accomplishing its
+goals.  (One can certainly attack PostScript on performance, although
+I suspect its performance problems stem more from the underlying
+execution speed of the graphics primitives and the inefficient ASCII
+representation of input than any inherent aspect of the language.)
+Certainly PostScript blew away its competitors, such as Impress and
+DDL, almost without taking notice of them.  Further, it seemed
+apparent that PostScript's success was another example in the long
+list of open, programmable products that triumphed over ``more
+comprehensive'' but non-extensible ones.
+
+Looking at PostScript inevitably brings one back to the language
+that inspired it, FORTH\@.  Although FORTH has a reputation for
+obscurity and seems to attract an unusually high percentage of flaky
+adherents, it has many attributes that recommend it as a candidate for
+a portable tool to make any application programmable.
+
+\paragraph{It is small.} A minimal implementation of FORTH is a tiny
+thing indeed, since most of the language can be defined in itself,
+using only a small number of fundamental primitives.  Even a rich
+implementation, with extensions such as floating point and
+mathematical functions, strings, file I/O, compiler writing
+facilities, user-defined objects, arrays, debugging tools, and
+runtime instrumentation, is still on the order of one fifth the number
+of source lines of a Lisp interpreter with far fewer built-in
+functions, and occupies less than of 70\% the object code size.  Runtime
+data memory requirements are a tiny fraction (often one or two percent) of
+those required by Lisp, and frequently substantially less that
+compiled languages such as C\@.  It's kind of startling to discover
+that an entire interpretive and compiled language, including floating
+point, all the math functions of C, file I/O, strings, etc., can be
+built, in large model, into a DOS executable of 50964 bytes.  It can.
+
+\paragraph{It is fast.}  Because it is a threaded language, execution
+of programs consists not of source level interpretation but simple
+memory loads and indirect jumps.  Even for compute-bound code, the
+speed penalty compared to true compilers is often in the range of 5 to
+8.
+While this may seem a serious price to pay, bear in
+mind that tokenising Lisp interpreters often exhibit speed penalties
+of between 60 and 70 to 1 on similar code, and source-level
+interpreters, such as the macro languages found in many application
+programs, are often much, much worse than that.  In most programs, the
+execution speed of FORTH and compiled code will be essentially
+identical, particularly when FORTH is used largely in the role of a
+macro language, calling primitives within an application coded in a
+compiled language.
+
+\paragraph{It is portable.}  If the implementation rigidly specifies
+the memory architecture and data types used (and this can be done with
+essentially no sacrifice in speed), FORTH programs can be made 100\%
+compatible among implementations.  Programs can be transferred as
+ASCII files, universally interchangeable across systems.
+Application data types defined in FORTH, using its object creation
+facilities, automatically gain the portability of the underlying
+data types.
+
+\paragraph{It is easy to extend.}  Because the underlying architecture
+is very simple (unlike, for example, that of a Lisp interpreter), any
+competent C programmer with a minimum of indoctrination can begin
+adding C-coded primitives to a C-implemented FORTH within hours.
+These C primitives will run at full speed, yet be able to be
+parameterised, placed in definitions, used in loops, etc., from any
+FORTH construct.  This leads to a different way of building
+applications.  Rather than programming the structure and primitives as a
+unified process, one builds the application-unique primitives that are
+needed, tests them interactively as they are built, then assembles the
+application with glue code written either in FORTH or C
+depending upon considerations of efficiency, security, and the extent
+to which one wishes to make the underlying primitives visible to and
+accessible by the user.  Unlike conventional program development
+processes, these considerations are not yes-or-no decisions but, for
+the most part, continua along which the product may be positioned at
+the point desired and subsequently adjusted based upon market feedback.
+
+\paragraph{It is interactive.}  While most portions of a FORTH program
+are compiled into a form equally compact and comparable in execution
+speed to machine code, direct user interaction can always be furnished
+simply by providing a connection from the user's keyboard to the
+interpreter (or conversely, blocked by denying the user that access).
+That such interactivity expedites program development compared to the
+normal edit, compile, link, debug cycle is well known.  That FORTH can
+provide it without sacrificing execution speed is one of its major
+attractions.
+
+\paragraph{It supports multiple operating paradigms.}  Once the
+technique of encapsulating the functionality of a product in
+primitives accessible from the FORTH environment is mastered, it is
+possible to build programs in which the core facilities (for example,
+database access, geometric calculations, graphical display of results,
+calculating mass properties) can be composed into sequences that can
+be invoked from a program, called interactively from a command line,
+triggered by a menu selection or pick of a button in a dialogue, or
+virtually any other form of interaction imaginable.  Further, since
+any stimulus that affects the program simply
+executes a FORTH word, and such words can be easily redefined with a
+small amount of FORTH text, any of these operating modes can be
+rendered programmable by the implementor, third party developer, or
+user, at the discretion of the designer.
+
+\paragraph{It is surprisingly modern.}  Although FORTH appears to be
+an artifact of the bygone days of 64K computers and teletype machines,
+many of its concepts, viewed through contemporary eyes, are remarkably
+up to date.  For example, few languages share its ability to define
+new fundamental data types, along with methods that operate upon
+them.  The multiple dictionary facility of FORTH permits one to create
+objects that inherit, by default, properties of their parents, and to
+implement such structures in an efficient manner.
+
+\subsection{\atlast\ and FORTH}
+
+All of these advantages do not erase some substantial shortcomings of
+FORTH, particularly in the modern programming environment.  In
+defining \atlast , I have attempted to conform to FORTH wherever possible,
+without compromising my overall goal of creating a system that would
+allow a developer to factor out the programmability from an
+application and hand it to a standard module to manage, precisely as
+C programmers delegate I/O and mathematical function evaluation to
+library routines provided for those purposes.
+
+\atlast\ is based on the FORTH-83 standard and incorporates many of the
+optional extensions and supplementary words defined in that standard.
+Once the basic differences between FORTH and \atlast\ have been
+mastered, one can use a FORTH reference manual for most user-level
+\atlast\ programming tasks.  The major differences between FORTH-83 and
+\atlast\ are as follows.
+
+\paragraph{Integers are 32 bits.}  To bring forth another language
+burdened with 16 bit integers in the year 1990 is, to my mind,
+unthinkable.  We are rapidly entering an era where the vast
+majority of C language environments agree that the {\tt int} type is
+32 bits, and applications may be expected to rapidly conform to this
+standard.  Consequently, in \atlast, all integers are 32 bits and no
+{\tt short} data type is provided.  Note that this does not imply
+incompatibility with C environments with 16 bit {\tt int}s---\atlast\
+works perfectly with Turbo C on MS-DOS and Microsoft C on OS/2, for
+example, because all integers are explicitly declared as {\tt long}.
+
+\paragraph{Identifiers are arbitrary length.}  In \atlast , you need
+not struggle with the tradeoff between memory efficiency and
+uniqueness of identifiers that plagues the FORTH programmer.
+Identifiers are limited in length only to the size of the built-in
+token assembly buffer, which defaults to 128 characters, and
+all characters are significant.  Again, this change brings \atlast\ more
+closely into conformance with contemporary language designs.
+To implement this change, symbol names were moved from the heap into
+dynamically allocated buffers, taking advantage of the underlying C
+runtime environment.  This makes the task of adjusting heap size
+easier (and changes some of the arcana of programs that fiddle with
+the low-level structure of the system, but everything you could do in
+FORTH, you can do in \atlast, albeit in a slightly different way).
+
+\paragraph{Floating point is supported.}  Floating point constants,
+variables, operators, scanning and formatting facilities, and a rich
+set of mathematical functions are provided as
+primitives (which can be turned off at compile time, if not needed).
+Compatibly with C, the default floating point type is 64 bit
+C {\tt double} precision numbers.  The only assumption made by \atlast\
+about floating point format is that a floating point number is twice
+the size of an integer.  The rational number facilities of FORTH are
+not provided in \atlast .
+
+\paragraph{Strings are supported.}  Strings are supported at a much
+higher level in \atlast\ than in FORTH\@.  String literals are provided
+in a general and explicit manner using the C syntax for escaping
+special characters.  A rich set of string processing functions which
+closely follow those of C are provided ({\tt STRCPY}, {\tt STRCAT},
+{\tt STRLEN}\ldots ).  A mechanism of cyclically allocated temporary
+string buffers provides more flexible manipulation of strings in
+interactive input.  Strings continue to follow the pointer and buffer
+model used by both C and FORTH\@.  String-intensive programs should
+run at about the same speed as their equivalents in C or FORTH\@.
+
+\paragraph{Debugging facilities are provided.}  \atlast\ can be
+configured at compile time with as much or as little error checking
+and debugging support as is appropriate for the application in which
+it is being integrated and the development status of that product.
+During development and test, one can configure \atlast\ with an
+optional {\tt TRACE} that follows program execution primitive by
+primitive, a {\tt WALKBACK} that prints the active word stack when an
+error is detected, precise overflow and underflow checking of both the
+evaluation and return stacks, and close to bulletproof pointer
+checking that catches attempts to load or store outside the designated
+heap area.  Although sufficiently crafty programs can still crash
+\atlast , errors that slip past the checking and wreak havoc are
+extremely rare, even in unprotected environments such as MS-DOS\@.
+This, combined with the fundamental interactivity of \atlast ,
+makes for a friendly debugging environment.  All the runtime error
+checking can be disabled to reduce memory and execution time overhead,
+when and where appropriate.
+
+\paragraph{File I/O follows C and Unix conventions.}  FORTH was
+developed before the age of standard operating systems; in its early
+days, it {\em was} the operating system of many of the minicomputers
+which ran it.  Now that the Unix file system interface has become a {\em de
+facto} industry standard, \atlast\ conforms to that model of file
+system operation.  {\tt FILE} variables correspond to C language file
+descriptors, and a familiar set of primitives such as {\tt FOPEN},
+{\tt FCLOSE}, {\tt FREAD}, {\tt FSEEK}, etc., are used in the same
+manner as in C\@.  Line-level I/O is provided as well, offering
+AutoCAD-compatible automatic recognition of ASCII files written with any
+of the current end of line conventions.
+
+\paragraph{Extensive support for embedding is provided.}  Unlike
+FORTH, \atlast\ is intended to be invisibly embedded within application
+programs.  Other than providing a common framework for programmability
+and extension, the application continues to ``look like'' itself, not
+like \atlast\ or FORTH\@.  Thus, \atlast\ is not ``in control'' in the
+sense that the main loop of a FORTH system is; it is a slave, called
+by the application at appropriate times.  Accomplishing this required
+inverting the control structure from that of a typical FORTH system
+and providing a comprehensive set of C callable linkages by which the
+application communicates with \atlast .  In addition, primitives are
+provided which aid in tuning \atlast\ to the precise needs of the host
+program.  The developer can monitor memory usage, note which
+primitives are used and which are not, and configure a custom version
+of \atlast\ ideally suited to the needs and environment of the host
+program.
+
+\section{A note on what follows}
+
+In order to illustrate \atlast , the balance of this paper employs
+numerous sample programs and fragments of \atlast\ code.  A reader with
+a basic understanding of FORTH should, along with the definitions of
+the \atlast\ primitives given at the end of the paper, be able to
+figure out what is going on in the examples.  If you've never
+encountered FORTH before, the examples may seem little more than
+gibberish.  Don't worry---once you get the hang of it, or consult one
+of the many excellent FORTH books available (I recommend {\sl
+Mastering Forth}, by Anderson and Tracy, New York: Brady
+Books/Prentice-Hall, 1984), all will become clear.
+
+Until then, don't be put off by the examples.  Just skim over them
+{\em as if\/} you understood them.  You'll still pick up the flavour
+of the package, how it integrates with applications, and what you can
+do with it.  I'd like to be able to leave my brain and fingers running
+overnight and find a complete \atlast\ reference manual that could
+stand by itself sitting on my machine the next day.  Alas, I lack
+overnight batch capability and have no opportunity to undertake such a
+task in prime time at present.  I decided to supply the documentation
+in this oddly incomplete form to get the essentials across to those
+who can understand it rather than defer the entire effort until I can
+complete a hundred pages or so of documentation that largely
+duplicates a FORTH reference manual.
+
+\section{Interactive \atlast}
+
+Although \atlast\ is intended to be embedded in application programs,
+for learning the language, experimenting with small programs, and
+using it as a desk calculator, it's handy to have an interactive
+stand-alone version.  The \atlast\ source distribution includes a main
+program, {\tt atlmain.c}, that can be linked with \atlast\ to provide
+such a utility.  The executable, called {\tt atlast} on Unix and {\tt
+ATLAST.EXE} on MS-DOS, is built with all error checking enabled to aid
+in program development.
+
+To experiment with \atlast , execute the interactive program with:
+
+{\tt atlast}
+
+You'll be prompted with:
+
+{\tt ->}
+
+as long as \atlast\ is in the interpretive state.  For example, you
+might load \atlast\ and experiment with various rational approximations
+of $\pi$.
+
+\begin{verbatim}
+    % atlast
+    -> 22.0 7.0 f/ f.
+    3.14286 -> 377.0 120.0 f/ f.
+    3.14167 -> ^D
+    %
+\end{verbatim}
+
+Note that \atlast\ does not explicitly return the carriage after
+output; use the {\tt CR} primitive if you wish this done.  Rather than
+printing each number and comparing it manually against $\pi$, we can
+define a {\em constant} with the value of $\pi$ and a new {\em word}
+(or function) that compares a value against it and prints the error
+residual.  Here's how we might do that:
+
+\begin{verbatim}
+    % atlast
+    -> 1.0 atan 4.0 f* 2constant pi
+    -> : pierr
+    :>   pi f- fabs f. cr
+    :> ;
+    -> 3.0 pierr
+    .141593
+    -> 22.0 7.0 f/ pierr
+    0.00126449
+    -> 355.0 113.0 f/ pierr
+    2.66764e-07
+    -> ^D
+    %
+\end{verbatim}
+
+We can also load programs from files into Interactive \atlast .
+Suppose we want to investigate the behaviour of Leibniz' famous
+1673 series that converges (achingly slowly) to $\pi$.  The series is:
+
+\[ \frac{\pi}{4} = 1-\frac{1}{3}+\frac{1}{5}-\frac{1}{7}+\frac{1}{9}-
+    \cdots \]
+
+We can create a file, using the text editor of our choice, containing
+the following:
+
+\begin{verbatim}
+
+\   Series approximations of Pi
+
+\   Leibniz: pi/4 = 1 - 1/3 + 1/5 - 1/7 ...
+
+: leibniz      ( n -- fpi )
+    1.0 1.0
+    4 pick 1 do
+        2.0 f+  \ denom += 2
+        2dup
+        i 1 and if
+            fnegate
+        then
+        1.0 2swap f/
+        2rot f+
+        2swap
+    loop
+    2drop
+    rot drop
+    4.0 f*
+;
+
+\   Reference value of Pi
+
+1.0 atan 4.0 f* 2constant pi
+
+\ Calculate and print error
+
+: pierr
+    pi f- fabs f. cr
+;
+\end{verbatim}
+
+If this seems like gibberish, don't worry!  Remember the first time
+you looked at a Lisp or C program.  If you want to decode some of the
+structure of this program before learning the language, refer to the
+definitions of \atlast\ primitives at the back of this manual, remember
+that \atlast\ is a reverse Polish stack language, and note that
+``\verb+\+'' is a comment delimiter that causes the rest of the line
+to be ignored and that ``{\tt (}'' is a comment delimiter that ignores
+all text until the next ``{\tt )}''.
+
+If this file is saved as {\tt leibniz.atl},
+we can load the program into Interactive \atlast\ with the command:
+
+{\tt atlast -ileibniz}
+
+\atlast\ will compile the program in the file, report any errors, and
+if no errors are found enter the interactive interpretation mode.
+The definition of {\tt leibniz} performs the number of iterations
+specified by the number on the top of the stack and leaves the
+resulting series approximation to $\pi$ on the top of the stack.
+
+We can play with this definition as follows:
+
+\begin{verbatim}
+    % atlast -ileibniz
+    10 leibniz f.
+    3.04184 -> 100 leibniz f.
+    3.13159 -> 1000 leibniz f.
+    3.14059 -> 10000 leibniz f.
+    3.14149 ->   
+\end{verbatim}
+
+Well, we can see it's converging, but not very fast.  Since we can
+define new compiled words on the fly, let's improvise a definition
+that will print the value and its error for increments of 10000
+iterations, then run that program.  Continuing our session above:
+
+\begin{verbatim}
+    -> : itest 0 do i 1+ 10000 * dup .
+    :> leibniz 2dup f. pierr  loop ;
+    -> 5 itest
+    10000 3.14149 0.0001 
+    20000 3.14154 5e-05 
+    30000 3.14156 3.33333e-05 
+    40000 3.14157 2.5e-05 
+    50000 3.14157 2e-05 
+    -> ^D
+    %
+\end{verbatim}
+
+As you can see (even if you don't understand), we've mixed compiled
+code, interpreted code, and on-the fly definition of new compiled
+functions in a seamless manner.
+
+You can also run an \atlast\ program in batch mode simply by specifying
+its name on the {\tt atlast} command line.  If, for example, you added
+the lines:
+
+\begin{verbatim}
+\   Run iteration vs. error report
+
+: itest
+    0 do 
+        i 1+ 10000 * dup . leibniz
+        2dup f. pierr
+    loop
+;
+
+10 itest
+\end{verbatim}
+
+to the end of the {\tt leibniz.atl} file, creating a new file called
+{\tt leibbat.atl}, you could run the program in batch mode as follows:
+
+\begin{verbatim}
+% atlast leibbat 
+10000 3.14149 0.0001 
+20000 3.14154 5e-05 
+30000 3.14156 3.33333e-05 
+40000 3.14157 2.5e-05 
+50000 3.14157 2e-05 
+60000 3.14158 1.66667e-05 
+70000 3.14158 1.42857e-05 
+80000 3.14158 1.25e-05 
+90000 3.14158 1.11111e-05 
+100000 3.14158 1e-05 
+%
+\end{verbatim}
+
+(By the way, as is apparent, this is clearly no way to compute $\pi$!
+Try this, instead, if you're serious about pumping $\pi$.)
+
+\begin{verbatim}
+\   Tamura-Kanada fast Pi algorithm
+
+2variable a
+2variable b
+2variable c
+2variable y
+
+: tamura-kanada ( n -- fpi )
+    1.0 a 2!
+    1.0 2.0 sqrt f/ b 2!
+    0.25 c 2!
+    1.0
+    rot 1 do
+        a 2@ 2dup y 2!
+        b 2@ f+ 2.0 f/ a 2!
+        b 2@ y 2@ f* sqrt b 2!
+        c 2@ 2over a 2@ y 2@ f-
+        2dup f* f* f- c 2! 2.0 f*
+    loop
+    2drop
+    a 2@ b 2@ f+ 2dup f* 4.0 c 2@ f* f/
+;
+\end{verbatim}
+
+\newcommand{\au}[1]{{\tt atl\underline{ }#1}}
+\newcommand{\AU}[1]{{\tt ATL\underline{ }#1}}
+
+\section{Debugging}
+
+As befits an interactive language, \atlast\ provides debugging support.
+You can trace through the execution of a program word by word by
+enabling the {\tt TRACE} facility.  To turn tracing on, enter the
+sequence:
+
+{\tt 1 trace}
+
+If you've loaded a definition of the factorial function as follows:
+
+\begin{verbatim}
+: factorial
+        dup 0= if
+           drop 1
+        else
+           dup 1- factorial *
+        then
+;
+\end{verbatim}
+
+and execute it under trace, you'll see output as
+follows:
+
+\begin{verbatim}
+% atlast -ifact
+-> 1 trace
+-> 3 factorial .
+
+Trace: FACTORIAL 
+Trace: DUP 
+Trace: 0= 
+Trace: ?BRANCH 
+Trace: DUP 
+Trace: 1- 
+Trace: FACTORIAL 
+Trace: DUP 
+Trace: 0= 
+Trace: ?BRANCH 
+Trace: DUP 
+Trace: 1- 
+Trace: FACTORIAL 
+Trace: DUP 
+Trace: 0= 
+Trace: ?BRANCH 
+Trace: DUP 
+Trace: 1- 
+Trace: FACTORIAL 
+Trace: DUP 
+Trace: 0= 
+Trace: ?BRANCH 
+Trace: DROP 
+Trace: (LIT) 1 
+Trace: BRANCH 
+Trace: EXIT 
+Trace: * 
+Trace: EXIT 
+Trace: * 
+Trace: EXIT 
+Trace: * 
+Trace: EXIT 
+Trace: . 6 -> ^D
+%
+\end{verbatim}
+
+You can turn off tracing with ``{\tt 0 trace}''.
+
+When an error occurs, a walkback is normally printed that lists the
+active words starting with the one in which the error occurred,
+proceeding through levels of nesting to the outermost, interpretive
+level.  If the {\tt WALKBACK} package is configured (see
+page~\pageref{`wback'}), the walkback is printed by default.  You can
+disable it with ``{\tt 0 walkback}''.  Here is a sample error
+walkback report:
+
+\begin{verbatim}
+% atlast -ileibniz
+-> leibniz
+Stack underflow.
+Walkback:
+   ROT
+   LEIBNIZ
+->
+\end{verbatim}
+
+\section{Integrating \atlast}
+
+Unlike most languages, \atlast\ is not structured as a main program; it
+is a subroutine.  You can invoke it when and where you like within
+your application, providing as much or as little programmability as is
+appropriate.  Before we get into the details of the interface between
+an application and \atlast , it's worth showing, by example, just how
+simple a program can be that accesses all the facilities of
+\atlast\ mentioned so far.  The following main program, linked with the
+\atlast\ object module, constitutes a fully-functional interactive
+\atlast\ interpreter.  It lacks the refinements of Interactive \atlast\
+such as console break processing, batch mode, loading definition
+files, prompting with compilation state, and the like, but any program
+that Interactive \atlast\ will run can be run by this program, if
+submitted to it by input redirection.
+
+\begin{verbatim}
+#include <stdio.h>
+#include "atlast.h"
+int main()
+{
+    char t[132];
+    atl_init();
+    while (printf("-> "),
+           fgets(t, 132, stdin) != NULL)
+        atl_eval(t);
+    return 0;
+}
+\end{verbatim}
+
+\subsection{Configuring {\tt atlast.c}}
+
+\label{`gconf'}
+The first step in integrating \atlast\ is building a suitable version
+of {\tt atlast.c} that can be linked with your application.  In order
+to do this, you must choose the modes with which you wish \atlast\
+built.  These modes are normally specified by compile-time
+definitions supplied on the C compiler call line.  Unless you request
+individual configuration of \atlast\ subpackages, a fully functional
+version of \atlast\ will be built.  In that case, you need only be
+concerned with the settings of the following compile-time variables.
+
+\begin{description}
+\item[{\tt ALIGNMENT}.] If double precision floating point numbers
+                    must be aligned on 8 byte boundaries in memory,
+                    define {\tt ALIGNMENT}.  If not defined, \atlast\
+                    assumes that 4 byte alignment is adequate for
+                    these numbers.  (Conditional code in {\tt
+                    atldef.h} attempts to define {\tt ALIGNMENT} on
+                    processors which require it, but its tests may
+                    omit your machine.)  \\
+\item[{\tt COPYRIGHT}.]  If you require a statement of the the public
+		    domain status of \atlast\ to be embedded into the
+		    binary program, define this variable.  Otherwise,
+		    leave it undefined and save a few bytes.
+\item[{\tt EXPORT}.]  If you are simply invoking \atlast\ as a macro
+                    engine and do not require access to its internal
+                    data structures, leave {\tt EXPORT} undefined.  If
+                    your program adds application-specific
+                    primitives to \atlast\ (as most do), define {\tt
+                    EXPORT} and include the file {\tt atldef.h} in
+                    all modules that require that access.  The stack,
+                    return stack, and heap pointers will be made
+                    external, names of internal symbols within \atlast\
+                    will be redefined to special names beginning with
+                    \verb+atl__+ to avoid conflicts with your program,
+                    and additional interface code is enabled to
+                    provide your primitives full access to the \atlast\
+                    runtime environment. \\
+\item[{\tt MEMSTAT}.] If you want to enable the runtime memory usage
+                    monitor, accessible from the {\tt MEMSTAT}
+                    primitive or the \verb+atl_memstat()+ function
+                    call, define {\tt MEMSTAT}. \\
+\item[{\tt NOMEMCHECK}.] To disable all runtime stack, heap, and
+                    pointer checking, define {\tt NOMEMCHECK}\@.  This
+                    will yield a dramatic increase in execution speed,
+                    but should be enabled only in closed applications
+                    after you're sure all the bugs are securely in
+                    hiding.  When built with {\tt NOMEMCHECK}, an
+                    \atlast\ program is no more secure than a
+                    pointer-mad C program.
+
+\item[{\tt READONLYSTRINGS}.] When the {\tt WORDSUSED} package (see
+		    page~\pageref{`wordsused'}) is enabled, \atlast\ 
+		    keeps track of which primitive and user-defined
+		    words are used in a program, allowing you to
+		    determine which packages are required and whether
+		    your tests have invoked all of the words you have
+		    defined. This is done by setting a flag in the
+		    word definition which, for built-in primitive
+		    words, involves modifying a C constant string.  If
+		    your C language implementation does not permit
+		    this, define {\tt READONLYSTRINGS}, which will
+		    copy the predefined words to a dynamically
+		    allocated buffer which may be modified. Note that
+		    this is done only if the {\tt WORDSUSED} package
+		    is enabled.
+
+\end{description}
+
+When building \atlast\ on MS-DOS or OS/2, you must use a large data
+model (32 bit data addresses).  \atlast\ treats all integers as 32
+bits and assumes that data pointers are at least that long.
+Attempting to build with 16 bit data addresses will cause compile
+errors that indicate violation of design assumptions.
+
+\subsection{Initialising: \au{init}}
+
+Before your application makes any other calls to \atlast , you must
+call \verb+atl_init+ to initialise its dynamic storage and create
+the data structures used to evaluate \atlast\ expressions.
+
+To initialise \atlast\ with the default memory configuration, just
+call:
+
+\verb+atl_init();+
+
+The stack, return stack, heap, and initial dictionary are created and
+\atlast\ is prepared for execution.  You can adjust the size of the
+memory allocated by \atlast\ by setting the following variables
+(defined in {\tt atlast.h}) before calling \verb+atl_init+.
+\label{`memall'}
+
+\begin{description}
+\item[\au{stklen}]          Evaluation (data) stack length.  Expressed
+                            as a number of 4 byte stack items.
+                            Default 100. \\
+\item[\au{rstklen}]         Return stack length.  Expressed as a
+                            number of 4 byte return stack pointer
+                            items.  Default 100. \\
+\item[\au{heaplen}]         Heap length.  Specified as a number of
+                            4 byte stack items.  Default 1000. \\
+\item[\au{ltempstr}]        Temporary string length.  Gives the
+                            length of the buffers used to hold
+                            temporary strings entered in interpretive
+                            mode and created by certain primitives.
+                            Default 256. \\
+\item[\au{ntempstr}]        Number of temporary strings.  Specifies
+                            the number of temporary strings.
+                            Temporary strings are used in rotation; if
+                            more than \verb+atl_ntempstr+ are used
+                            without storing out the oldest result,
+                            it will be overwritten.
+                            Default 4.
+\end{description}
+
+Applications can allow \atlast\ programs they load to override default
+memory allocation specifications with {\em prologue statements}.  See
+page~\pageref{`prologue'} for details.  Deeply embedded applications,
+such as those programmed into ROMs, may wish to assign the \atlast\
+dynamic storage areas to predefined areas of memory instead of
+requesting them with {\tt malloc()}.  If the base address pointer of
+an area is set nonzero before \verb+atl_init+ is called, the address
+specified will be used for that region; no buffer will be allocated.
+If you take advantage of this facility, please read the code for
+\verb+atl_init()+ in {\tt atlast.c} carefully and make sure the storage
+you supply is as long as the various length cells specify.  Note in
+particular that the system state word, temporary string buffers, and
+heap are consolidated into one contiguous area of memory.
+
+\subsection{Evaluating: \au{eval}}
+
+To evaluate a string containing \atlast\ program text, call:
+
+{\tt {\em stat} = \verb+atl_eval+({\em string});}
+
+where {\em string} is a string containing the text to be evaluated and
+{\em stat} is an integer giving the status of the evaluation.
+Mnemonics for evaluation status codes are defined in {\tt atlast.h},
+and have the following meanings:
+
+\begin{tabbing}
+\AU{RSTACKUNDER} \= Attempt to {\tt FORGET} protected \kill
+\AU{SNORM} \>          No error \\
+\AU{STACKOVER} \>      Stack overflow \\
+\AU{STACKUNDER} \>     Stack underflow \\
+\AU{RSTACKOVER} \>     Return stack overflow \\
+\AU{RSTACKUNDER} \>    Return stack underflow \\
+\AU{HEAPOVER} \>       Heap overflow \\
+\AU{BADPOINTER} \>     Bad heap pointer \\
+\AU{UNDEFINED} \>      Undefined word \\
+\AU{FORGETPROT} \>     Attempt to {\tt FORGET} protected \\
+                \>        symbol \\
+\AU{NOTINDEF} \>       Compiler word outside definition \\
+\AU{RUNSTRING} \>      Runaway string \\
+\AU{RUNCOMM} \>        Runaway comment in file \\
+\AU{BREAK} \>          Asynchronous break signal \\
+           \>          received \\
+\AU{DIVZERO} \>        Attempt to divide by zero \\
+\end{tabbing}
+
+In addition to these status codes, a program that calls
+\verb+atl_eval+ may determine the current state of \atlast\ by
+examining external variables.  If a multi-line comment awaiting
+termination with a ``{\tt )}'' is active, \verb+atl_comment+ will be
+nonzero.  If the definition of a word (colon definition) is currently
+pending, the variable {\tt state} (accessible only if {\tt EXPORT} is
+defined and {\tt atldef.h} is included) will be nonzero.
+
+\subsection{Loading files: \au{load}}
+
+To load an entire file containing \atlast\ program text, call:
+
+{\tt {\em stat} = \verb+atl_load+({\em file});}
+
+where {\em file} is a C file descriptor (type {\tt FILE *})
+designating the file, currently open for input and positioned before
+the first byte of the \atlast\ program to be loaded.  The
+program is read, and {\em stat} is the status resulting from
+loading and executing the \atlast\ program in that file.  The status
+codes are the same as those given above for the \verb+atl_eval+
+function.  The \verb+atl_load+ function reads text files in any of the end
+of line conventions recognised by AutoCAD; ASCII files in any of these
+formats may be loaded by any implementation of \atlast .  If the host
+system requires binary files to be identified at open time, files
+containing \atlast\ programs to be loaded with \verb+atl_load+ should
+be opened in {\em binary} mode, even though they nominally contain ASCII
+text.  Binary mode permits correct interpretation of all the end of
+line delimiters accepted by AutoCAD\@.
+
+The \verb+atl_load+ function uses \verb+atl_mark+ to save the runtime
+status before loading the file.  If an error occurs, it attempts to
+restore the {\em status quo ante} by performing an \verb+atl_unwind+.
+If the file loaded included interpretive mode code that modified
+preexisting objects on the heap, those changes will not be reversed if
+an error occurs whilst loading the file.
+
+\subsection{Marking: \au{mark}}
+
+Applications may wish to undertake a series of \atlast\ operations
+which might result in a runtime evaluation error.  In that event, the
+application will normally want to undo definitions made by the
+program that errored.  To mark one's place before embarking upon a
+potentially perilous \atlast\ program, use:
+
+{\tt \verb+atl_statemark+ mk;\\
+\verb+atl_mark(&mk);+}
+
+The current position of the stack, return stack, heap, and dictionary
+are saved in the \verb+atl_statemark+ structure.  A subsequent
+\verb+atl_unwind+ call will roll each of those dynamic storage areas
+back to the position at the designated \verb+atl_mark+.
+
+\subsection{Reversing changes: \au{unwind}}
+
+To roll back all changes to the stack, return stack, heap allocation,
+and dictionary to the state saved in an \verb+atl_statemark+ object
+with \verb+atl_mark+, call:
+
+{\tt \verb+atl_statemark+ mk;\\
+\verb+atl_unwind(&mk);+}
+
+The allocation pointers for all the storage areas are reset to their
+positions at the time \verb+atl_mark+ was called, but changes to
+heap variables made by storing through pointers after the
+\verb+atl_mark+ are not reversed.
+
+\subsection{Asynchronous break: \au{break}}
+
+Interactive applications of \atlast\ must allow the user
+to escape infinite loops and other accidentally initiated lengthy
+computations.  If the system provides a facility for responding to
+user interrupt requests, \atlast\ allows execution of programs under
+its control to be terminated through the \verb+atl_break+ mechanism.
+
+If {\tt BREAK} is defined at compile time, the \verb+atl_break()+
+function and support for asynchronous break is enabled.  When the
+application receives an asynchronous break, it should call
+\verb+atl_break()+ to notify the currently running \atlast\ program of
+the break signal.  If no \atlast\ program is running at the time of the
+signal, no harm is done.  The application break routine should always
+call \verb+atl_break()+ rather than try to determine whether \atlast\
+is active.  If an \atlast\ program was executing at the time of the
+break signal, the application that invoked it, whether by
+\verb+atl_eval+, \verb+atl_load+, or \verb+atl_exec+, will be notified
+of the abnormal termination by the return of the \verb+ATL_BREAK+
+status.
+
+The \verb+atl_break+ function simply sets a flag examined by the inner
+loop of the \atlast\ evaluator; it does not actually terminate
+execution.  Consequently, it may safely be called at any time, even
+from hardware interrupt service routines.
+
+\subsection{Showing memory status: \au{memstat}}
+
+In the final stage of optimising an application incorporating \atlast\
+for shipment, one may wish to adjust the memory allocation parameters
+to eliminate wasted space while providing reasonable margins for user
+extensions after shipment.  To set the parameters wisely, one must
+know the baseline memory usage of the application.  If {\tt atlast.c}
+is built with {\tt MEMSTAT} defined, this can be obtained either by
+executing the {\tt MEMSTAT} primitive within the \atlast\ program or by
+calling the \verb+atl_memstat+ function at an opportune time within
+the application.  In either case, a memory usage report similar to the
+following example is written to the standard output stream.
+
+{\small
+\begin{verbatim}
+             Memory Usage Summary
+
+              Current  Maximum  Items   Percent
+Memory Area    usage    used  allocated in use 
+ Stack            0        9     100       0
+ Return stack     0        4     100       0
+ Heap           227      227    1000      22
+\end{verbatim}
+}
+
+\vspace{1ex}
+\centerline{\fbox{\parbox[t]{19pc}{\large {\bf Note:} to use any of the
+ following functions, you must compile {\tt atlast.c} and the modules
+ that call them with {\tt EXPORT} defined, and you must include the
+ header file {\tt atldef.h} in files that call them.}}}
+
+\subsection{Looking up words: \au{lookup}}
+
+Your application can look up words in the \atlast\ dictionary, using
+the same search order as the interpreter would, with the
+call:
+
+{\tt dictword *{\em dw};\\
+char *{\em name};\\
+\\
+{\em dw} = \verb+atl_lookup+({\em name});}
+
+Since \atlast\ names are matched regardless of whether letters in them
+are upper or lower case, the {\em name} may contain any combination of upper
+and lower case letters.  If the word is defined, its dictionary entry
+is returned.  The {\tt dictword} structure is defined in {\tt
+atldef.h}.  If the word is not defined, {\tt NULL} is returned.
+There may be multiple nested definitions of a word; if this is the
+case, only the most recent definition (the active definition) is
+returned.  There is no way, using \verb+atl_lookup+ alone, to locate
+hidden definitions.
+
+\subsection{Accessing a word's text: \au{body}}
+
+An \atlast\ word definition consists of several components, including
+its name and the C-coded method that implements it.  Of most interest
+to applications that intercommunicate with \atlast\ is the {\em body\/}
+of the word.  For a variable or constant, this is the storage that
+contains the word's value.  To obtain the body address of a
+dictionary item returned by \verb+atl_lookup+ or created by
+\verb+atl_vardef+ (see below), use \verb+atl_body+.  The call:
+
+{\tt
+dictword *{\em dw};\\
+stackitem *{\em si};\\
+\\
+{\em si} = \verb+atl_body+({\em dw});}
+
+places the body address of dictionary item {\em dw} into variable {\em
+si}.  If you wish to store a data type into the body of the
+\atlast\ word other than the default of {\tt stackitem} (defined as {\tt
+long}), cast the pointer to the correct pointer type.  See the
+\verb+atl_vardef+ sample below for an example of a floating point
+variable being created and initialised using \verb+atl_body+.
+
+\subsection{Defining variables: \au{vardef}}
+
+Shared variables are
+a convenient way of intercommunicating between a host application
+and \atlast .  By making the application's state
+visible to and changeable by the \atlast\ program, the program is given the
+information it needs and the power to direct the application.  A
+shared variable is an \atlast\ variable defined by the application, the
+address of which is known both to \atlast\ (via the dictionary), and to
+the application (by a pointer returned when the shared variable is
+created).  To create a shared variable, call:
+
+{\tt dictword *{\em var};\\
+\\
+{\em var} = \verb+atl_vardef+({\em name}, {\em size});}
+
+where {\em name} is a character pointer giving the name of the
+variable to be created and {\em size} is an integer specifying its
+size in bytes.  Note that to create a normal \atlast\ integer variable
+{\em size} should be 4; for a floating point variable, {\em size}
+should be 8 bytes.  Storage for the variable is reserved on the
+\atlast\ heap.  If insufficient heap space is available to create the
+variable {\tt NULL} is returned.  Otherwise, the address of the
+variable's dictionary entry is returned.  {\bf Beware:} the dictionary
+entry {\em is not} the storage address of the variable's value.
+To obtain that address, call \verb+atl_body+, described above.
+
+For example, we can create a floating point variable containing a
+crummy approximation of $\pi$ with the sequence:
+
+\begin{verbatim}
+dictword *pi;
+
+pi = atl_vardef("Pi", sizeof(double));
+if (pi == NULL) {
+    printf("Can't atl_vardef PI.\n");
+} else {
+    *((double *) atl_body(pi)) =
+        3.141596235;
+}
+\end{verbatim}
+
+We could then print the value with an \atlast\ program run under that
+application with:
+
+{\tt pi 2@ f. }
+
+\subsection{Executing words: \au{exec}}
+
+If you've obtained the dictionary address of an \atlast\ word
+definition, your application can execute it with the sequence:
+
+{\tt dictword *{\em dw};\\
+int {\em stat};
+\\
+{\em stat} = \verb+atl_exec+({\em dw});}
+
+The status codes returned in {\em stat} are identical to those
+returned by \verb+atl_eval+.  The distinction between \verb+atl_eval+
+and \verb+atl_exec+ is subtle, but important---it can make a big
+difference in the performance of your application.  If you know the
+name of an \atlast\ word, you can execute it either by passing a string
+containing its name to \verb+atl_eval+ or by saving its dictionary
+address in a variable and executing the word directly from the
+dictionary address with \verb+atl_exec+.  The results of these two
+operations are identical, but when you pass a string to
+\verb+atl_eval+, \atlast\ is forced to scan the string, parse its
+contents into the token denoting the word, look that word up in the
+dictionary, and only then execute the word.  You can bypass all these
+nonproductive and time consuming preliminaries if you know the word's
+dictionary address and use \verb+atl_exec+.
+
+Creative use of \verb+atl_lookup+ and \verb+atl_exec+ provide one of
+the most powerful ways for \atlast\ to enrich an application.  If you
+create an application to perform a relatively well-defined task, you
+can, before entering its main processing loop,
+inquire with \verb+atl_lookup+ whether the user has defined a series
+of words specified by the application.  If so, their dictionary
+addresses are saved in pointers in the application code.  Then, as the
+application executes, at each step where the user might want to
+interpose his own processing or replace the application's default
+processing with his own method, the application merely tests whether
+the word associated with that step has been defined in the \atlast\
+program and, if so, runs it with \verb+atl_exec+.  If the
+default processing that would otherwise occur is made available
+as an \atlast\ primitive with \verb+atl_primdef+ (see below), it is
+extremely easy for the \atlast\ program to examine the data at the
+point it has been ``hooked,'' perform any special processing
+it wishes, or inherit the default processing simply by running
+the primitive that does it.  If the user has not requested special
+processing, the cost to the application to provide that opportunity
+is one pointer comparison against {\tt NULL}\@.
+Compared with the benefits of open architecture, this is a small price
+indeed.
+
+You can pass arguments to the definition you're invoking with
+\verb+atl_exec+ either by storing them in shared variables created
+with \verb+atl_vardef+ or, usually the best approach, pushing them on
+the stack before executing the definition.  See the discussion of
+\verb+atl_primdef+ below for information on access to the stack
+from C\@.
+
+\subsection{Defining primitives: \au{primdef}}
+
+Most of the power of \atlast\ derives from the ease with which C coded
+primitives can be added to the language.  Once integrated, they may be
+used in conjunction with the looping, conditional execution, and other
+facilities already present.  \atlast\ has been
+deliberately designed to make the addition of primitives simple and
+safe: nothing like the peril-filled nightmare of adding a function to
+AutoLISP.  Still, to extend any language you need to learn your way
+around its memory architecture and control structure.  So, listen up,
+walk through the examples, and before long you'll be adding primitives
+like a pro.
+
+An \atlast\ primitive is a C function.  When the primitive is executed,
+that function is called and may do whatever it likes.  A primitive can
+be as simple as one that discards the top item on the stack, or as
+complex as one that prepares a ray-traced bitmap from a three
+dimensional geometric model.  Most primitives communicate with one
+another via the {\em stack}.  Some primitives also access variables
+stored on the {\em heap}.  Finally, a very few primitives manipulate
+data stored on the {\em return stack}, which \atlast\ uses to track the
+nesting of execution.  A user-defined primitive will rarely need to
+access the return stack.  Definitions in {\tt atldef.h} simplify
+access to each of these areas of memory.  Let's look at them one by
+one.
+
+\subsubsection{Accessing the stack}
+
+The stack pointer variable is called {\tt stk}, and always points to
+the next available {\tt long} stack item.  Primitives rarely reference {\tt
+stk} directly, since it is usually far more convenient to use
+definitions that hide the complexity of indexing the stack.  The
+following tools are provided for access to the stack.
+
+\begin{description}
+\item[{\tt Sl({\em n})}]        Before you access any items on the
+                                stack, you must check that the stack
+                                actually contains at least as many 
+                                items as you'll be using.  If not,
+                                a {\em stack underflow} must be
+                                reported.  At the start of your
+                                primitive, simply use the statement
+                                ``{\tt Sl({\em n});}'', where {\em n}
+                                is the number of stack items you'll be
+                                referencing.  If you use the topmost
+                                two stack items, {\tt S0} and {\tt
+                                S1}, you'd use {\tt Sl(2);}.  It's
+                                important that you use the definition
+                                rather than check the stack limit
+                                directly; if you later build your
+                                application with stack checking off,
+                                the {\tt Sl()} statement will generate
+                                no code, automatically configuring
+                                your primitive for maximum speed.
+\item[{\tt So({\em n})}]        Before you push any new items onto the
+                                stack, you must check that the stack
+                                will not overflow the area allocated
+                                to it when those items are added.
+                                If it would,
+                                a {\em stack overflow} must be
+                                reported.  At the start of your
+                                primitive, simply use the statement
+                                ``{\tt So({\em n});}'', where {\em n}
+                                is the number of new stack items you'll be
+                                pushing.  If you are adding one new
+                                integer item to the stack, use ``{\tt
+                                So(1);}''.  It's
+                                important that you use the definition
+                                rather than check the stack limit
+                                directly; if you later build your
+                                application with stack checking off,
+                                the {\tt So()} statement will generate
+                                no code, automatically configuring
+                                your primitive for maximum speed.
+\item[{\tt S0}--{\tt S5}]       The definitions {\tt S0}, {\tt
+                                S1},\ldots {\tt S5} provide direct
+                                access to the top 6 integer stack
+                                items.  {\tt S0} is the top item on
+                                the stack, {\tt S1} is the next item,
+                                and so on.  These definitions may be
+                                used on either the left or right
+                                side of an assignment.
+\item[{\tt Pop}]                Used as a statement, ``{\tt Pop;}'',
+                                discards the topmost item from the
+                                stack.
+\item[{\tt Pop2}]               Used as a statement, ``{\tt Pop2;}'',
+                                discards the topmost two items from the
+                                stack.
+\item[{\tt Npop({\em n})}]      Discards the top {\em n} items from
+                                the stack.
+\item[{\tt Push}]               Used on the left side of an
+                                assignment, stores the value on the
+                                right side into the next free stack
+                                item and increments the stack pointer.
+\item[{\tt Realsize}]           For primitives that use floating point
+                                numbers, {\tt Realsize} gives the
+                                number of stack items occupied by one
+                                floating point number.  A primitive
+                                that expects two floating point
+                                arguments on the stack and will leave
+                                them there, adding one new floating
+                                point result would begin ``{\tt Sl(2 *
+                                Realsize); So(Realsize);}''.
+\item[{\tt REAL0}--{\tt REAL2}] These definitions provide read access
+                                to the topmost three floating point
+                                numbers on the stack.  The stack cells
+                                are automatically cast to type {\tt
+                                double}.  It is {\em essential} that
+                                you access floating point values this
+                                way---some computers require that {\tt
+                                double}s be aligned on 8 byte
+                                boundaries, and the {\tt REAL{\em n}}
+                                definitions automatically align the
+                                variable if the machine requires it.
+\item[{\tt SREAL0({\em f})}, {\tt SREAL1({\em f})}] These definitions,
+                                used as functions, store their
+                                floating point arguments into the
+                                topmost ({\tt SREAL0}) and next ({\tt
+                                SREAL1}) floating point items on the
+                                stack.  Because of the possible need
+                                to compensate for machine alignment
+                                restrictions, the {\tt REAL{\em n}}
+                                definitions cannot be used on the left
+                                side of an assignment; use these
+                                functions instead.
+\item[{\tt Realpop}]            Pops the topmost floating point value
+                                from the stack.  Equivalent to {\tt
+                                Npop(Realsize)}.
+\item[{\tt Realpop2}]           Pops the two topmost floating point
+                                values
+                                from the stack.  Equivalent to {\tt
+                                Npop(2 * Realsize)}.
+\end{description}
+
+{\em He said this was easy!}  Please bear with me---all of this is
+far simpler (and more compact) to use than it is to explain.  If you
+can't stand it, skip ahead to the sample primitive definitions and see
+for yourself.  O.K., welcome back.  Probably 95\% of all the
+primitives you'll add to \atlast\ will confine themselves to accessing
+the stack.  Heap and return stack access is far less frequent (and may
+indicate poor design).  In any case, if you need to do it, here's
+how.
+
+\subsubsection{Accessing the heap}
+
+The {\em heap} is a pool of memory used to allocate static
+objects.  Most heap is allocated by \atlast\ {\em defining words}, such
+as {\tt VARIABLE}, {\tt CONSTANT}, and the {\tt :} used to define new
+executable words, themselves stored on the heap.  The ability to
+create defining words for new data types directly in \atlast\ is one of
+its most powerful features and reduces the need to manipulate the heap
+from user primitives.  The heap is accessed through a set of
+definitions similar to those used for the stack.  The heap pointer
+itself is named {\tt hptr}, but will rarely be referenced explicitly.
+
+\begin{description}
+\item[{\tt Ho({\em n})}]        Before you store any new data on the
+                                heap, you must verify that doing so
+                                would not cause the heap to grow past
+                                its assigned maximum size.  This event
+                                is called a {\em heap overflow}, and
+                                the {\tt Ho({\em n})} function checks
+                                for it and terminates execution should
+                                overflow occur.  The number {\em n} is
+                                the amount of heap you propose to
+                                allocate, {\em in terms of stack
+                                items}, each of four bytes.  If you
+                                wish to allocate a number expressed in
+                                bytes, you must round it up to the
+                                next larger multiple of four.  A
+                                portable way to do this is to use the
+                                expression: {\tt (({\em x} +
+                                (sizeof(stackitem) - 1)) /
+                                sizeof(stackitem))} where {\em x} is
+                                the number of bytes of heap you
+                                require.  If you configure stack and
+                                heap checking off for maximum
+                                performance, {\tt Ho({\em n})} generates
+                                no code.
+\item[{\tt Hpc({\em ptr})}]     Heap storage is normally accessed via
+                                pointers passed on the stack.  Since
+                                the stack contains many other types of
+                                data, accidentally using a non-pointer
+                                as a heap address could be
+                                catastrophic.  Before using any value
+                                as a pointer to the heap, call {\tt
+                                Hpc({\em ptr})} where {\em ptr} is the
+                                pointer.  If the pointer is not within
+                                the heap, a {\em bad pointer} error
+                                will be reported and execution
+                                terminated.  If you configure stack
+                                and heap checking off, {\tt Hpc({\em
+                                ptr})} generates no code.
+\item[{\tt Hstore}]             Used on the left of an assignment,
+                                stores the {\tt long} value on the
+                                right side into the next available
+                                heap cell and advances the heap
+                                allocation pointer.
+\end{description}
+
+\subsubsection{Accessing the return stack}
+
+The return stack remembers the point at which one definition
+invoked another, tracks loop control indices, and stores other items
+internal to the evaluator.  Messing with the return stack is generally
+a very bad idea.  This information is presented not so much to
+encourage you to use the return stack as for completeness and to
+document the code within {\tt atlast.c} that maintains it.
+The stack pointer variable is called {\tt rstk}, and always points to
+the next available return stack item.  Return stack items have a type of
+{\tt **dictword} (got that?), which is also {\tt typedef}ed to {\tt
+rstackitem}.
+
+Primitives rarely reference {\tt
+rstk} directly, since it is usually far more convenient to use
+definitions that hide the complexity of indexing the return stack.  The
+following tools provide access to the return stack.
+
+\begin{description}
+\item[{\tt Rsl({\em n})}]       Before you access any items on the
+                                return stack, you must check that the
+                                return stack actually contains at
+                                least as many items as you'll be
+                                using.  Otherwise, a {\em return stack
+                                underflow} must be reported.  At the
+                                start of your primitive, simply use
+                                the statement ``{\tt Rsl({\em n});}'',
+                                where {\em n} is the number of return
+                                stack items you'll be referencing.  If
+                                you use the topmost two items,
+                                {\tt R0} and {\tt R1}, you'd use {\tt
+                                Rsl(2);}.  It's important that you use
+                                the definition rather than check the
+                                return stack limit directly; if you
+                                later build your application with
+                                stack checking off, the {\tt Rsl()}
+                                statement will generate no code,
+                                automatically configuring your
+                                primitive for maximum speed.
+\item[{\tt Rso({\em n})}]       Before you push any new items onto the
+                                return stack, you must check that the
+                                return stack will not overflow the
+                                area allocated to it when those items
+                                are added.  If it would, a {\em return
+                                stack overflow} must be reported.  At
+                                the start of your primitive, simply
+                                use the statement ``{\tt Rso({\em
+                                n});}'', where {\em n} is the number
+                                of new return stack items you'll be
+                                pushing.  If you are adding one new
+                                item to the return stack, use ``{\tt
+                                Rso(1);}''.  It's important that you
+                                use the definition rather than check
+                                the return stack limit directly; if you
+                                later build your application with
+                                stack checking off, the {\tt Rso()}
+                                statement will generate no code,
+                                automatically configuring your
+                                primitive for maximum speed.
+\item[{\tt R0}--{\tt R2}]       The definitions {\tt R0}, {\tt
+                                R1}, and {\tt R2} provide direct
+                                access to the top three return stack
+                                items.  {\tt R0} is the top item on
+                                the return stack, {\tt R1} is the next
+                                item, and {\tt R2} is the third item.
+                                These definitions may be used on
+                                either the left or the right side of
+                                an assignment.
+\item[{\tt Rpop}]               Used as a statement, ``{\tt Rpop;}'',
+                                discards the topmost item from the
+                                return stack.
+\item[{\tt Rpush}]              Used on the left side of an
+                                assignment, stores the value on the
+                                right side into the next free return
+                                stack item and increments the return
+                                stack pointer.
+\end{description}
+
+\subsubsection{Coding primitive functions}
+
+Each primitive word you define is implemented by a C function declared
+as ``{\tt static void}''.  The header file {\tt atldef.h} defines
+``{\tt prim}'' as this type to more explicitly identify primitive
+implementing functions.
+
+As an example of a simple primitive, let's add the ability to obtain
+the date and time in Unix format and to extract the hours, minutes,
+and seconds from the Unix date word.  We'll add two new primitive
+functions to \atlast : {\tt TIME}, which leaves the number of seconds
+since midnight on January 1, 1970 on the top of the stack, and {\tt
+HHMMSS} which, given the value returned by {\tt TIME},
+leaves the hours, minutes, and seconds represented by that time in the
+three top stack locations, with the seconds at the top.
+
+Here is the C function that implements the {\tt TIME} primitive word:
+
+\begin{verbatim}
+prim ptime()
+{
+    So(1);
+    Push = time(NULL);
+}
+\end{verbatim}
+
+Since we're placing one new word on the stack, we call {\tt So(1)} to
+check for stack overflow.  That accomplished, we simply use {\tt Push}
+on the left side of the assignment to store the {\tt long} time word
+returned by the Unix-compatible {\tt time()} function (which is
+supported by most non-Unix C libraries, as well).
+
+The function for our {\tt HHMMSS} primitive is more complicated, but
+not much.  It uses the Unix-compatible {\tt localtime()} function
+which, passed a pointer to a word containing a time in the format
+returned by {\tt time()}, returns a pointer to an internal static
+structure with fields that give the day, month, year, hour, minute,
+second, etc.\ represented by that time.  The primitive definition is:
+
+\begin{verbatim}
+prim phhmmss()
+{
+    struct tm *lt;
+
+    Sl(1);
+    So(2);
+    lt = localtime(&S0);
+    S0 = lt->tm_hour;
+    Push = lt->tm_min;
+    Push = lt->tm_sec;
+}
+\end{verbatim}
+
+This primitive expects one argument (the time word) on the stack, so
+it begins with {\tt Sl(1)} to verify that it is present.  It will
+replace that value with the hours and add two new items to the stack
+for the minutes and seconds, so it next uses {\tt So(2)} to ensure
+those additions won't cause the stack to overflow.  Now it can get
+down to business.  It calls {\tt localtime()}, passing the address of
+the first stack item (the time word), then stores the hours back into
+that word and uses {\tt Push} twice to add the minutes and seconds.
+
+Once the primitive functions are coded, the primitives are actually
+added to \atlast\ by listing them in a primitive definition table and
+registering that table with \atlast\ by calling the \verb+atl_primdef+
+function.  The primitive definition table for our two new primitives
+is as follows:
+
+\begin{verbatim}
+static struct primfcn timep[] = {
+    {"0TIME",   ptime},
+    {"0HHMMSS", phhmmss},
+    {NULL,      (codeptr) 0}
+};
+\end{verbatim}
+
+The {\tt primfcn} structure is declared in {\tt atldef.h}.  You may
+list as many primitives in the table as you wish.  The end of the
+table is marked by an entry with {\tt NULL} instead of a primitive
+name.  For each primitive you define, make an entry with two components:
+the first a string with the first character ``{\tt 0}'' if the
+primitive is a normal word and ``{\tt 1}'' if it is a compile-time
+immediate word, the balance of which is the name of the
+primitive with all letters upper case.  The second component
+is the name of the function that implements the primitive.
+The primitives in the table are defined by calling
+\verb+atl_primdef+, passing the address of the table as follows:
+
+\verb+atl_primdef(primt);+
+
+(Subtle note for MS-DOS users: to save memory, \atlast\ uses the
+actual static strings you declare in the primitive table as part of
+the dictionary entries it creates.
+Since the
+\atlast\ dictionary will contain pointers to these compiled-in strings,
+you must not place the data for the primitive table in an overlay
+which might be swapped out when \atlast\ later attempts to search the
+dictionary.  If your program does not overlay its data segment, you
+need not worry about this.)
+
+You can call \verb+atl_primdef+ any time after you've called
+\verb+atl_init+, and you can call it as many times as you like with
+different {\tt primfcn} tables.  If a name in a {\tt primfcn} table
+duplicates the name of a built-in \atlast\ primitive or a primitive
+defined by an previous call on \verb+atl_primdef+, the earlier
+definition will be hidden and inaccessible.
+
+With these new primitives installed, we can now try them out interactively from
+\atlast .
+
+\begin{verbatim}
+% atlast
+-> time .
+634539503 -> time .
+634539505 -> time .
+634539508 -> time .s
+Stack: 634539512 -> hhmmss
+-> .s
+Stack: 20 58 32 -> clear time hhmmss .s
+Stack: 20 58 44 -> clear
+-> time hhmmss .s
+Stack: 20 58 52 -> ^D
+%
+\end{verbatim}
+
+Everything seems to be behaving as we intended.  Our new primitives
+work!
+
+Finally, let's look at a more complicated primitive, one involving
+floating point.  Turning again to the Leibniz series for $\pi$, here
+is the C language definition of a primitive function to evaluate
+it.  The function is compatible with the one we previously implemented
+in \atlast : it expects the number of terms on the top of the stack and
+returns the approximation of $\pi$ as a floating point value in the two
+top stack items.
+
+\begin{verbatim}
+prim pleibniz()
+{
+    long nterms;
+    double sum = 0.0,
+           numer = 1.0,
+           denom = 1.0;
+
+    Sl(1);
+    nterms = S0;
+    Pop;
+
+    So(Realsize);
+    Push = 0;
+    Push = 0;
+    while (nterms-- > 0) {
+        sum += numer / denom;
+        numer = -numer;
+        denom += 2.0;
+    }
+    SREAL0(sum * 4.0);
+}
+\end{verbatim}
+
+This function begins by verifying with {\tt Sl(1)} that its term count
+argument is present on the stack.  It loads that argument, referenced
+as {\tt S0}, and saves it in the loop count, {\tt nterms}.  The
+iteration count is then discarded from the stack with {\tt Pop}.
+Next, {\tt So(Realsize)} verifies that the stack will not overflow
+when the real result is pushed (recall that {\tt Realsize} is the
+number of stack items per floating point result---this is always two,
+but using the definition makes for more readable code).  We then
+immediately count on {\tt Realsize} being two as we use two {\tt Push}
+operations to allocate the stack space for the result and clear it to
+zero.  That done, the function falls into the loop that sums the
+requested number of terms of the series.  Finally, {\tt SREAL0()} is
+used to store the result into the top floating point value on the
+stack: the one we created with the two {\tt Push}es.
+
+This primitive is declared and registered with \atlast\ with the
+sequence:
+
+\begin{verbatim}
+static struct primfcn pip[] = {
+    {"0LEIBNIZ", pleibniz},
+    {NULL, (codeptr) 0}
+};
+atl_primdef(pip);
+\end{verbatim}
+
+With a C coded primitive implementation, we can explore the outer
+reaches of this awful series.  For example, here it's used to print
+the error after the first half million terms.
+
+\begin{verbatim}
+% atlast
+-> 2variable pi
+-> 1.0 atan 4.0 f* pi 2!
+-> pi 2@ f. c 
+3.14159
+-> 500000 leibniz pi 2@ f- f. cr
+-2e-06
+-> ^D
+%
+\end{verbatim}
+
+As you can see from the brevity and straightforwardness of these
+sample
+primitives, there's nothing complicated or difficult about adding a
+primitive to \atlast .  The overhead in executing a primitive
+function from \atlast\ rather than calling it from a C program is a
+matter of a few instructions.  If you need guidance in implementing
+primitives that interact with \atlast\ in more intricate ways, the best
+source of information is the source code of {\tt atlast.c}; find
+a standard primitive with arguments and results similar to the one
+you're planning to add, and look up its implementing function.  That
+should abate any confusion about the fine points of stack and heap
+manipulation.
+
+\section{Package configuration}
+
+In addition to the global configuration parameters described on
+page~\pageref{`gconf'}, you can choose precisely which components of
+\atlast\ are included when building a version for your application by
+creating a custom configuration file named {\tt custom.h}, then
+compiling {\tt atlast.c} with the {\tt -DCUSTOM} compiler flag.  A
+custom configuration file has the following format:
+
+\begin{raggedright}
+\verb+#define INDIVIDUALLY+\\
+\verb+#define +{\em Package$_1$}\\
+\verb+#define +{\em Package$_2$}\\
+\hspace*{8em} $\vdots$ \\
+\verb+#define +{\em Package$_n$}
+\end{raggedright}
+
+The {\em Package$_n$} definitions select which \atlast\ subpackages you
+wish included in your application.  The individual subpackages are
+described in the following paragraphs.  The {\tt WORDSUSED} and {\tt
+WORDSUNUSED} primitives, available as part of the {\tt WORDSUSED}
+package, let you determine which primitives are used within an \atlast\
+program and, consequently, which packages are required to execute it.
+
+\paragraph{The {\tt ARRAY} package.}
+Provides declaration of $n$ dimensional arrays of arbitrary data types
+and runtime subscript calculation for such arrays.  Primitives: {\tt
+ARRAY}.
+
+\paragraph{The {\tt BREAK} package.}
+Enables asynchronous break processing via the \verb+atl_break+
+function.  Disabling this package saves an insignificant amount of
+memory but increases execution speed by about 10\%.  Primitives: none.
+
+\paragraph{The {\tt COMPILERW} package.}
+Enables primitives used to define new compiler words.  Primitives:
+{\tt [COMPILE]}, {\tt LITERAL}, {\tt COMPILE}, {\tt <MARK}, {\tt
+<RESOLVE}, {\tt >MARK}, {\tt >RESOLVE}.
+
+\paragraph{The {\tt CONIO} package.}
+Enables primitives that display interactive output.  These primitives
+may be disabled in applications that provide no interaction with the
+user.  Primitives: {\tt .}, {\tt ?}, {\tt CR}, {\tt .S}, {\tt ."},
+{\tt .(}, {\tt TYPE}, {\tt WORDS}.
+
+\paragraph{The {\tt DEFFIELDS} package.}
+Enables low level primitives used to manipulate dictionary items.
+These primitives are rarely used except in very ambitious
+language extensions coded in \atlast .  Primitives: {\tt FIND}, {\tt
+>NAME}, {\tt >LINK}, {\tt BODY>}, {\tt NAME>}, {\tt LINK>}, {\tt
+N>LINK}, {\tt L>NAME}, {\tt NAME>S!}, {\tt S>NAME!}.
+
+\paragraph{The {\tt DOUBLE} package.}
+Enables double word operations.  These operations can be used with any
+stack data, but are heavily used in floating point code, since
+floating point numbers occupy pairs of stack items.  Primitives: {\tt
+2DUP}, {\tt 2DROP}, {\tt 2SWAP}, {\tt 2OVER}, {\tt 2ROT}, {\tt
+2VARIABLE}, {\tt 2CONSTANT}, {\tt 2!}, {\tt 2@}.
+
+\paragraph{The {\tt FILEIO} package.}
+Enables the C language-like file primitives.  If your application does
+not require access to files, this package may be disabled.
+Primitives: {\tt FILE}, {\tt FOPEN}, {\tt FCLOSE}, {\tt FDELETE}, {\tt
+FGETS}, {\tt FPUTS}, {\tt FREAD}, {\tt FWRITE}, {\tt FGETC}, {\tt
+FPUTC}, {\tt FTELL}, {\tt FSEEK}, {\tt FLOAD}\@.  In addition, {\tt
+FILE} variables {\tt STDIN}, {\tt STDOUT}, and {\tt STDERR} are
+defined, automatically bound to the Unix I/O streams with the same
+names.
+
+\paragraph{The {\tt MATH} package.}
+Enables the mathematical functions.  {\tt MATH} can be enabled only if
+{\tt REAL} is also enabled.  Primitives: {\tt ACOS}, {\tt ASIN}, {\tt
+ATAN}, {\tt ATAN2}, {\tt COS}, {\tt EXP}, {\tt LOG}, {\tt POW}, {\tt
+SIN}, {\tt SQRT}, {\tt TAN}.
+
+\paragraph{The {\tt MEMMESSAGE} package.}
+Controls whether messages are printed when runtime errors
+(such as stack overflow and underflow, bad pointers, etc.)\ occur.
+Disabling these messages doesn't save time or significant memory: it's
+intended for deeply embedded applications where returning the error
+status to the caller of \verb+atl_eval+ or \verb+atl_exec+ is all the
+error notification that is appropriate.  Primitives: none.
+
+\paragraph{The {\tt PROLOGUE} package.}
+\label{`prologue'}
+The amount of memory allocated to the stack, return stack, heap, and
+temporary string buffers can be controlled by setting the external
+variables governing those areas as described on
+page~\pageref{`memall'}.  You can allow the \atlast\ program text to
+override the default settings you make by enabling the {\tt PROLOGUE}
+package.  If this package is enabled, special statements of the form:
+
+\verb+\ *+{\em area} {\em size}
+
+are recognised by the evaluator when encountered before the first line
+containing executable \atlast\ text.  To permit processing of the
+prologue, {\em do not} explicitly call \verb+atl_init+; it will be
+called automatically by \verb+atl_eval+ after the prologue is
+processed.  The following {\em area} specifications are recognised in
+the prologue:
+
+\begin{description}
+\item[{\tt STACK}]      Specifies the stack size in terms of {\tt
+                        long} stack items.
+\item[{\tt RSTACK}]     Specifies the return stack size in items.
+\item[{\tt HEAP}]       Specifies the heap size as a number of {\tt
+                        long} stack items.
+\item[{\tt TEMPSTRL}]   Specifies the length of each temporary string
+                        buffer in characters.
+\item[{\tt TEMPSTRN}]   Specifies the number of temporary string
+                        buffers.
+\end{description}
+
+\paragraph{The {\tt REAL} package.}
+Enables floating point operations.  If you enable the {\tt REAL}
+package, you should also enable the {\tt DOUBLE} package; without it
+you won't be able to accomplish much.  Primitives: {\tt (FLIT)}, {\tt
+F+}, {\tt F-}, {\tt F*}, {\tt F/}, {\tt FMIN}, {\tt FMAX}, {\tt
+FNEGATE}, {\tt FABS}, {\tt F=}, {\tt F<>}, {\tt F>}, {\tt F<}, {\tt
+F>=}, {\tt F<=}, {\tt F.}, {\tt FLOAT}, {\tt FIX}.
+
+\paragraph{The {\tt SHORTCUTA} package.}
+Enables shortcut integer arithmetic operations.  Primitives: {\tt 1+},
+{\tt 2+}, {\tt 1-}, {\tt 2-}, {\tt 2*}, {\tt 2/}.
+
+\paragraph{The {\tt SHORTCUTC} package.}
+Enables shortcut integer comparison operations.  Primitives: {\tt 0=},
+{\tt 0<>}, {\tt 0<}, {\tt 0>}.
+
+\paragraph{The {\tt STRING} package.}
+Enables string operations.  Primitives: {\tt (STRLIT)}, {\tt
+STRING}, {\tt STRCPY}, {\tt S!}, {\tt STRCAT}, {\tt S+}, {\tt STRLEN}, 
+{\tt STRCMP}, {\tt STRCHAR}, {\tt SUBSTR}, {\tt COMPARE}, {\tt STRFORM}, {\tt
+STRINT}, {\tt STRREAL}\@.  If the {\tt REAL} package is also enabled,
+the {\tt FSTRFORM} primitive is available, as well.
+
+\paragraph{The {\tt SYSTEM} package.}
+Enables submission of commands in strings to the operating system for
+execution.  This package may be enabled only if the implementation of
+C used to build \atlast\ provides the {\tt system()} function.
+Primitives: {\tt SYSTEM}.
+
+\paragraph{The {\tt TRACE} package.}
+Enables runtime word execution trace.  Primitives: {\tt TRACE}.
+
+\paragraph{The {\tt WALKBACK} package.}
+\label{`wback'}
+Enables the walkback through nested invocation of words when an error
+is detected at runtime.  Primitives: {\tt WALKBACK}.
+
+\paragraph{The {\tt WORDSUSED} package.}
+\label{`wordsused'}
+Enables the collection of information on which words are used and not
+used by a program, and the primitives that list words used and words
+not used.  This facility allows you to determine, in the development
+phase of an \atlast\ application, which packages are needed and which
+can be safely dispensed with.  Primitives: {\tt WORDSUSED}, {\tt
+WORDSUNUSED}.
+
+\section{Benchmarks}
+
+To give a rough idea of the kind of performance you can expect from
+\atlast\ when it is pressed into service for compute-intensive tasks,
+I tested it against C and AutoLISP with two benchmarks, both involving
+the computation of square roots.
+
+The first benchmark, {\tt CSQRT}, calculates the square root of 2
+with the iterative Newton-Raphson algorithm used by AutoCAD's {\tt
+HMATH.C} module, also used in the AutoLISP sample program
+{\tt SQR.LSP}\@.  This benchmark is representative of extremely
+compute-bound code which represents misuse of a macro language---any
+such computation should normally be moved into a primitive written in
+C\@.  Still, it's interesting to know what the worst case is.
+
+The second benchmark, {\tt SSQRT}, is identical to {\tt CSQRT}, except
+that the system math library's {\tt sqrt()} function is called instead
+of one coded in the language under test.  Since all three languages
+are calling the same underlying system function, this test
+demonstrates relative performance in an environment still more
+compute-bound than a typical macro language application, but one where the
+language overhead is less than 100\%.  All of these benchmarks were 
+run on a Sun 3/260 under SunOS 4.0.3, and listings of the benchmark
+programs are given at the end of this paper.  The \atlast\ timings were
+made on a version of \atlast\ compiled with the ``{\tt -O4 -f68881}''
+flags, and stack and heap checking disabled in the \atlast\
+configuration.  The C programs were also compiled with ``{\tt -O4
+-f68881}'' flags, while the AutoLISP tests were run on a {\tt
+NONPRODUCTION} version of {\tt Z.0.65} in which AutoLISP was built
+with ``{\tt -O -f68881}''.  All timings in the following table have
+been normalised so that the native C language times are 1.
+
+\begin{center}
+\begin{tabular}{lrrr}
+ & \multicolumn{1}{c}{{\bf C}} &
+   \multicolumn{1}{c}{{\bf ATLAST}} &
+   \multicolumn{1}{c}{{\bf AutoLISP}} \\
+{\tt CSQRT} & 1.00 & 7.41 & 67.08 \\
+{\tt SSQRT} & 1.00 & 1.00 & 1.52  \\
+\end{tabular}
+\end{center}
+
+\section{Summary and Conclusions}
+
+Everything should be programmable.  {\em Everything!}  I have come to
+the conclusion that to write almost any program in a closed manner is a
+mistake that invites the expenditure of uncounted hours ``enhancing''
+it over its life cycle.  Further tweaks, ``features,'' and ``fixes''
+often result in a product so massive and incomprehensible that it becomes
+unlearnable, unmaintainable, and eventually unusable.
+
+Far better to invest the effort up front to create a product
+flexible enough to be adapted at will, by its users, to their
+immediate needs.  If the product is programmable in a portable, open
+form, user extensions can be exchanged, compared, reviewed by the
+product developer, and eventually incorporated into the mainstream of
+the product.
+
+It is far, far better to have thousands of creative users expanding
+the scope of one's product in ways the original developers didn't
+anticipate---in fact, working for the vendor without pay, than it is
+to have thousands of frustrated users writing up wish list requests
+that the vendor can comply with only by hiring people and paying them
+to try to accommodate the perceived needs of the users.  Open
+architecture and programmability not only benefits the user,
+not only makes a product better in the technical and marketing sense,
+but confers a direct economic advantage upon the vendor of such a
+product---one mirrored in a commensurate disadvantage to the vendor
+of a closed product.
+
+The chief argument against programmability has been the extra
+investment needed to create open products.  \atlast\ provides a way
+of building open products in the same, or less, time than it takes to
+construct closed ones.  Just as no C programmer in his right mind
+would sit down and write his own buffered file I/O package when a
+perfectly fine one was sitting in the library, why re-invent a macro
+language or other parameterisation and programming facility when
+there's one just sitting there that's as fast as native C code for all
+but the most absurd misapplications, takes less than 51K with every
+gew-gaw and optional feature at its command enabled all at once, is
+portable to any machine that supports C by simply recompiling a single
+file, and can be integrated into a typical application at a basic level
+in less than 15 minutes?
+
+Am I proposing that every application suddenly look like FORTH\@?
+Of course not; no more than output from PostScript printers looks
+like PostScript, or applications that run on 80386 processors resemble
+80386 assembly language.  \atlast\ is an intermediate language, seen
+only by those engaged in implementing and extending the product.  Even
+then, \atlast\ is a chameleon which, with properly defined words, can
+look like almost anything you like, even at the primitive level of the
+interpreter.
+
+Again and again, I have been faced with design situations where I
+knew that I really needed programmability, but didn't have the time,
+the memory, or the fortitude to face the problem squarely and solve it
+the right way.  Instead, I ended up creating a kludge that continued
+to burden me through time.  This is just a higher level manifestation
+of the nightmares perpetrated by old-time programmers who didn't have
+access to a proper dynamic memory allocator or linked list package.
+Just because programmability is the magic smoke of computing doesn't
+mean we should be spooked by the ghost in the machine or hesitant to
+confer its power upon our customers.
+
+Don't think of \atlast\ as FORTH\@.  Don't think of it as a language at
+all.  The best way to think of \atlast\ is as a library routine that
+gives you {\em programmability}, in the same sense other libraries
+provide file access, window management, or graphics facilities.  The
+whole concept of ``programmability in a can'' is odd---it took me two
+years from the time I first thought about it in connection with The
+Leto Protocol until I really got my end effector around it and crushed
+it into submission.  I urge you to think about it, play with it, and
+examine how it will be applied in the \atlast -enhanced programs I will
+be demonstrating in the near future.
+
+Open is better.  \atlast\ lets you build open programs in less time
+than you used to spend writing closed ones.
+Programs that inherit their open architecture from \atlast\ will share,
+across the entire product line and among all hardware platforms that
+support it, a common, clean, and efficient means of user
+extensibility.  The potential benefits of this are immense.
+
+{
+\raggedleft \em
+John Walker\\
+Muir Beach, California\\
+January 22--February 11, 1990\\
+4072 lines of code\\
+}
+
+\onecolumn
+
+\runhead{\huge \atlast\ Primitives: Alphabetical Reference}
+
+\newcommand{\mf}{\bf}
+\newcommand{\wline}[6]{\vspace{4pt}
+                       \makebox[3cm][l]{\Large \tt #1}
+                       \makebox[3cm][r]{#2} 
+                       $\rightarrow$ 
+                       \makebox[3cm][l]{#3}
+                       \makebox[162pt][l]{\bf #4}
+                       \makebox[2cm][r]{\small \tt #6}\\
+\hfill\parbox[t]{225pt}{#5}\\
+}
+\begin{raggedright}
+\input{atlworda}
+\end{raggedright}
+
+\clearpage
+
+\runhead{\huge \atlast\ Primitives: Alphabetical Summary}
+
+\renewcommand{\mf}{\rm}
+\renewcommand{\wline}[6]{{\Large \tt #1} \>
+ \makebox[110pt][r]{#2} \> $\rightarrow$ \>  \makebox[3cm][l]{#3} \> {#4} \\}
+\begin{tabbing}
+dlkjldjdlkjdlkjdl;jdj \= \makebox[110pt][r]{x} \= $\rightarrow$ \=
+\makebox[3cm][l]{x} \= dlkjdlkdjdljkdljk \=
+\kill
+\input{atlworda}
+\end{tabbing}
+
+\clearpage
+
+\runhead{\huge Benchmark Program Listings}
+
+\input{atlblist}
+
+\end{document}

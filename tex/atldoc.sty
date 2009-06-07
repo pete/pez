@@ -1,0 +1,17 @@
+
+%   Running heading commands for use within the aitech style
+
+%   Kelvin, 7th February 1990
+
+\newcommand{\runhead}[1]{
+    \addtolength{\headheight}{5pt}
+    \addtolength{\@colht}{-5pt}
+    \def\@oddhead{\centerline{#1}}
+    \def\@evenhead{\centerline{#1}}
+}
+\newcommand{\norunhead}{
+    \addtolength{\headheight}{-5pt}
+    \addtolength{\@colht}{5pt}
+    \def\@oddhead{}
+    \def\@evenhead{}
+}

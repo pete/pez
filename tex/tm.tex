@@ -1,0 +1,14 @@
+% This file expects to be \input by somebody's preamble.
+% It defines the trademark and registered trademark symbols.
+% They were designed in 11 point type with lots of empirical constants.
+% Everything is expressed in `ex' units, with the intention of making it
+% work in all sizes.  Remarkably, it has passed tests at 10 and 12 points.
+%
+% Define the trademark symbol
+\newcommand{\tm}{\setlength{\unitlength}{1ex}%
+\begin{picture}(2.6,1)\put(0,.7){\tiny TM}\end{picture}}
+%
+% Define the Registered trademark symbol
+\newcommand{\rtm}{\setlength{\unitlength}{1ex}%
+\begin{picture}(1.35,1)\put(.175,.7){\tiny R}\put(.675,1.1){\circle{1.25}}%
+\end{picture}}

@@ -1,0 +1,22 @@
+These are the things that remain to be done to make Atlast a workable VM
+for Roboto.
+
+* Get it to stop segfaulting under x86-64
+	* Fix pointer issues, esp. with arrays and strings
+
+* Get the tests to pass under x86-64
+	* Negation
+
+* Make it buildable as a .so.
+
+* Enable multiple instances within a single process.
+
+* Serialization of the dictionary/code/etc.
+	* I expect text to be easier than binary images.
+	* Also, do both if possible.
+
+* Add a C ffi
+	* Add support for dlload et al
+	* Some nice wrapping for same
+
+* _Maybe_ tweak the parser so that 

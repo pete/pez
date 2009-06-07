@@ -1,0 +1,97 @@
+
+%       Technical Report style definition
+
+%       Designed and implemented by John Walker in September of 1989
+
+%       This   is   used  as  an  optional  argument  to  the  article
+%       documentstyle, and is normally used in  conjunction  with  the
+%       article documentstyle in:
+
+%       \documentstyle[aitech]{article}
+
+%       The  following  declarations  are permitted, shown with sample
+%       arguments in the recommended format.
+
+%       \title{Killer Slugs From Ukiah}
+%       \abstract{Just when you thought it was safe to go back
+%                 into the garden.}
+%       \author{Kelvin R. Throop}
+%       \date{July 20, 1989}
+
+%       You may omit the following declarations, which will then assume
+%       the following defaults:
+
+%       Declaration       Default
+%       ===========       =======
+
+%       abstract          No abstract supplied.
+%       date              \today
+
+%       Since  this  style  is  intended  solely  for  in-house use at
+%       Autodesk where we use ArborText's TeX release  and  PostScript
+%       printers  exclusively, this style uses an ArborText PostScript
+%       font, "psmtimr" for the title and dropped  capitals.   If  you
+%       want  to  use  this  style and don't have access to PostScript
+%       fonts, you'll have to change the font declarations that appear
+%       at the very bottom of this file.
+
+
+%       We  redefine  the  \maketitle command to display things in our
+%       format and also to cause the first page to be formatted  as  a
+%       normal odd page.
+
+\renewcommand{\maketitle}{
+\twocolumn[
+\vspace*{-0.5in}
+\begin{center}
+{\titlefont \@title} \\
+\vspace{6pt} \parbox{6.5in}{\Large \sl \@abstract } \\
+\vspace{8pt} {\large by \@author} \\
+{\large \@date}
+\end{center}
+]
+}
+
+%       Define defaults for optional declarations
+
+\def\@abstract{No abstract supplied.}
+
+%       Include other styles implicitly used
+
+\input{dcap.sty}
+
+%       Define commands for style-defined declarations
+
+\renewcommand{\abstract}[1]{\def\@abstract{#1}}
+
+%       Define command for dense-packed lists
+
+\newcommand{\dense}{\setlength{\itemsep}{-1ex}}
+
+%       Declare formatting modes
+
+\topmargin -0.5in
+\textheight 9in
+\parskip 10pt
+\parindent 0pt
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\textwidth 7in
+
+\setcounter{secnumdepth}{-1}       % Disable section numbering
+\setcounter{tocdepth}{-1}          % Disable table of contents
+
+%       Font  declarations.   See the comment in the heading about the
+%       use of ArborText DVIPS PostScript fonts.  If  you  don't  have
+%       access  to these fonts, you'll have to change the font name in
+%       the next two declarations to something your TeX does  support.
+%       Unfortunately,  the  standard  CM  fonts  available  with most
+%       versions of TeX provide nothing ideal for letters this  large.
+%       Try  "cmr17" at the specified point sizes; it's about the best
+%       you can do unless you have local custom fonts.
+
+% \newfont{\titlefont}{cmr17 at 36pt}
+% \dcapfont{cmr17 at 32pt}
+
+\newfont{\titlefont}{rptmr at 36pt}
+\dcapfont{rptmr at 32pt}

@@ -1,0 +1,557 @@
+\wline{+}{n1 n2}{n3}{n3 = n1 $+$ n2}{Adds {\em n1} and {\em n2} and
+    leaves sum on stack.}{}
+\wline{-}{n1 n2}{n3}{n3 = n1 $-$ n2}{Subtracts {\em n2} from {\em n1} and
+    leaves difference on stack.}{}
+\wline{*}{n1 n2}{n3}{n3 = n1 $\times$ n2}{Multiplies {\em n1} and {\em n2} and
+    leaves product on stack.}{}
+\wline{/}{n1 n2}{n3}{n3 = n1 $\div$ n2}{Divides {\em n1} by {\em n2} and
+    leaves quotient on stack.}{}
+\wline{' {\em word}}{}{caddr}{Obtain compilation address}{Places the compilation
+    address of the following word on the stack.}{}
+\wline{,}{n}{}{Store in heap}{Reserves four bytes of heap space,
+    initialising it to {\em n}.}{}
+\wline{.}{n}{}{Print top of stack}{Prints the number on the top of the
+    stack.}{CONIO}
+\wline{.( {\em str}}{}{}{Print constant string}{Immediately prints the
+string that follows in the input stream.}{CONIO}
+\wline{.S}{}{}{Print stack}{Prints entire contents of stack.}{CONIO}
+\wline{." {\em str}}{}{}{Print immediate string}{Prints the string
+    literal that follows in line.}{CONIO}
+\wline{: {\em w}}{}{}{Begin definition}{Begins compilation of a word
+    named {\em w}.}{}
+\wline{;}{}{}{End definition}{Ends compilation of word.}{}
+\wline{<}{n1 n2}{flag}{Less than}{Returns $-1$ if {\em n1}$<${\em n2},
+    0 otherwise.}{}
+\wline{<=}{n1 n2}{flag}{Less than or equal}{Returns $-1$ if
+    {\em n1}$\leq${\em n2}, 0 otherwise.}{}
+\wline{<>}{n1 n2}{flag}{Not equal}{Returns $-1$ if
+    {\em n1}$\neq${\em n2}, 0 otherwise.}{}
+\wline{=}{n1 n2}{flag}{Equal}{Returns $-1$ if
+    {\em n1}$=${\em n2}, 0 otherwise.}{}
+\wline{>}{n1 n2}{flag}{Greater}{Returns $-1$ if
+    {\em n1}$>${\em n2}, 0 otherwise.}{}
+\wline{>=}{n1 n2}{flag}{Greater than or equal}{Returns $-1$ if
+    {\em n1}$\geq${\em n2}, 0 otherwise.}{}
+\wline{?}{addr}{}{Print indirect}{Prints the value at the address at
+    the top of the stack.}{CONIO}
+\wline{!}{n addr}{}{Store into address}{Stores the value {\em n} into
+    the address {\em addr}.}{}
+\wline{+!}{n addr}{}{Add indirect}{Adds {\em n} to the word at address
+    {\em addr}.}{}
+\wline{@}{addr}{n}{Load}{Loads the value at {\em addr} and leaves it
+    at the top of the stack.}{}
+\wline{[}{}{}{Set interpretive state}{Within a compilation, returns to
+    the interpretive state.}{}
+\wline{['] {\em word}}{}{caddr}{Push next word}{Places the compile
+    address of the following word in a definition onto the stack.}{}
+\wline{]}{}{}{End interpretive state}{Restore compile state after
+    temporary interpretive state.}{}
+\wline{0<}{n1}{flag}{Less than zero}{Returns $-1$ if {\em n1} less
+    than zero, 0 otherwise.}{SHORTCUTC}
+\wline{0<>}{n1}{flag}{Nonzero}{Returns $-1$ if {\em n1} is nonzero,
+    0 otherwise.}{SHORTCUTC}
+\wline{0=}{n1}{flag}{Equal to zero}{Returns $-1$ if {\em n1} is zero,
+    0 otherwise.}{SHORTCUTC}
+\wline{0>}{n1}{flag}{Greater than zero}{Returns $-1$ if {\em n1}
+    greater than zero, 0 otherwise.}{SHORTCUTC}
+\wline{1+}{n1}{n2}{Add one}{Adds one to top of stack.}{SHORTCUTA}
+\wline{1-}{n1}{n2}{Subtract one}{Subtracts one from top of stack.}{SHORTCUTA}
+\wline{2+}{n1}{n2}{Add two}{Adds two to top of stack.}{SHORTCUTA}
+\wline{2-}{n1}{n2}{Subtract two}{Subtracts two from top of stack.}{SHORTCUTA}
+\wline{2*}{n1}{n2}{Times two}{Multiplies the top of stack by
+    two.}{SHORTCUTA}
+\wline{2/}{n1}{n2}{Divide by two}{Divides top of stack by
+    two.}{SHORTCUTA}
+\wline{2!}{n1 n2 addr}{}{Store two words}{Stores the two words {\em
+    n1} and {\em n2} at addresses {\em addr} and {\em
+    addr}+4.}{DOUBLE}
+\wline{2@}{addr}{n1 n2}{Load two words}{Places the two words starting
+    at {\em addr} on the top of the stack}{DOUBLE}
+\wline{2CONSTANT {\em x}}{n1 n2}{}{Double word constant}{Declares a
+    double word constant {\em x}.  When {\em x} is executed, {\em n1}
+    and {\em n2} are placed on the stack.}{DOUBLE}
+\wline{2DROP}{n1 n2}{}{Double drop}{Discards the two top items from the
+    stack.}{DOUBLE}
+\wline{2DUP}{n1 n2}{n1 n2 n1 n2}{Duplicate two}{Duplicates the top two
+    items on the stack.}{DOUBLE}
+\wline{2OVER}{n1 n2 n3 n4}{n1 n2 n3 n4 n1 n2}{Double over}{Copies the
+    second pair of items on the stack to the top of stack.}{DOUBLE}
+\wline{2ROT}{n1 n2 n3 n4 n5 n6}{n3 n4 n5 n6 n1 n2}{Double
+    rotate}{Rotates the third pair on the stack to the top, moving
+    down the first and second pairs.}{DOUBLE}
+\wline{2SWAP}{n1 n2 n3 n4}{n3 n4 n1 n2}{Double swap}{Swaps the first
+    and second pairs on the stack.}{DOUBLE}
+\wline{2VARIABLE {\em x}}{}{}{Double variable}{Creates a two cell (8
+    byte) variable named {\em x}.  When {\em x} is executed, the
+    address of the 8 byte area is placed on the stack.}{DOUBLE}
+\wline{ABORT}{}{}{Abort}{Clears the stack and performs a {\tt
+    QUIT}.}{}
+\wline{ABORT" {\em str}}{}{}{Abort with message}{Prints the string
+    literal that follows in line, then aborts, clearing all execution
+    state to return to the interpreter.}{}
+\wline{ABS}{n1}{n2}{${\mf n2}=|{\mf n1}|$}{Replaces top of stack with
+    its absolute value.}{}
+\wline{ACOS}{f1}{f2}{${\mf f2}=\arccos {\mf f1}$}{Replaces floating
+    point top of stack with its arc cosine.}{MATH}
+\wline{AGAIN}{}{}{Indefinite loop}{Marks the end of an indefinite loop
+   opened by the matching {\tt BEGIN}.}{}
+\wline{ALLOT}{n}{}{Allocate heap}{Allocates {\em n} bytes of heap
+    space.  The space allocated is rounded to the next higher multiple
+    of 4.}{}
+\wline{AND}{n1 n2}{n3}{Bitwise AND}{Stores the bitwise AND of {\em n1}
+    and {\em n2} on the stack.}{}
+\wline{ARRAY {\em x}}{s$_1$ s$_2$ \ldots\ s$_n$ n esize}{}{Declare
+    array}{Declares an array {\em x} of elements of {\em esize}
+    bytes each with {\em n} subscripts, each ranging from 0 to {\em
+    s}$_n-1$}{ARRAY}
+\wline{ASIN}{f1}{f2}{${\mf f2}=\arcsin {\mf f1}$}{Replaces floating
+    point top of stack with its arc sine.}{MATH}
+\wline{ATAN}{f1}{f2}{${\mf f2}=\arctan {\mf f1}$}{Replaces floating
+    point top of stack with its arc tangent.}{MATH}
+\wline{ATAN2}{f1 f2}{f3}{${\mf f3}=\arctan {\mf f1}/{\mf f2}$}{Replaces
+    the two floating point numbers on the top of the stack with
+    the arc tangent of their quotient, properly handling zero
+    denominators.}{MATH}
+\wline{BEGIN}{}{}{Begin loop}{Begins an indefinite loop.  The end of
+    the loop is marked by the matching {\tt AGAIN}, {\tt REPEAT}, or
+    {\tt UNTIL}.}{}
+\wline{BODY>}{pfa}{cfa}{Body to word}{Given body address of word,
+    return the compile address of the word.}{DEFFIELDS}
+\wline{>BODY}{cfa}{pfa}{Body address}{Given the compile address of a
+    word, return its body (parameter) address.}{}
+\wline{BRANCH}{}{}{Branch}{Jump to the address that follows in
+    line.}{}
+\wline{?BRANCH}{flag}{}{Conditional branch}{If the top of stack is
+    zero, jump to the address which follows in line.  Otherwise 
+    skip the address and continue execution.}{}
+\wline{C!}{n addr}{}{Store byte}{The 8 bit value {\em n} is stored in
+    the byte at address {\em addr}.}{}
+\wline{C@}{addr}{n}{Load byte}{The byte at address {\em addr} is
+    placed on the top of the stack.}{}
+\wline{C,}{n}{}{Compile byte}{The 8 bit value {\em n} is stored in the
+    next free byte of the heap and the heap pointer is incremented by
+    one.}{}
+\wline{C=}{}{}{Align heap}{The heap allocation pointer is adjusted to
+    the next four byte boundary.  This must be done following a
+    sequence of {\tt C,} operations.}{}
+\wline{CLEAR}{}{}{Clear stack}{All items on the stack are
+    discarded.}{}
+\wline{COMPARE}{s1 s2}{n}{Compare strings}{The two strings whose
+    addresses are given by {\em s1} and {\em s2} are compared.
+    If {\em s1} is less than {\em s2}, $-1$ is returned; if
+    {\em s1} is greater than {\em s2}, 1 is returned.  If
+    {\em s1} and {\em s2} are equal, 0 is returned.}{STRING}
+\wline{COMPILE {\em w}}{}{}{Compile word}{Adds the compile address of
+   the word that follows in line to the definition currently being
+   compiled.}{COMPILERW}
+\wline{[COMPILE] {\em word}}{}{}{Compile immediate word}{Compiles the
+    address of {\em word}, even if {\em word} is marked {\tt
+    IMMEDIATE}.}{COMPILERW}
+\wline{CONSTANT {\em x}}{n}{}{Declare constant}{Declares a constant
+    named {\em x}.  When {\em x} is executed, the value {\em n} will
+    be left on the stack.}{}
+\wline{COS}{f1}{f2}{Cosine}{The floating point value on the top of the stack is
+    replaced by its cosine.}{MATH}
+\wline{CR}{}{}{Carriage return}{The standard output stream is advanced
+    to the first character of the next line.}{CONIO}
+\wline{CREATE}{}{}{Create object}{Create an object, given the name
+    which appears next in the input stream, with a default action of
+    pushing the parameter field address of the object when executed.
+    No storage is allocated; normally the parameter field will be
+    allocated and initialised by the defining word code that follows
+    the {\tt CREATE}.}{}
+\wline{DEPTH}{}{n}{Stack depth}{Returns the number of items on the
+    stack before {\tt DEPTH} was executed.}{}
+\wline{DO}{limit n}{}{Definite loop}{Executes the loop from the
+    following word to the matching {\tt LOOP} or {\tt +LOOP} until
+    {\em n} increments past the boundary between {\em limit}$-1$ and
+    {\em limit}.  Note that the loop is always executed at least once
+    (see {\tt ?DO} for an alternative to this).}{}
+\wline{?DO}{limit n}{}{Conditional loop}{If {\em n} equals {\em
+    limit}, skip immediately to the matching {\tt LOOP} or {\tt
+    +LOOP}.  Otherwise, enter the loop, which is thenceforth treated
+    as a normal {\tt DO} loop.}{}
+\wline{DOES>}{}{}{Run-time action}{Sets the run-time action of a word
+    created by the last {\tt CREATE} to the code that follows.  When
+    the word is executed, its body address is pushed on the
+    stack, then the code that follows the {\tt DOES>} will be
+    executed.}{}
+\wline{DROP}{n}{}{Discard top of stack}{Discards the value at the top
+    of the stack.}{}
+\wline{DUP}{n}{n n}{Duplicate}{Duplicates the value at the top of the
+    stack.}{}
+\wline{?DUP}{n}{0 / n n}{Conditional duplicate}{If top of stack is
+    nonzero, duplicate it.  Otherwise leave zero on top of stack.}{}
+\wline{ELSE}{}{}{Else}{Used in an {\tt IF}---{\tt ELSE}---{\tt THEN}
+    sequence, delimits the code to be executed if the if-condition
+    was false.}{}
+\wline{EXECUTE}{addr}{}{Execute word}{Executes the word with compile
+    address {\em addr}.}{}
+\wline{EXIT}{}{}{Exit definition}{Exit from the current definition
+   immediately.  Note that {\tt EXIT} cannot be used within
+   a {\tt DO}---{\tt LOOP}; use {\tt LEAVE} instead.}{}
+\wline{EXP}{f1}{f2}{${\mf f2}={\mf e}^{\mf f1}$}{The floating point value on
+   the top of the stack is replaced by its natural
+   antilogarithm.}{MATH}
+\wline{F+}{f1 f2}{f3}{${\mf f3}={\mf f1}+{\mf f2}$}{The two
+    floating point values on the top of the stack are added and their
+    sum is placed on the top of the stack.}{REAL}
+\wline{F-}{f1 f2}{f3}{${\mf f3}={\mf f1}-{\mf f2}$}{The
+    floating point value {\em f2} is subtracted from the floating
+    point value {\em f1} and the result
+    is placed on the top of the stack.}{REAL}
+\wline{F*}{f1 f2}{f3}{${\mf f3}={\mf f1}\times{\mf f2}$}{The two
+    floating point values on the top of the stack are multiplied and their
+    product is placed on the top of the stack.}{REAL}
+\wline{F/}{f1 f2}{f3}{${\mf f3}={\mf f1}\div{\mf f2}$}{The
+    floating point value {\em f1} is divided by the floating point
+    value {\em f2} and the
+    quotient is placed on the top of the stack.}{REAL}
+\wline{F.}{f}{}{Print floating point}{The floating point value on the
+    top of the stack is printed.}{REAL}
+\wline{F<}{f1 f2}{flag}{Floating less than}{The top of stack is set to
+    $-1$ if {\em f1} is less than
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{F<=}{f1 f2}{flag}{Floating less than or equal}{The top of stack is
+    set to
+    $-1$ if {\em f1} is less than or equal to
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{F<>}{f1 f2}{flag}{Floating not equal}{The top of stack is set to
+    $-1$ if {\em f1} is not equal to
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{F=}{f1 f2}{flag}{Floating equal}{The top of stack is set to
+    $-1$ if {\em f1} is equal to
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{F>}{f1 f2}{flag}{Floating greater than}{The top of stack is set to
+    $-1$ if {\em f1} is greater than
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{F>=}{f1 f2}{flag}{Floating greater than or equal}{The top of stack
+    is set to
+    $-1$ if {\em f1} is greater than or equal to
+    {\em f2} and 0 otherwise.}{REAL}
+\wline{FABS}{f1}{f2}{${\mf f2}=|{\mf f1}|$}{Replaces floating point
+    top of stack with its absolute value.}{}
+\wline{FCLOSE}{file}{}{Close file}{The specified file is
+    closed.}{FILEIO}
+\wline{FDELETE}{s1}{flag}{Delete file}{The file named by the string
+    {\em s1} is deleted.  If the file was successfully deleted, $-1$
+    is returned.   Otherwise, 0 is returned.}{FILEIO}
+\wline{FGETC}{file}{char}{Read next character}{The next byte is read
+    from the specified {\em file} and placed on the top of the stack.
+    If end of file is encountered, $-1$ is returned.}{FILEIO}
+\wline{FGETS}{file string}{flag}{Read string}{The next text line
+    (limited to a maximum of 132 characters) is read from {\em file}
+    and stored into the buffer at {\em string}.  Input lines are
+    recognised in all the end of line conventions accepted by
+    AutoCAD\@.  The end of line delimiter is deleted from the input
+    line and is not stored in the {\em string}.
+    If end of file is encountered 0 is returned; otherwise
+    $-1$ is placed on the top of the stack.}{FILEIO}
+\wline{FILE {\em f}}{}{}{Declare file}{A file descriptor named {\em f}
+    is declared.  This descriptor may subsequently be associated
+    with a file with {\tt FOPEN}.}{FILEIO}
+\wline{FIND}{s}{word flag}{Look up word}{The word with name given
+    by the string {\em s} is looked up in the dictionary.  If a
+    definition if not found, {\em word} will be left as the address
+    of the string and {\em flag} will be set to zero.  If the word is
+    present in the dictionary, its compilation address is placed on
+    the stack, followed by a {\em flag} that is 1 if the word is
+    marked for immediate execution and $-1$ otherwise.}{DEFFIELDS}
+\wline{FIX}{f}{n}{Floating to integer}{The floating point number
+    on the top of the stack is replaced by the integer obtained by
+    truncating its fractional part.}{REAL}
+\wline{(FLIT)}{}{f}{Push floating point literal}{Pushes the
+    floating point literal that follows in line onto the top of
+    the stack.}{REAL}
+\wline{FLOAD}{file}{stat}{Load file}{The source program starting at
+    the current position in {\em file} is loaded as if its text
+    appeared at the current character position in the input stream.
+    The status resulting from the evaluation is left on the stack,
+    zero if normal, negative in case of error.}{FILEIO}
+\wline{FLOAT}{n}{f}{Integer to floating}{The integer value on the top
+    of the stack is replaced by the equivalent floating point
+    value.}{REAL}
+\wline{FMAX}{f1 f2}{f3}{Floating point maximum}{The greater of the two
+    floating point values on the top of the stack is placed on the
+    top of the stack.}{FLOAT}
+\wline{FMIN}{f1 f2}{f3}{Floating point minimum}{The lesser of the two
+    floating point values on the top of the stack is placed on the
+    top of the stack.}{FLOAT}
+\wline{FNEGATE}{f1}{f2}{${\mf f2} = -{\mf f1}$}{The negative of the
+    floating point value on the top of the stack replaces the floating
+    point value there.}{FLOAT}
+\wline{FOPEN}{fname fmodes file}{flag}{File open}{The previously
+    declared {\em file} is opened with the specified file name {\em
+    fname} given by the string address on the stack in the mode
+    given by {\em fmodes}.  The bits in {\em fmodes} are 1 for read,
+    2 for write, 4 for binary, and 8 to create a new
+    file.  If the file is opened successfully, $-1$ is returned;
+    otherwise 0 is returned.  The Unix standard streams, {\tt STDIN},
+    {\tt STDOUT}, and {\tt STDERR} are predefined and automatically
+    opened.}{FILEIO}
+\wline{FORGET {\em w}}{}{}{Forget word}{The most recent definition of
+    word {\em w} is deleted, along with all words declared more
+    recently than the named word.}{}
+\wline{FPUTC}{char file}{stat}{Write character}{The character {\em
+    char} is written to {\em file}.  If the character is written
+    successfully, {\em char} is returned; otherwise $-1$ is
+    returned.}{FILEIO}
+\wline{FPUTS}{s file}{flag}{Write string}{The string {\em s} is
+    written to {\em file}, followed by the end of line delimiter used
+    on this system.  If the line is written successfully, $-1$ is
+    returned; otherwise 0 is returned.}{FILEIO}
+\wline{FREAD}{file len buf}{length}{Read file}{{\em Len} bytes are
+   read into buffer {\em buf} from {\em file}.  The number of
+   bytes actually read is returned on the top of the stack.}{FILEIO}
+\wline{FSEEK}{offset base file}{}{Set file position}{The current
+    position of {\em file} is set to {\em offset}, relative to the
+    specified {\em base}: if 0, the beginning of the file; if 1, the
+    current file position; if 2, the end of file.}{FILEIO}
+\wline{FSTRFORM}{f format str}{}{Floating point edit}{Edits a floating
+    point number {\em f} into string {\em str}, using the {\tt
+    sprintf} format given by the string {\em format}.}{REAL}
+\wline{FTELL}{file}{pos}{File position}{Returns the current byte
+    position {\em pos} for file {\em file}.}{FILEIO}
+\wline{FWRITE}{len buf file}{length}{File write}{Writes {\em len}
+    bytes from the buffer at address {\em buf} to {\em file}.
+    The number of bytes written is returned on the top of the
+    stack.}{FILEIO}
+\wline{HERE}{}{addr}{Heap address}{The current heap allocation address
+    is placed on the top of the stack.}{}
+\wline{I}{}{n}{Inner loop index}{The index of the innermost {\tt
+    DO}---{\tt LOOP} is placed on the stack.}{}
+\wline{IF}{flag}{}{Conditional statement}{If {\em flag} is nonzero,
+    the following statements are executed.  Otherwise, execution
+    resumes after the matching {\tt ELSE} clause, if any, or after the
+    matching {\tt THEN}.}{}
+\wline{IMMEDIATE}{}{}{Mark immediate}{The most recently defined word
+    is marked for immediate execution; it will be executed even if
+    entered in compile state.}{}
+\wline{J}{}{n}{Outer loop index}{The loop index of the next to
+    innermost {\tt DO}---{\tt LOOP} is placed on the stack.}{}
+\wline{L>NAME}{lfa}{nfa}{Link to name field}{Given the link field
+    address of a word on the top of the stack, its name pointer field
+    address is returned.}{DEFFIELDS}
+\wline{LEAVE}{}{}{Exit {\tt DO}---{\tt LOOP}}{The innermost {\tt
+    DO}---{\tt LOOP} is immediately exited.  Execution resumes after
+    the {\tt LOOP} statement marking the end of the loop.}{}
+\wline{LINK>}{lfa}{cfa}{Link field to compile address}{Given the link field
+    address of a word on the top of the stack, the compile
+    address of the word is returned.}{DEFFIELDS}
+\wline{>LINK}{cfa}{lfa}{Link address}{Given the compile address of a
+    word, return its link field address.}{DEFFIELDS}
+\wline{(LIT)}{}{n}{Push literal}{Pushes the integer literal that
+    follows in line onto the top of the stack.}{}
+\wline{LITERAL}{n}{}{Compile literal}{Compiles the value on the top of
+    the stack into the current definition.  When the definition is
+    executed, that value will be pushed onto the top of the
+    stack.}{COMPILERW}
+\wline{LOG}{f1}{f2}{${\mf f2}=\ln {\mf f1}$}{The floating point value on
+   the top of the stack is replaced by its natural logarithm.}{MATH}
+\wline{LOOP}{}{}{Increment loop index}{Adds one to the index of 
+    the active loop.  If the limit is reached, the loop is exited.
+    Otherwise, another iteration is begun.}{}
+\wline{+LOOP}{n}{}{Add to loop index}{Adds {\em n} to the index of 
+    the active loop.  If the limit is reached, the loop is exited.
+    Otherwise, another iteration is begun.}{}
+\wline{<MARK}{}{addr}{Backward jump mark}{Saves the current
+    compilation address on the stack.}{COMPILERW}
+\wline{>MARK}{}{addr}{Forward mark}{Compiles a place-holder offset for
+    a forward jump and saves its address for later backpatching on
+    the stack.}{COMPILERW}
+\wline{MAX}{n1 n2}{n3}{Maximum}{The greater of {\em n1} and {\em n2} is
+    left on the top of the stack.}{}
+\wline{MEMSTAT}{}{}{Print memory status}{The current and maximum
+    memory usage so far are printed on standard output.  The sizes
+    allocated for the stack, return stack, and heap are edited, as
+    well as the percentage in use.}{MEMSTAT}
+\wline{MIN}{n1 n2}{n3}{Minimum}{The lesser of {\em n1} and {\em n2} is
+    left on the top of the stack.}{}
+\wline{MOD}{n1 n2}{n3}{Modulus (remainder)}{The remainder when {\em
+    n1} is divided by {\em n2} is left on the top of the stack.}{}
+\wline{/MOD}{n1 n2}{n3 n4}{n3 = n1 $\bmod$ n2, n4 = n1 $\div$ n2}{
+    Divides {\em n1} by {\em n2} and leaves quotient on top of
+    stack, remainder as next on stack.}{}
+\wline{N>LINK}{nfa}{lfa}{Name to link field}{Given the name field
+    pointer address of a word on the top of the stack, leaves the link
+    field address of the word on the top of stack.}{DEFFIELDS}
+\wline{>NAME}{cfa}{nfa}{Name address}{Given the compile address of a
+    word, return its name pointer field address.}{DEFFIELDS}
+\wline{NAME>}{nfa}{cfa}{Name field to compile address}{Given the
+    address of the name pointer field of a word on the top of the
+    stack, leaves the compile address of the word on the top of the
+    stack.}{DEFFIELDS}
+\wline{NAME>S!}{nfa string}{}{Get name field}{Stores the
+    name field of the word pointed to by {\em nfa} into {\em
+    string}.}{DEFFIELDS} 
+\wline{NEGATE}{n1}{n2}{${\mf n2}=-{\mf n1}$}{Negates the value on the
+    top of the stack.}{}
+\wline{(NEST)}{}{}{Invoke word}{Pushes the instruction pointer onto
+    the return stack and sets the instruction pointer to the next word
+    in line.}{}
+\wline{NOT}{n1}{n2}{Logical not}{Inverts the bits in the value on the
+    top of the stack.  This performs logical negation for truth
+    values of $-1$ (True) and $0$ (False).}{}
+\wline{OR}{n1 n2}{n3}{Bitwise OR}{Stores the bitwise OR of {\em n1}
+    and {\em n2} on the stack.}{}
+\wline{OVER}{n1 n2}{n1 n2 n1}{Duplicate second item}{The second item
+    on the stack is copied to the top.}{}
+\wline{PICK}{\ldots n$_2$ n$_1$ n$_0$ index}{\ldots n$_0$ n$_{index}$}{Pick
+    item
+    from stack}{The {\em index}th stack item is copied to the top of
+    the stack.  The top of stack has {\em index} 0, the second item
+    {\em index} 1, and so on.}{}
+\wline{POW}{f1 f2}{f3}{${\mf f3}={\mf f1}^{\mf f2}$}{The second
+    floating point value on the stack is taken to the power of the
+    top floating point stack value and the result is left on the
+    top of the stack.}{MATH}
+\wline{QUIT}{}{}{Quit execution}{The return stack is cleared and
+    control is returned to the interpreter.  The stack is not
+    disturbed.}{}
+\wline{>R}{n}{}{To return stack}{Removes the top item from the stack
+    and pushes it onto the return stack.}{}
+\wline{R>}{}{n}{From return stack}{The top value is removed from the
+    return stack and pushed onto the stack.}{}
+\wline{R@}{}{n}{Fetch return stack}{The top value on the return stack
+    is pushed onto the stack.  The value is not removed from the
+    return stack.}{}
+\wline{REPEAT}{}{}{Close {\tt BEGIN}---{\tt WHILE}---{\tt REPEAT}
+    loop}{Another iteration of the current {\tt BEGIN}---{\tt
+    WHILE}---{\tt REPEAT} loop having been completed, execution
+    continues after the matching {\tt BEGIN}.}{}
+\wline{<RESOLVE}{addr}{}{Backward jump resolve}{Compiles the address
+    saved by the matching {\tt <MARK}.}{COMPILERW}
+\wline{>RESOLVE}{addr}{}{Forward jump resolve}{Backpatches the address left
+    by the matching {\tt >MARK} to jump to the next word to be
+    compiled.}{COMPILERW}
+\wline{ROLL}{\ldots n$_2$ n$_1$ n$_0$ index}{\ldots n$_0$
+    n$_{index}$}{Rotate {\em index}th item to top}{The stack item selected
+    by {\em index}, with 0 designating the top of stack, 1 the
+    second item, and so on, is moved to the top of the stack.  The
+    intervening stack items are moved down one item.}{}
+\wline{ROT}{n1 n2 n3}{n2 n3 n1}{Rotate 3 items}{The third item on the
+    stack is placed on the top of the stack and the second and first
+    items are moved down.}{}
+\wline{-ROT}{n1 n2 n3}{n3 n1 n2}{Reverse rotate}{Moves the top of
+    stack to the third item, moving the third and second items up.}{}
+\wline{S!}{s1 s2}{}{Store string}{The string at address {\em s1} is
+    copied into the string at {\em s2}.}{STRING}
+\wline{S+}{s1 s2}{}{String concatenate}{The string at address {\em s1}
+    is concatenated to the string at address {\em s2}.}{STRING}
+\wline{S>NAME!}{string nfa}{}{Store name field}{Stores the {\em string}
+    into the name field of the word given by name pointer
+    field {\em nfa}.}{DEFFIELDS}
+\wline{SHIFT}{n1 n2}{n3}{Shift n1 by n2 bits}{The value {\em n1} is
+    logically shifted the number of bits specified by {\em n2},
+    left if {\em n2} is positive and right if {\em n2} is
+    negative.  Zero bits are shifted into vacated bits.}{}
+\wline{SIN}{f1}{f2}{Sine}{The floating point value on the top of the stack is
+    replaced by its sine.}{MATH}
+\wline{SQRT}{f1}{f2}{${\mf f2}=\sqrt{{\mf f1}}$}{The floating point
+    value on the top of the stack is replaced by its square
+    root.}{MATH}
+\wline{STATE}{}{addr}{System state variable}{The address of the system
+    state variable is pushed on the stack.  The state is zero if
+    interpreting, nonzero if compiling.}{}
+\wline{STRCAT}{s1 s2}{}{String concatenate}{The string at address {\em s1}
+    is concatenated to the string at address {\em s2}.}{STRING}
+\wline{STRCHAR}{s1 s2}{}{String character search}{The string at
+    address {\em s1} is searched for the first occurrence of the first
+    character of string {\em s2}.  If that character appears nowhere
+    in {\em s1}, 0 is returned.  Otherwise, the address of the first
+    occurrence in {\em s1} is left on the top of the stack.}{STRING}
+\wline{STRCMP}{s1 s2}{n}{String compare}{The string at address {\em s1}
+    is compared to the string at address {\em s2}.  If {\em s1} is
+    less than {\em s2}, $-1$ is returned.  If {\em s1} and {\em s2}
+    are equal, 0 is returned.  If {\em s1} is greater than {\em s2}, 1
+    is returned.}{STRING}
+\wline{STRCPY}{s1 s2}{}{Store string}{The string at address {\em s1} is
+    copied into the string at {\em s2}.}{STRING}
+\wline{STRFORM}{n format str}{}{Integer edit}{Edits the
+    number {\em n} into string {\em str}, using the {\tt
+    sprintf} format given by the string {\em format}.  Note: the
+    reference to the number in the format must be as a {\tt long}
+    value, for example {\tt "\%ld"}.}{STRING}
+\wline{STRING {\em x}}{size}{}{Declare string}{Declares a string named
+    {\em x} of a maximum of {\em size}$-1$ characters.}{STRING}
+\wline{STRINT}{s1}{s2 n}{String to integer}{Scans an integer
+    from {\em s1}.  The integer scanned is placed on the top of
+    the stack and the address of the character that terminated the
+    scan is stored as the next item on the stack.}{STRING}
+\wline{STRLEN}{s}{n}{String length}{The length of string {\em s} is
+    placed on the top of the stack.}{STRING}
+\wline{(STRLIT)}{}{s}{String literal}{Pushes the address of the string literal
+    that follows in line onto the stack.}{STRING}
+\wline{STRREAL}{s1}{s2 f}{String to real}{Scans a floating point
+    number from {\em s1}.  The floating point number scanned is placed
+    on the top of the stack and the address of the character that
+    terminated the scan is stored as the next item on the
+    stack.}{STRING}
+\wline{SUBSTR}{s1 start length s2}{}{Extract substring}{The substring
+    of string {\em s1} that begins at character {\em start}, with the
+    first character numbered 0, extending for {\em length} characters,
+    with $-1$ designating all characters to the end of string, is stored
+    into the string {\em s2}.}{STRING}
+\wline{SWAP}{n1 n2}{n2 n1}{Swap top two items}{The top two stack items
+    are interchanged.}{}
+\wline{SYSTEM}{s}{n}{Execute system command}{The operating system
+    command given in the string {\em s} is passed to the system's
+    command interpreter (shell).  The system result status returned
+    after the command completes is left on the top of the
+    stack.}{SYSTEM}
+\wline{TAN}{f1}{f2}{Tangent}{The floating point value on the top of
+    the stack is replaced by its tangent.}{MATH}
+\wline{THEN}{}{}{End if}{Used in an {\tt IF}---{\tt ELSE}---{\tt THEN}
+    sequence, marks the end of the conditional statement.}{}
+\wline{TRACE}{n}{}{Trace mode}{If {\em n} is nonzero, trace mode is
+    enabled.  If {\em n} is zero, trace mode is turned off.}{TRACE}
+\wline{TYPE}{s}{}{Print string}{The string at address {\em s} is
+    printed on standard output.}{CONIO}
+\wline{UNTIL}{flag}{}{End {\tt BEGIN}---{\tt UNTIL} loop}{If {\em
+    flag} is zero, the loop continues execution at the word following
+    the matching {\tt BEGIN}\@.  If {\em flag} is nonzero, the loop is
+    exited and the word following the {\tt UNTIL} is executed.}{}
+\wline{VARIABLE {\em x}}{}{}{Declare variable}{A variable named {\em
+    x} is declared and its value is set to zero.  When {\em x}
+    is executed, its address will be placed on the stack.  Four bytes
+    are reserved on the heap for the variable's value.}{}
+\wline{WALKBACK}{n}{}{Walkback mode}{If {\em n} is nonzero, a walkback
+    trace through active words will be performed whenever an error
+    occurs during execution.  If {\em n} is zero, the walkback is
+    suppressed.}{WALKBACK}
+\wline{WHILE}{flag}{}{Decide {\tt BEGIN}---{\tt WHILE}---{\tt REPEAT}
+    loop}{If {\em flag} is nonzero, execution continues after the {\tt
+    WHILE}\@.  If {\em flag} is zero, the loop is exited and execution
+    resumed after the {\tt REPEAT} that marks the end of the loop.}{}
+\wline{WORDS}{}{}{List words defined}{Defined words are listed, from
+    the most recently defined to the first defined.  If the system
+    supports keystroke trapping, pressing any key will pause the
+    display of defined words; pressing carriage return will abort the
+    listing---any other key resumes it.  On other systems, only the 20
+    most recently defined words are listed.}{CONIO}
+\wline{WORDSUSED}{}{}{List words used}{The words used by this program
+    are listed on standard output.  If the system supports keystroke
+    trapping, the listing may be aborted by pressing a key while the
+    output is in progress.  The words used report is useful in
+    configuring a custom version of \atlast\ that includes just the words
+    needed by the program it executes.}{WORDSUSED}
+\wline{WORDSUNUSED}{}{}{List words not used}{The words not used by
+    this program are listed on standard output.  If the system
+    supports keystroke trapping, the listing may be aborted by
+    pressing a key while the output is in progress.  The words not used
+    report is useful in configuring a custom version of \atlast\ that
+    includes just the words needed by the program it
+    executes.}{WORDSUSED}
+\wline{XOR}{n1 n2}{n3}{Bitwise exclusive OR}{Stores the bitwise
+    exclusive or of {\em n1} and {\em n2} on the stack.}{}
+\wline{(XDO)}{limit n}{}{Execute loop}{At runtime, enters a loop that
+    will step until {\em n} increments and becomes equal to {\em limit}}{}
+\wline{(X?DO)}{limit n}{}{Execute conditional loop}{At runtime, tests
+    if {\em n} equals {\em limit}.  If so, skips until the matching {\tt
+    LOOP} or {\tt +LOOP}.  Otherwise, enters the loop.}{}
+\wline{(XLOOP)}{}{}{Increment loop index}{At runtime, adds one to the
+    index of the active loop and exits if equal to the limit.
+    Otherwise returns to the matching {\tt DO} or {\tt ?DO}.}{}
+\wline{(+XLOOP)}{incr}{}{Add to loop index}{At runtime, increments
+    the loop index by the top of stack.  If the loop is not done, begins
+    the next iteration.}{}

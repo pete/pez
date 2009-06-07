@@ -1,0 +1,144 @@
+\centerline{\fbox{\Large \tt SQRT.ATL}}
+
+\begin{verbatim}
+2variable x
+2variable y
+
+: csqrt
+        2dup 0.0 f< if
+           cr ." "SQRT: Negative argument!"
+           exit
+        then
+        2dup 0.0 f<> if
+           2dup 2dup x 2!
+           1.893872 f* 0.154116 f+
+           1.047988 f* 1.0 f+
+           f/ y 2!                 \ y=(0.154116+1.893872*x)/(1.0+1.047988*x)
+
+           y 2@                    \ y
+           0.0                     \ y c
+           begin
+                 2swap             \ c y
+                 2dup              \ c y y
+                 x 2@              \ c y y x
+                 2over             \ c y y x y
+                 f/                \ c y y x/y
+                 f-                \ c y y-x/y
+                 -0.5              \ c y (y-x/y) -0.5
+                 f*                \ c y (y-x/y)*-0.5
+                 2dup              \ cl y c c
+                 2rot              \ cl c c y
+                 f+                \ cl c c+y
+                 2rot              \ c c+y cl
+                 2rot              \ c+y cl c
+                 2swap             \ c+y c cl
+                 2over             \ c+y c cl c
+                 f=                \ c+y c =0?
+           until
+           2drop
+        then
+;
+
+: cbenchmark 10000 0 do 2.0 csqrt 2drop loop ." "Done\n" ;
+: sbenchmark 100000 0 do 2.0 sqrt 2drop loop ." "Done\n" ;
+
+.( "Type \"cbenchmark\" to run the CSQRT benchmark (10000 iterations).\n"
+.( "Type \"sbenchmark\" to run the SQRT benchmark (100000 iterations).\n"
+\end{verbatim}
+\clearpage
+\centerline{\fbox{\Large \tt CSQRT.C}}
+
+\begin{verbatim}
+#include <stdio.h>
+
+double
+/*FCN*/asqrt(x)
+  double x;
+{
+    double c, cl, y;
+    int n;
+
+    if (c == 0.0)
+        return (0.0);
+
+    if (x < 0.0)
+        abort();
+
+    y = (0.154116 + 1.893872 * x) / (1.0 + 1.047988 * x);
+    c = 0.0;
+    n = 20;
+    do {
+        cl = c;
+        c = (y - x / y) * 0.5;
+        y -=  c;
+    } while (c != cl && --n);
+    return y;
+}
+
+main()
+{
+    int i;
+    char a[300];
+
+    fputs("Ready to test: ", stdout);
+    gets(a);
+
+    for (i = 0; i < 100000; i++)
+        asqrt(2.0);
+    printf("Done.\n");
+}
+\end{verbatim}
+\clearpage
+\centerline{\fbox{\Large \tt SSQRT.C}}
+
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main()
+{
+    int i;
+    char a[300];
+
+    fputs("Ready to test: ", stdout);
+    gets(a);
+
+    for (i = 0; i < 100000; i++)
+        sqrt(2.0);
+    printf("Done.\n");
+}
+\end{verbatim}
+\clearpage
+\centerline{\fbox{\Large \tt SQRT.LSP}}
+
+\begin{verbatim}
+(defun sqr (x / y c cl)
+    (if (or (= 'REAL (type x)) (= 'INT (type x)))
+        (progn
+            (cond ((minusp x) 'Negative-argument)
+                  ((zerop x) 0.0)
+                  (t (setq y (/ (+ 0.154116 (* x 1.893872))
+                                       (+ 1.0 (* x 1.047988))
+                             )
+                     )
+                     (setq c (/ (- y (/ x y)) 2.0))
+                     (setq cl 0.0)
+                     (while (not (equal c cl))
+                        (setq y (- y c))
+                        (setq cl c)
+                        (setq c (/ (- y (/ x y)) 2.0))
+                     )
+                     y
+                  )
+            )
+        )
+        (progn
+            (princ "Invalid argument.")
+            (princ)
+        )
+    )
+)
+
+(defun C:csqrt () (repeat 10000 (sqr 2.0)))
+(defun C:ssqrt () (repeat 10000 (sqrt 2.0)))
+\end{verbatim}
