@@ -375,7 +375,7 @@ char **cp;
 		if(istring) {
 			if(rstring) {
 #ifdef MEMMESSAGE
-				V printf("\nRunaway string: %s\n", tokbuf);
+				printf("\nRunaway string: %s\n", tokbuf);
 #endif
 				evalstat = ATL_RUNSTRING;
 				return TokNull;
@@ -534,19 +534,19 @@ void atl_memstat()
 {
 	static char fmt[] = "   %-12s %6ld    %6ld    %6ld       %3ld\n";
 
-	V printf("\n             Memory Usage Summary\n\n");
-	V printf("                 Current   Maximum    Items     Percent\n");
-	V printf("  Memory Area     usage     used    allocated   in use \n");
+	printf("\n             Memory Usage Summary\n\n");
+	printf("                 Current   Maximum    Items     Percent\n");
+	printf("  Memory Area     usage     used    allocated   in use \n");
 
-	V printf(fmt, "Stack",
+	printf(fmt, "Stack",
 		 ((long)(stk - stack)),
 		 ((long)(stackmax - stack)),
 		 atl_stklen, (100L * (stk - stack)) / atl_stklen);
-	V printf(fmt, "Return stack",
+	printf(fmt, "Return stack",
 		 ((long)(rstk - rstack)),
 		 ((long)(rstackmax - rstack)),
 		 atl_rstklen, (100L * (rstk - rstack)) / atl_rstklen);
-	V printf(fmt, "Heap",
+	printf(fmt, "Heap",
 		 ((long)(hptr - heap)),
 		 ((long)(heapmax - heap)),
 		 atl_heaplen, (100L * (hptr - heap)) / atl_heaplen);
@@ -581,7 +581,7 @@ static Boolean kbquit()
 	int key;
 
 	if((key = Keyhit()) != 0) {
-		V printf("\nPress RETURN to stop, any other key to continue: ");
+		printf("\nPress RETURN to stop, any other key to continue: ");
 		while((key = Keyhit()) == 0);
 		if(key == '\r' || (key == '\n'))
 			return True;
@@ -1075,7 +1075,7 @@ prim P_strlit()
 	Push = (stackitem) (((char *)ip) + 1);
 #ifdef TRACE
 	if(atl_trace) {
-		V printf("\"%s\" ", (((char *)ip) + 1));
+		printf("\"%s\" ", (((char *)ip) + 1));
 	}
 #endif				/* TRACE */
 	Skipstring;		/* Advance IP past it */
@@ -1226,7 +1226,7 @@ prim P_flit()
 		atl_real tr;
 
 		V memcpy((char *)&tr, (char *)ip, sizeof(atl_real));
-		V printf("%g ", tr);
+		printf("%g ", tr);
 	}
 #endif				/* TRACE */
 	for(i = 0; i < Realsize; i++) {
@@ -1357,7 +1357,7 @@ prim P_fleq()
 prim P_fdot()
 {				/* Print floating point top of stack */
 	Sl(Realsize);
-	V printf("%g ", REAL0);
+	printf("%g ", REAL0);
 	Realpop;
 }
 
@@ -1456,7 +1456,7 @@ prim P_tan()
 prim P_dot()
 {				/* Print top of stack, pop it */
 	Sl(1);
-	V printf(base == 16 ? "%lX" : "%ld ", S0);
+	printf(base == 16 ? "%lX" : "%ld ", S0);
 	Pop;
 }
 
@@ -1464,25 +1464,25 @@ prim P_question()
 {				/* Print value at address */
 	Sl(1);
 	Hpc(S0);
-	V printf(base == 16 ? "%lX" : "%ld ", *((stackitem *) S0));
+	printf(base == 16 ? "%lX" : "%ld ", *((stackitem *) S0));
 	Pop;
 }
 
 prim P_cr()
 {				/* Carriage return */
-	V printf("\n");
+	printf("\n");
 }
 
 prim P_dots()
 {				/* Print entire contents of stack */
 	stackitem *tsp;
 
-	V printf("Stack: ");
+	printf("Stack: ");
 	if(stk == stackbot)
-		V printf("Empty.");
+		printf("Empty.");
 	else {
 		for(tsp = stack; tsp < stk; tsp++) {
-			V printf(base == 16 ? "%lX" : "%ld ", *tsp);
+			printf(base == 16 ? "%lX" : "%ld ", *tsp);
 		}
 	}
 }
@@ -1499,7 +1499,7 @@ prim P_dotparen()
 	if(ip == NULL) {	/* If interpreting */
 		stringlit = True;	/* Set to print next string constant */
 	} else {		/* Otherwise, */
-		V printf("%s", ((char *)ip) + 1);	/* print string literal
+		printf("%s", ((char *)ip) + 1);	/* print string literal
 							   in in-line code. */
 		Skipstring;	/* And advance IP past it */
 	}
@@ -1509,7 +1509,7 @@ prim P_type()
 {				/* Print string pointed to by stack */
 	Sl(1);
 	Hpc(S0);
-	V printf("%s", (char *)S0);
+	printf("%s", (char *)S0);
 	Pop;
 }
 
@@ -1522,7 +1522,7 @@ prim P_words()
 
 	while(dw != NULL) {
 
-		V printf("\n%s", dw->wname + 1);
+		printf("\n%s", dw->wname + 1);
 		dw = dw->wnext;
 #ifdef Keyhit
 		if(kbquit()) {
@@ -1535,7 +1535,7 @@ prim P_words()
 			break;
 #endif
 	}
-	V printf("\n");
+	printf("\n");
 }
 #endif				/* CONIO */
 
@@ -1963,7 +1963,7 @@ prim P_dolit()
 	So(1);
 #ifdef TRACE
 	if(atl_trace) {
-		V printf("%ld ", (long)*ip);
+		printf("%ld ", (long)*ip);
 	}
 #endif
 	Push = (stackitem) * ip++;	/* Push the next datum from the
@@ -2266,7 +2266,7 @@ prim P_abortq()
 		stringlit = True;	/* Set string literal expected */
 		Compconst(s_abortq);	/* Compile ourselves */
 	} else {
-		V printf("%s", (char *)ip);	/* Otherwise, print string literal
+		printf("%s", (char *)ip);	/* Otherwise, print string literal
 						   in in-line code. */
 #ifdef WALKBACK
 		pwalkback();
@@ -2406,10 +2406,10 @@ prim P_tick()
 				So(1);
 				Push = (stackitem) di;	/* Push word compile address */
 			} else {
-				V printf(" '%s' undefined ", tokbuf);
+				printf(" '%s' undefined ", tokbuf);
 			}
 		} else {
-			V printf("\nWord not specified when expected.\n");
+			printf("\nWord not specified when expected.\n");
 			P_abort();
 		}
 	} else {
@@ -2420,7 +2420,7 @@ prim P_tick()
 		if(ip == NULL) {
 			tickpend = True;	/* Set tick pending */
 		} else {
-			V printf
+			printf
 			    ("\nWord requested by ` not on same input line.\n");
 			P_abort();
 		}
@@ -2491,7 +2491,7 @@ prim P_toname()
 prim P_tolink()
 {				/* Find link field from compile addr */
 	if(DfOff(wnext) != 0)
-		V printf("\n>LINK Foulup--wnext is not at zero!\n");
+		printf("\n>LINK Foulup--wnext is not at zero!\n");
 /*  Sl(1);
 	    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
@@ -2511,7 +2511,7 @@ prim P_fromname()
 prim P_fromlink()
 {				/* Get compile address from link */
 	if(DfOff(wnext) != 0)
-		V printf("\nLINK> Foulup--wnext is not at zero!\n");
+		printf("\nLINK> Foulup--wnext is not at zero!\n");
 /*  Sl(1);
 	    S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
@@ -2614,7 +2614,7 @@ prim P_wordsused()
 
 	while(dw != NULL) {
 		if(*(dw->wname) & WORDUSED) {
-			V printf("\n%s", dw->wname + 1);
+			printf("\n%s", dw->wname + 1);
 		}
 #ifdef Keyhit
 		if(kbquit()) {
@@ -2623,7 +2623,7 @@ prim P_wordsused()
 #endif
 		dw = dw->wnext;
 	}
-	V printf("\n");
+	printf("\n");
 }
 
 prim P_wordsunused()
@@ -2632,7 +2632,7 @@ prim P_wordsunused()
 
 	while(dw != NULL) {
 		if(!(*(dw->wname) & WORDUSED)) {
-			V printf("\n%s", dw->wname + 1);
+			printf("\n%s", dw->wname + 1);
 		}
 #ifdef Keyhit
 		if(kbquit()) {
@@ -2641,7 +2641,7 @@ prim P_wordsunused()
 #endif
 		dw = dw->wnext;
 	}
-	V printf("\n");
+	printf("\n");
 }
 #endif				/* WORDSUSED */
 
@@ -3042,13 +3042,13 @@ struct primfcn *pt;
 static void pwalkback()
 {
 	if(atl_walkback && ((curword != NULL) || (wbptr > wback))) {
-		V printf("Walkback:\n");
+		printf("Walkback:\n");
 		if(curword != NULL) {
-			V printf("   %s\n", curword->wname + 1);
+			printf("   %s\n", curword->wname + 1);
 		}
 		while(wbptr > wback) {
 			dictword *wb = *(--wbptr);
-			V printf("   %s\n", wb->wname + 1);
+			printf("   %s\n", wb->wname + 1);
 		}
 	}
 }
@@ -3060,7 +3060,7 @@ static void trouble(kind)
 char *kind;
 {
 #ifdef MEMMESSAGE
-	V printf("\n%s.\n", kind);
+	printf("\n%s.\n", kind);
 #endif
 #ifdef WALKBACK
 	pwalkback();
@@ -3158,7 +3158,7 @@ dictword *wp;
 	curword = wp;
 #ifdef TRACE
 	if(atl_trace) {
-		V printf("\nTrace: %s ", curword->wname + 1);
+		printf("\nTrace: %s ", curword->wname + 1);
 	}
 #endif				/* TRACE */
 	(*curword->wcode) ();	/* Execute the first word */
@@ -3176,7 +3176,7 @@ dictword *wp;
 		curword = *ip++;
 #ifdef TRACE
 		if(atl_trace) {
-			V printf("\nTrace: %s ", curword->wname + 1);
+			printf("\nTrace: %s ", curword->wname + 1);
 		}
 #endif				/* TRACE */
 		(*curword->wcode) ();	/* Execute the next word */
@@ -3501,7 +3501,7 @@ FILE *fp;
 	   error status and unwind the file.  */
 	if((es == ATL_SNORM) && (atl_comment == Truth)) {
 #ifdef MEMMESSAGE
-		V printf("\nRunaway `(' comment.\n");
+		printf("\nRunaway `(' comment.\n");
 #endif
 		es = ATL_RUNCOMM;
 		atl_unwind(&mk);
@@ -3543,7 +3543,7 @@ char *sp;
 					V sscanf(ap + 1, "%li",
 						 proname[i].pparam);
 #ifdef PROLOGUEDEBUG
-					V printf("Prologue set %sto %ld\n",
+					printf("Prologue set %sto %ld\n",
 						 proname[i].pname,
 						 *proname[i].pparam);
 #endif
@@ -3602,7 +3602,7 @@ char *sp;
 					while(dw != NULL) {
 						if(dw == dictprot) {
 #ifdef MEMMESSAGE
-							V printf
+							printf
 							    ("\nForget protected.\n");
 #endif
 							evalstat =
@@ -3645,7 +3645,7 @@ char *sp;
 						if(di->wcode ==
 						   (codeptr) P_dodoes) {
 #ifdef FORGETDEBUG
-							V printf
+							printf
 							    (" Forgetting DOES> word. ");
 #endif
 							hptr--;
@@ -3653,7 +3653,7 @@ char *sp;
 					}
 				} else {
 #ifdef MEMMESSAGE
-					V printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", tokbuf);
 #endif
 					evalstat = ATL_UNDEFINED;
 				}
@@ -3665,7 +3665,7 @@ char *sp;
 					Push = (stackitem) di;	/* Push word compile address */
 				} else {
 #ifdef MEMMESSAGE
-					V printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", tokbuf);
 #endif
 					evalstat = ATL_UNDEFINED;
 				}
@@ -3676,7 +3676,7 @@ char *sp;
 				defpend = False;
 				ucase(tokbuf);
 				if(atl_redef && (lookup(tokbuf) != NULL))
-					V printf("\n%s isn't unique.", tokbuf);
+					printf("\n%s isn't unique.", tokbuf);
 				enter(tokbuf);
 			} else {
 				di = lookup(tokbuf);
@@ -3711,7 +3711,7 @@ char *sp;
 					}
 				} else {
 #ifdef MEMMESSAGE
-					V printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", tokbuf);
 #endif
 					evalstat = ATL_UNDEFINED;
 					state = Falsity;
@@ -3775,7 +3775,7 @@ char *sp;
 					V strcpy(((char *)hptr) + 1, tokbuf);
 					hptr += l;
 				} else {
-					V printf("%s", tokbuf);
+					printf("%s", tokbuf);
 				}
 			} else {
 				if(state) {
@@ -3801,7 +3801,7 @@ char *sp;
 			break;
 #endif				/* STRING */
 		default:
-			V printf("\nUnknown token type %d\n", i);
+			printf("\nUnknown token type %d\n", i);
 			break;
 		}
 	}
