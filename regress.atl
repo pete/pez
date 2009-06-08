@@ -328,9 +328,9 @@ variable hp
 
     "C=" tests:
         c= here cellsize - hp @ ok?
-        c= here cellsize - hp @ ok?
         10 c, c= here cellsize 2 * - hp @ ok?
-        7 c, 8 c, -1 c, here 11 - c= here 12 - hp @ dup   2 nok?
+        7 c, 8 c, -1 c, here cellsize 2 * 3 + - 
+		c= here cellsize 3 * - hp @ dup   2 nok?
 
     "C@" tests:
         hp @ c@ hp @ 1+ c@ 253 187   2 nok?
