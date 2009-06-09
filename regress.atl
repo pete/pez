@@ -68,13 +68,13 @@ variable nsi
 \   FOK?  --  Validate a floating point stack result
 
 : fok?                                ( frcv fexp --  )
-    2over 2over f- fabs 1.0e-10 f> if
+    fover fover f- fabs 1.0e-10 f> if
         ." "Error in " checking type
             ." ": expected " "%g" estring fstrform estring type
             ." ", received " "%g.\n" estring fstrform estring type
         oops!
     else
-        2drop 2drop
+        fdrop fdrop
     then
     derbis
 ;

@@ -1382,6 +1382,7 @@ prim P_fix()
 	Push = i;
 }
 
+
 #ifdef MATH
 
 #define Mathfunc(x) Sl(Realsize); SREAL0(x(REAL0))
@@ -1953,6 +1954,78 @@ prim P_2at()
 	sp = (stackitem *) S0;
 	S0 = *sp++;
 	Push = *sp;
+}
+
+prim P_fover()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_over(); break;
+		case 2: P_2over(); break;
+	}
+}
+
+prim P_fdrop()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_drop(); break;
+		case 2: P_2drop(); break;
+	}
+}
+
+prim P_fdup()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_dup(); break;
+		case 2: P_2dup(); break;
+	}
+}
+
+prim P_fswap()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_swap(); break;
+		case 2: P_2swap(); break;
+	}
+}
+
+prim P_frot()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_rot(); break;
+		case 2: P_2rot(); break;
+	}
+}
+
+prim P_fvariable()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_variable(); break;
+		case 2: P_2variable(); break;
+	}
+}
+
+prim P_fconstant()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_constant(); break;
+		case 2: P_2constant(); break;
+	}
+}
+
+prim P_fbang()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_bang(); break;
+		case 2: P_2bang(); break;
+	}
+}
+
+prim P_fat()
+{
+	switch(sizeof(double) / sizeof(long)) {
+		case 1: P_at(); break;
+		case 2: P_2at(); break;
+	}
 }
 #endif				/* DOUBLE */
 
@@ -2711,6 +2784,8 @@ prim P_fwdresolve()
 	Pop;
 }
 
+
+
 #endif				/* COMPILERW */
 
 /*  Table of primitive words  */
@@ -2779,6 +2854,16 @@ static struct primfcn primt[] = {
 	{"02CONSTANT", P_2constant},
 	{"02!", P_2bang},
 	{"02@", P_2at},
+
+	{"0FDUP", P_fdup},
+	{"0FDROP", P_fdrop},
+	{"0FSWAP", P_fswap},
+	{"0FOVER", P_fover},
+	{"0FROT", P_frot},
+	{"0FVARIABLE", P_fvariable},
+	{"0FCONSTANT", P_fconstant},
+	{"0F!", P_fbang},
+	{"0F@", P_fat},
 #endif				/* DOUBLE */
 
 	{"0VARIABLE", P_variable},
@@ -2840,6 +2925,7 @@ static struct primfcn primt[] = {
 	{"0F.", P_fdot},
 	{"0FLOAT", P_float},
 	{"0FIX", P_fix},
+
 #ifdef MATH
 	{"0ACOS", P_acos},
 	{"0ASIN", P_asin},
