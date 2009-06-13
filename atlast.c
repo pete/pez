@@ -397,7 +397,8 @@ char **cp;
 		}
 
 		/* See if this token is a comment open delimiter.  If so, set to
-		   ignore all characters until the matching comment close delimiter. */
+		   ignore all characters until the matching comment close
+		   delimiter. */
 
 		if(strcmp(tokbuf, "(") == 0) {
 			while(*sp != EOS) {
@@ -439,8 +440,9 @@ char **cp;
 			}
 #endif
 #ifdef REAL
-			if(sscanf(tokbuf, "%lf%c", &tokreal, &tc) == 1)
+			if(sscanf(tokbuf, "%lf%c", &tokreal, &tc) == 1){
 				return TokReal;
+			}
 #endif
 		}
 		return TokWord;
@@ -1169,11 +1171,11 @@ prim P_strform()
 #ifdef REAL
 prim P_fstrform()
 {				/* Format real using sprintf() *//* rvalue "%6.2f" str -- */
-	Sl(4);
+	Sl(2 + Realsize);
 	Hpc(S0);
 	Hpc(S1);
-	V sprintf((char *)S0, (char *)S1, REAL1);
-	Npop(4);
+	sprintf((char *)S0, (char *)S1, ((atl_real *)(stk - 2))[-1]);
+	Npop(2 + Realsize);
 }
 #endif				/* REAL */
 
@@ -1201,7 +1203,7 @@ prim P_strreal()
 	char *eptr;
 
 	Sl(1);
-	So(2);
+	So(Realsize);
 	Hpc(S0);
 	fsu.fs = strtod((char *)S0, &eptr);
 	S0 = (stackitem) eptr;
@@ -1225,10 +1227,11 @@ prim P_flit()
 	if(atl_trace) {
 		atl_real tr;
 
-		V memcpy((char *)&tr, (char *)ip, sizeof(atl_real));
+		memcpy((char *)&tr, (char *)ip, sizeof(atl_real));
 		printf("%g ", tr);
 	}
 #endif				/* TRACE */
+
 	for(i = 0; i < Realsize; i++) {
 		Push = (stackitem) * ip++;
 	}
@@ -1237,6 +1240,11 @@ prim P_flit()
 prim P_fplus()
 {				/* Add floating point numbers */
 	Sl(2 * Realsize);
+	/*
+	printf("%f + %f = ", ((atl_real *)stk)[-1], ((atl_real *)stk)[-2]);
+	((atl_real *)stk)[-2] += ((atl_real *)stk)[-1];
+	printf("%f\n", ((atl_real *)stk)[-2]);
+	*/
 	SREAL1(REAL1 + REAL0);
 	Realpop;
 }
@@ -1356,8 +1364,10 @@ prim P_fleq()
 
 prim P_fdot()
 {				/* Print floating point top of stack */
+	double f;
+	memcpy(&f, stk - 1, sizeof(double));
 	Sl(Realsize);
-	printf("%g ", REAL0);
+	printf("%f ", REAL0);
 	Realpop;
 }
 
@@ -1454,10 +1464,20 @@ prim P_tan()
 
 #ifdef CONIO
 
+prim P_hex()
+{
+	base = 16;
+}
+
+prim P_decimal()
+{
+	base = 10;
+}
+
 prim P_dot()
 {				/* Print top of stack, pop it */
 	Sl(1);
-	printf(base == 16 ? "%lX" : "%ld ", S0);
+	printf(base == 16 ? "%lX " : "%ld ", S0);
 	Pop;
 }
 
@@ -1465,7 +1485,7 @@ prim P_question()
 {				/* Print value at address */
 	Sl(1);
 	Hpc(S0);
-	printf(base == 16 ? "%lX" : "%ld ", *((stackitem *) S0));
+	printf(base == 16 ? "%lX " : "%ld ", *((stackitem *) S0));
 	Pop;
 }
 
@@ -1483,7 +1503,7 @@ prim P_dots()
 		printf("Empty.");
 	else {
 		for(tsp = stack; tsp < stk; tsp++) {
-			printf(base == 16 ? "%lX" : "%ld ", *tsp);
+			printf(base == 16 ? "%lX " : "%ld ", *tsp);
 		}
 	}
 }
@@ -3027,6 +3047,8 @@ static struct primfcn primt[] = {
 #endif				/* COMPILERW */
 
 #ifdef CONIO
+	{"0HEX", P_hex},
+	{"0DECIMAL", P_decimal},
 	{"0.", P_dot},
 	{"0?", P_question},
 	{"0CR", P_cr},
@@ -3626,8 +3648,8 @@ char *sp;
 			if(strncmp(sp + 3, proname[i].pname,
 				   strlen(proname[i].pname)) == 0) {
 				if((ap = strchr(sp + 3, ' ')) != NULL) {
-					V sscanf(ap + 1, "%li",
-						 proname[i].pparam);
+					sscanf(ap + 1, "%li",
+							proname[i].pparam);
 #ifdef PROLOGUEDEBUG
 					printf("Prologue set %sto %ld\n",
 						 proname[i].pname,
@@ -3827,7 +3849,10 @@ char *sp;
 
 				Ho(Realsize + 1);
 				Hstore = s_flit;	/* Push (flit) */
+
 				tru.r = tokreal;
+				fflush(stderr);
+
 				for(i = 0; i < Realsize; i++) {
 					Hstore = tru.s[i];
 				}
@@ -3837,6 +3862,8 @@ char *sp;
 					atl_real r;
 					stackitem s[Realsize];
 				} tru;
+
+				fflush(stderr);
 
 				So(Realsize);
 				tru.r = tokreal;

@@ -271,19 +271,26 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Realpop  stk -= Realsize      /* Pop real from stack */
 #define Realpop2 stk -= (2 * Realsize) /* Pop two reals from stack */
 
+/* FIXME TODO testing this stuff...
 #ifdef ALIGNMENT
 #define REAL0 *((atl_real *) memcpy((char *) &rbuf0, (char *) &S1, sizeof(atl_real)))
 #define REAL1 *((atl_real *) memcpy((char *) &rbuf1, (char *) &S3, sizeof(atl_real)))
 #define REAL2 *((atl_real *) memcpy((char *) &rbuf2, (char *) &S5, sizeof(atl_real)))
 #define SREAL0(x) rbuf2=(x); (void)memcpy((char *) &S1, (char *) &rbuf2, sizeof(atl_real))
-#define SREAL1(x) rbuf2=(x); (void)memcpy((char *) &S3, (char *) &rbuf2, sizeof(atl_real))
+#define SREAL1(x) rbuf2=(x); (void)memcpy((char *) stk - Realsize, (char *) &rbuf2, sizeof(atl_real))
 #else
-#define REAL0	*((atl_real *) &S1)   /* First real on stack */
-#define REAL1	*((atl_real *) &S3)   /* Second real on stack */
-#define REAL2	*((atl_real *) &S5)   /* Third real on stack */
-#define SREAL0(x) *((atl_real *) &S1) = (x)
-#define SREAL1(x) *((atl_real *) &S3) = (x)
+#define REAL0	*((atl_real *) &S1)   // First real on stack
+#define REAL1	*((atl_real *) &S3)   // Second real on stack
+#define REAL2	*((atl_real *) &S5)   // Third real on stack
+#define SREAL0(x) *((atl_real *) stk) = (x)
+#define SREAL1(x) *((atl_real *) stk - Realsize) = (x)
 #endif
+*/
+#define REAL0 ((atl_real *)stk)[-1]
+#define REAL1 ((atl_real *)stk)[-2]
+#define REAL2 ((atl_real *)stk)[-3]
+#define SREAL0(x) REAL0 = (x)
+#define SREAL1(x) REAL1 = (x)
 
 /*  File I/O definitions (used only if FILEIO is configured).  */
 
@@ -291,4 +298,4 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 					 random number generator */
 #define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {V printf("\nNot a file\n");return;}
 #define FileD(x)  ((FILE *) *(((stackitem *) (x)) + 1))
-#define Isopen(x) if (FileD(x) == NULL) {V printf("\nFile not open\n");return;}
+#define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
