@@ -155,7 +155,7 @@ char *argv[];
 	   the main ATLAST execution loop. */
 
 #ifndef HIGHC
-	V signal(SIGINT, ctrlc);
+	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
 	while(TRUE) {
 		char t[132];
