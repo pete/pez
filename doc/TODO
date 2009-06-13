@@ -1,15 +1,9 @@
 These are the things that remain to be done to make Atlast a workable VM
 for Roboto.
 
-* Get the tests to pass under x86-64
-	* Negation
-	* Float size assumptions
-
 * Make it buildable as a .so.
 
 * Misc cleanup
-	* There are a couple of idioms (like casting printf/memcpy/etc. to void)
-	that are used as optimization hints to ancient compilers.
 	* Make my own idioms conform a little more to the Atlast codebase.
 
 * Enable multiple instances within a single process.
@@ -21,5 +15,3 @@ for Roboto.
 * Add a C ffi
 	* Add support for dlload et al
 	* Some nice wrapping for same
-
-* _Maybe_ tweak the parser so that 
