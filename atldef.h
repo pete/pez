@@ -171,7 +171,7 @@ extern char *atl_fgetsp();
 #ifdef __TURBOC__
 #define  Keyhit()   (kbhit() ? getch() : 0)
 /* DOS needs poll to detect break */
-#define  Keybreak() { static int n=0; if ((n = (n+1) & 127) == 0) V kbhit(); }
+#define  Keybreak() { static int n=0; if ((n = (n+1) & 127) == 0) kbhit(); }
 #ifdef __MSDOS__
 #define MSDOS
 #endif
