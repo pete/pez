@@ -67,3 +67,6 @@ lint:	lintatlast
 
 lintatlast:
 	lint atlast.c atlmain.c $(LIBRARIES) $(ATLCONFIG)
+
+repl: atlast
+	rlwrap ./atlast
