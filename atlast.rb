@@ -20,3 +20,13 @@ module Atlast
 		attach_function *fdef
 	}
 end
+
+if __FILE__ == $0
+	include Atlast
+	atl_init
+	loop {
+		print "-> "
+		$stdout.flush
+		atl_eval(gets || exit)
+	}
+end
