@@ -94,8 +94,6 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 #define EOS     '\0'		/* End of string characters */
 
-#define V	(void)		/* Force result to void */
-
 #define Truth	-1L		/* Stack value for truth */
 #define Falsity 0L		/* Stack value for falsity */
 
@@ -255,10 +253,10 @@ unsigned int size;
 {
 	char *cp = malloc(size);
 
-/* printf("\nAlloc %u", size); */
+	/* printf("\nAlloc %u", size); */
 	if(cp == NULL) {
-		V fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n",
-			  size);
+		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n",
+			size);
 		abort();
 	}
 	return cp;
@@ -440,7 +438,7 @@ char **cp;
 			}
 #endif
 #ifdef REAL
-			if(sscanf(tokbuf, "%lf%c", &tokreal, &tc) == 1){
+			if(sscanf(tokbuf, "%lf%c", &tokreal, &tc) == 1) {
 				return TokReal;
 			}
 #endif
@@ -512,13 +510,13 @@ FILE *stream;
 		if(ch == '\r') {
 			ch = getc(stream);
 			if(ch != '\n')
-				V ungetc(ch, stream);
+				ungetc(ch, stream);
 			break;
 		}
 		if(ch == '\n') {
 			ch = getc(stream);
 			if(ch != '\r')
-				V ungetc(ch, stream);
+				ungetc(ch, stream);
 			break;
 		}
 		if(i < (n - 1))
@@ -541,17 +539,17 @@ void atl_memstat()
 	printf("  Memory Area     usage     used    allocated   in use \n");
 
 	printf(fmt, "Stack",
-		 ((long)(stk - stack)),
-		 ((long)(stackmax - stack)),
-		 atl_stklen, (100L * (stk - stack)) / atl_stklen);
+	       ((long) (stk - stack)),
+	       ((long) (stackmax - stack)),
+	       atl_stklen, (100L * (stk - stack)) / atl_stklen);
 	printf(fmt, "Return stack",
-		 ((long)(rstk - rstack)),
-		 ((long)(rstackmax - rstack)),
-		 atl_rstklen, (100L * (rstk - rstack)) / atl_rstklen);
+	       ((long) (rstk - rstack)),
+	       ((long) (rstackmax - rstack)),
+	       atl_rstklen, (100L * (rstk - rstack)) / atl_rstklen);
 	printf(fmt, "Heap",
-		 ((long)(hptr - heap)),
-		 ((long)(heapmax - heap)),
-		 atl_heaplen, (100L * (hptr - heap)) / atl_heaplen);
+	       ((long) (hptr - heap)),
+	       ((long) (heapmax - heap)),
+	       atl_heaplen, (100L * (hptr - heap)) / atl_heaplen);
 }
 #endif				/* MEMSTAT */
 
@@ -565,9 +563,9 @@ static void enter(tkname)
 char *tkname;
 {
 	/* Allocate name buffer */
-	createword->wname = alloc(((unsigned int)strlen(tkname) + 2));
+	createword->wname = alloc(((unsigned int) strlen(tkname) + 2));
 	createword->wname[0] = 0;	/* Clear flags */
-	V strcpy(createword->wname + 1, tkname);	/* Copy token to name buffer */
+	strcpy(createword->wname + 1, tkname);	/* Copy token to name buffer */
 	createword->wnext = dict;	/* Chain rest of dictionary to word */
 	dict = createword;	/* Put word at head of dictionary */
 }
@@ -765,8 +763,8 @@ prim P_not()
 prim P_shift()
 {				/* Shift:  value nbits -- value */
 	Sl(1);
-	S1 = (S0 < 0) ? (((unsigned long)S1) >> (-S0)) :
-	    (((unsigned long)S1) << S0);
+	S1 = (S0 < 0) ? (((unsigned long) S1) >> (-S0)) :
+	    (((unsigned long) S1) << S0);
 	Pop;
 }
 
@@ -892,7 +890,7 @@ prim P_cbang()
 {				/* Store byte value into address */
 	Sl(2);
 	Hpc(S0);
-	*((unsigned char *)S0) = S1;
+	*((unsigned char *) S0) = S1;
 	Pop2;
 }
 
@@ -900,7 +898,7 @@ prim P_cat()
 {				/* Fetch byte value from address */
 	Sl(1);
 	Hpc(S0);
-	S0 = *((unsigned char *)S0);
+	S0 = *((unsigned char *) S0);
 }
 
 prim P_ccomma()
@@ -909,7 +907,7 @@ prim P_ccomma()
 
 	Sl(1);
 	Ho(1);
-	chp = ((unsigned char *)hptr);
+	chp = ((unsigned char *) hptr);
 	*chp++ = S0;
 	hptr = (stackitem *) chp;
 	Pop;
@@ -921,7 +919,7 @@ prim P_cequal()
 	    (sizeof(stackitem));
 
 	if(n != 0) {
-		char *chp = ((char *)hptr);
+		char *chp = ((char *) hptr);
 
 		chp += sizeof(stackitem) - n;
 		hptr = ((stackitem *) chp);
@@ -990,7 +988,7 @@ prim P_floatsize()
 
 #ifdef ARRAY
 prim P_arraysub()
-{	/* Array subscript calculation *//* sub1 sub2 ... subn -- addr */
+{				/* Array subscript calculation *//* sub1 sub2 ... subn -- addr */
 	int i, offset, esize, nsubs;
 	stackitem *array;
 	stackitem *isp;
@@ -1019,12 +1017,13 @@ prim P_arraysub()
 	   and the fundamental element size, then skip the subscript bounds
 	   words (as many as there are subscripts).  Then, finally, we
 	   can add the calculated offset into the array. */
-	S0 = (stackitem) (((char *)(((stackitem *) curword) +
-				    Dictwordl + 2 + nsubs)) + (esize * offset));
+	S0 = (stackitem) (((char *) (((stackitem *) curword) +
+				     Dictwordl + 2 + nsubs)) +
+			  (esize * offset));
 }
 
 prim P_array()
-{	/* Declare array *//* sub1 sub2 ... subn n esize -- array */
+{				/* Declare array *//* sub1 sub2 ... subn n esize -- array */
 	int i, nsubs, asize = 1;
 	stackitem *isp;
 
@@ -1074,10 +1073,10 @@ prim P_array()
 prim P_strlit()
 {				/* Push address of string literal */
 	So(1);
-	Push = (stackitem) (((char *)ip) + 1);
+	Push = (stackitem) (((char *) ip) + 1);
 #ifdef TRACE
 	if(atl_trace) {
-		printf("\"%s\" ", (((char *)ip) + 1));
+		printf("\"%s\" ", (((char *) ip) + 1));
 	}
 #endif				/* TRACE */
 	Skipstring;		/* Advance IP past it */
@@ -1098,7 +1097,7 @@ prim P_strcpy()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	V strcpy((char *)S0, (char *)S1);
+	strcpy((char *) S0, (char *) S1);
 	Pop2;
 }
 
@@ -1107,7 +1106,7 @@ prim P_strcat()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	V strcat((char *)S0, (char *)S1);
+	strcat((char *) S0, (char *) S1);
 	Pop2;
 }
 
@@ -1115,7 +1114,7 @@ prim P_strlen()
 {				/* Take length of string on stack top */
 	Sl(1);
 	Hpc(S0);
-	S0 = strlen((char *)S0);
+	S0 = strlen((char *) S0);
 }
 
 prim P_strcmp()
@@ -1125,7 +1124,7 @@ prim P_strcmp()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	i = strcmp((char *)S1, (char *)S0);
+	i = strcmp((char *) S1, (char *) S0);
 	S1 = (i == 0) ? 0L : ((i > 0) ? 1L : -1L);
 	Pop;
 }
@@ -1135,7 +1134,7 @@ prim P_strchar()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	S1 = (stackitem) strchr((char *)S1, *((char *)S0));
+	S1 = (stackitem) strchr((char *) S1, *((char *) S0));
 	Pop;
 }
 
@@ -1147,12 +1146,12 @@ prim P_substr()
 	Sl(4);
 	Hpc(S0);
 	Hpc(S3);
-	sl = strlen(ss = ((char *)S3));
+	sl = strlen(ss = ((char *) S3));
 	se = ss + sl;
-	sp = ((char *)S3) + S2;
+	sp = ((char *) S3) + S2;
 	if((sn = S1) < 0)
 		sn = 999999L;
-	ds = (char *)S0;
+	ds = (char *) S0;
 	while(sn-- && (sp < se))
 		*ds++ = *sp++;
 	*ds++ = EOS;
@@ -1164,7 +1163,7 @@ prim P_strform()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	V sprintf((char *)S0, (char *)S1, S2);
+	sprintf((char *) S0, (char *) S1, S2);
 	Npop(3);
 }
 
@@ -1174,7 +1173,7 @@ prim P_fstrform()
 	Sl(2 + Realsize);
 	Hpc(S0);
 	Hpc(S1);
-	sprintf((char *)S0, (char *)S1, ((atl_real *)(stk - 2))[-1]);
+	sprintf((char *) S0, (char *) S1, ((atl_real *) (stk - 2))[-1]);
 	Npop(2 + Realsize);
 }
 #endif				/* REAL */
@@ -1187,7 +1186,7 @@ prim P_strint()
 	Sl(1);
 	So(1);
 	Hpc(S0);
-	is = strtoul((char *)S0, &eptr, 0);
+	is = strtoul((char *) S0, &eptr, 0);
 	S0 = (stackitem) eptr;
 	Push = is;
 }
@@ -1205,7 +1204,7 @@ prim P_strreal()
 	Sl(1);
 	So(Realsize);
 	Hpc(S0);
-	fsu.fs = strtod((char *)S0, &eptr);
+	fsu.fs = strtod((char *) S0, &eptr);
 	S0 = (stackitem) eptr;
 	for(i = 0; i < Realsize; i++) {
 		Push = fsu.fss[i];
@@ -1227,7 +1226,7 @@ prim P_flit()
 	if(atl_trace) {
 		atl_real tr;
 
-		memcpy((char *)&tr, (char *)ip, sizeof(atl_real));
+		memcpy((char *) &tr, (char *) ip, sizeof(atl_real));
 		printf("%g ", tr);
 	}
 #endif				/* TRACE */
@@ -1241,10 +1240,10 @@ prim P_fplus()
 {				/* Add floating point numbers */
 	Sl(2 * Realsize);
 	/*
-	printf("%f + %f = ", ((atl_real *)stk)[-1], ((atl_real *)stk)[-2]);
-	((atl_real *)stk)[-2] += ((atl_real *)stk)[-1];
-	printf("%f\n", ((atl_real *)stk)[-2]);
-	*/
+	   printf("%f + %f = ", ((atl_real *)stk)[-1], ((atl_real *)stk)[-2]);
+	   ((atl_real *)stk)[-2] += ((atl_real *)stk)[-1];
+	   printf("%f\n", ((atl_real *)stk)[-2]);
+	 */
 	SREAL1(REAL1 + REAL0);
 	Realpop;
 }
@@ -1387,7 +1386,7 @@ prim P_fix()
 	stackitem i;
 
 	Sl(Realsize);
-	i = (int)REAL0;
+	i = (int) REAL0;
 	Realpop;
 	Push = i;
 }
@@ -1520,7 +1519,7 @@ prim P_dotparen()
 	if(ip == NULL) {	/* If interpreting */
 		stringlit = True;	/* Set to print next string constant */
 	} else {		/* Otherwise, */
-		printf("%s", ((char *)ip) + 1);	/* print string literal
+		printf("%s", ((char *) ip) + 1);	/* print string literal
 							   in in-line code. */
 		Skipstring;	/* And advance IP past it */
 	}
@@ -1530,7 +1529,7 @@ prim P_type()
 {				/* Print string pointed to by stack */
 	Sl(1);
 	Hpc(S0);
-	printf("%s", (char *)S0);
+	printf("%s", (char *) S0);
 	Pop;
 }
 
@@ -1579,7 +1578,7 @@ prim P_fopen()
 	Hpc(S2);
 	Hpc(S0);
 	Isfile(S0);
-	fd = fopen((char *)S2, fopenmodes[S1]);
+	fd = fopen((char *) S2, fopenmodes[S1]);
 	if(fd == NULL) {
 		stat = Falsity;
 	} else {
@@ -1596,7 +1595,7 @@ prim P_fclose()
 	Hpc(S0);
 	Isfile(S0);
 	Isopen(S0);
-	V fclose(FileD(S0));
+	fclose(FileD(S0));
 	*(((stackitem *) S0) + 1) = (stackitem) NULL;
 	Pop;
 }
@@ -1605,7 +1604,7 @@ prim P_fdelete()
 {				/* Delete file: fname -- flag */
 	Sl(1);
 	Hpc(S0);
-	S0 = (unlink((char *)S0) == 0) ? Truth : Falsity;
+	S0 = (unlink((char *) S0) == 0) ? Truth : Falsity;
 }
 
 prim P_fgetline()
@@ -1614,7 +1613,7 @@ prim P_fgetline()
 	Hpc(S0);
 	Isfile(S1);
 	Isopen(S1);
-	if(atl_fgetsp((char *)S0, 132, FileD(S1)) == NULL) {
+	if(atl_fgetsp((char *) S0, 132, FileD(S1)) == NULL) {
 		S1 = Falsity;
 	} else {
 		S1 = Truth;
@@ -1628,7 +1627,7 @@ prim P_fputline()
 	Hpc(S1);
 	Isfile(S0);
 	Isopen(S0);
-	if(fputs((char *)S1, FileD(S0)) == EOF) {
+	if(fputs((char *) S1, FileD(S0)) == EOF) {
 		S1 = Falsity;
 	} else {
 		S1 = putc('\n', FileD(S0)) == EOF ? Falsity : Truth;
@@ -1642,7 +1641,7 @@ prim P_fread()
 	Hpc(S0);
 	Isfile(S2);
 	Isopen(S2);
-	S2 = fread((char *)S0, 1, ((int)S1), FileD(S2));
+	S2 = fread((char *) S0, 1, ((int) S1), FileD(S2));
 	Pop2;
 }
 
@@ -1652,7 +1651,7 @@ prim P_fwrite()
 	Hpc(S1);
 	Isfile(S0);
 	Isopen(S0);
-	S2 = fwrite((char *)S1, 1, ((int)S2), FileD(S0));
+	S2 = fwrite((char *) S1, 1, ((int) S2), FileD(S0));
 	Pop2;
 }
 
@@ -1669,7 +1668,7 @@ prim P_fputc()
 	Sl(2);
 	Isfile(S0);
 	Isopen(S0);
-	S1 = putc((char)S1, FileD(S0));
+	S1 = putc((char) S1, FileD(S0));
 	Pop;
 }
 
@@ -1686,7 +1685,7 @@ prim P_fseek()
 	Sl(3);
 	Isfile(S0);
 	Isopen(S0);
-	V fseek(FileD(S0), (long)S2, (int)S1);
+	fseek(FileD(S0), (long) S2, (int) S1);
 	Npop(3);
 }
 
@@ -1719,7 +1718,7 @@ prim P_evaluate()
 
 	Sl(1);
 	Hpc(S0);
-	estring = (char *)S0;	/* Get string to evaluate */
+	estring = (char *) S0;	/* Get string to evaluate */
 	Pop;			/* Pop so it sees arguments below it */
 	atl_mark(&mk);		/* Mark in case of error */
 	ip = NULL;		/* Fool atl_eval into interp state */
@@ -1978,73 +1977,109 @@ prim P_2at()
 
 prim P_fover()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_over(); break;
-		case 2: P_2over(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_over();
+		break;
+	case 2:
+		P_2over();
+		break;
 	}
 }
 
 prim P_fdrop()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_drop(); break;
-		case 2: P_2drop(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_drop();
+		break;
+	case 2:
+		P_2drop();
+		break;
 	}
 }
 
 prim P_fdup()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_dup(); break;
-		case 2: P_2dup(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_dup();
+		break;
+	case 2:
+		P_2dup();
+		break;
 	}
 }
 
 prim P_fswap()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_swap(); break;
-		case 2: P_2swap(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_swap();
+		break;
+	case 2:
+		P_2swap();
+		break;
 	}
 }
 
 prim P_frot()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_rot(); break;
-		case 2: P_2rot(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_rot();
+		break;
+	case 2:
+		P_2rot();
+		break;
 	}
 }
 
 prim P_fvariable()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_variable(); break;
-		case 2: P_2variable(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_variable();
+		break;
+	case 2:
+		P_2variable();
+		break;
 	}
 }
 
 prim P_fconstant()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_constant(); break;
-		case 2: P_2constant(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_constant();
+		break;
+	case 2:
+		P_2constant();
+		break;
 	}
 }
 
 prim P_fbang()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_bang(); break;
-		case 2: P_2bang(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_bang();
+		break;
+	case 2:
+		P_2bang();
+		break;
 	}
 }
 
 prim P_fat()
 {
-	switch(sizeof(double) / sizeof(long)) {
-		case 1: P_at(); break;
-		case 2: P_2at(); break;
+	switch (sizeof(double) / sizeof(long)) {
+	case 1:
+		P_at();
+		break;
+	case 2:
+		P_2at();
+		break;
 	}
 }
 #endif				/* DOUBLE */
@@ -2056,7 +2091,7 @@ prim P_dolit()
 	So(1);
 #ifdef TRACE
 	if(atl_trace) {
-		printf("%ld ", (long)*ip);
+		printf("%ld ", (long) *ip);
 	}
 #endif
 	Push = (stackitem) * ip++;	/* Push the next datum from the
@@ -2359,7 +2394,7 @@ prim P_abortq()
 		stringlit = True;	/* Set string literal expected */
 		Compconst(s_abortq);	/* Compile ourselves */
 	} else {
-		printf("%s", (char *)ip);	/* Otherwise, print string literal
+		printf("%s", (char *) ip);	/* Otherwise, print string literal
 						   in in-line code. */
 #ifdef WALKBACK
 		pwalkback();
@@ -2561,7 +2596,7 @@ prim P_find()
 	Sl(1);
 	So(1);
 	Hpc(S0);
-	V strcpy(tokbuf, (char *)S0);	/* Use built-in token buffer... */
+	strcpy(tokbuf, (char *) S0);	/* Use built-in token buffer... */
 	dw = lookup(tokbuf);	/* So ucase() in lookup() doesn't wipe */
 	/* the token on the stack */
 	if(dw != NULL) {
@@ -2586,7 +2621,7 @@ prim P_tolink()
 	if(DfOff(wnext) != 0)
 		printf("\n>LINK Foulup--wnext is not at zero!\n");
 /*  Sl(1);
-	    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
+		    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
 
 prim P_frombody()
@@ -2606,7 +2641,7 @@ prim P_fromlink()
 	if(DfOff(wnext) != 0)
 		printf("\nLINK> Foulup--wnext is not at zero!\n");
 /*  Sl(1);
-	    S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
+		    S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
 
 #undef DfOff
@@ -2621,8 +2656,8 @@ prim P_nametolink()
 	/*
 	   S0 -= DfTran(wnext, wname);
 	 */
-	from = (char *)&(dict->wnext);
-	to = (char *)&(dict->wname);
+	from = (char *) &(dict->wnext);
+	to = (char *) &(dict->wname);
 	S0 -= (to - from);
 }
 
@@ -2634,8 +2669,8 @@ prim P_linktoname()
 	/*
 	   S0 += DfTran(wnext, wname);
 	 */
-	from = (char *)&(dict->wnext);
-	to = (char *)&(dict->wname);
+	from = (char *) &(dict->wnext);
+	to = (char *) &(dict->wname);
 	S0 += (to - from);
 }
 
@@ -2650,7 +2685,7 @@ prim P_fetchname()
 	   futzing with word dictionary items on the heap in the first
 	   place, there's a billion other ways to bring us down at
 	   his command. */
-	V strcpy((char *)S0, *((char **)S1) + 1);
+	strcpy((char *) S0, *((char **) S1) + 1);
 	Pop2;
 }
 
@@ -2662,10 +2697,10 @@ prim P_storename()
 	Sl(2);			/* string nfa -- */
 	Hpc(S0);		/* See comments in P_fetchname above */
 	Hpc(S1);		/* checking name pointers */
-	tflags = **((char **)S0);
-	free(*((char **)S0));
-	*((char **)S0) = cp = alloc((unsigned int)(strlen((char *)S1) + 2));
-	V strcpy(cp + 1, (char *)S1);
+	tflags = **((char **) S0);
+	free(*((char **) S0));
+	*((char **) S0) = cp = alloc((unsigned int) (strlen((char *) S1) + 2));
+	strcpy(cp + 1, (char *) S1);
 	*cp = tflags;
 	Pop2;
 }
@@ -2677,7 +2712,7 @@ prim P_system()
 {				/* string -- status */
 	Sl(1);
 	Hpc(S0);
-	S0 = system((char *)S0);
+	S0 = system((char *) S0);
 }
 #endif				/* SYSTEM */
 
@@ -3122,7 +3157,7 @@ struct primfcn *pt;
 #endif				/* READONLYSTRINGS */
 #endif				/* WORDSUSED */
 
-	nw = (dictword *) alloc((unsigned int)(n * sizeof(dictword)));
+	nw = (dictword *) alloc((unsigned int) (n * sizeof(dictword)));
 
 	nw[n - 1].wnext = dict;
 	dict = nw;
@@ -3327,7 +3362,7 @@ void atl_init()
 
 		if(stack == NULL) {	/* Allocate stack if needed */
 			stack = (stackitem *)
-			    alloc(((unsigned int)atl_stklen) *
+			    alloc(((unsigned int) atl_stklen) *
 				  sizeof(stackitem));
 		}
 		stk = stackbot = stack;
@@ -3337,7 +3372,7 @@ void atl_init()
 		stacktop = stack + atl_stklen;
 		if(rstack == NULL) {	/* Allocate return stack if needed */
 			rstack = (dictword ***)
-			    alloc(((unsigned int)atl_rstklen) *
+			    alloc(((unsigned int) atl_rstklen) *
 				  sizeof(dictword **));
 		}
 		rstk = rstackbot = rstack;
@@ -3348,7 +3383,7 @@ void atl_init()
 #ifdef WALKBACK
 		if(wback == NULL) {
 			wback =
-			    (dictword **) alloc(((unsigned int)atl_rstklen) *
+			    (dictword **) alloc(((unsigned int) atl_rstklen) *
 						sizeof(dictword *));
 		}
 		wbptr = wback;
@@ -3368,16 +3403,16 @@ void atl_init()
 			   stackitems. */
 			atl_ltempstr += sizeof(stackitem) -
 			    (atl_ltempstr % sizeof(stackitem));
-			cp = alloc((((unsigned int)atl_heaplen) *
+			cp = alloc((((unsigned int) atl_heaplen) *
 				    sizeof(stackitem)) +
-				   ((unsigned int)(atl_ntempstr *
-						   atl_ltempstr)));
+				   ((unsigned int) (atl_ntempstr *
+						    atl_ltempstr)));
 			heapbot = (stackitem *) cp;
-			strbuf = (char **)alloc(((unsigned int)atl_ntempstr) *
-						sizeof(char *));
+			strbuf = (char **) alloc(((unsigned int) atl_ntempstr) *
+						 sizeof(char *));
 			for(i = 0; i < atl_ntempstr; i++) {
 				strbuf[i] = cp;
-				cp += ((unsigned int)atl_ltempstr);
+				cp += ((unsigned int) atl_ltempstr);
 			}
 			cstrbuf = 0;
 			heap = (stackitem *) cp;	/* Allocatable heap starts after
@@ -3441,7 +3476,7 @@ void atl_init()
 dictword *atl_lookup(name)
 char *name;
 {
-	V strcpy(tokbuf, name);	/* Use built-in token buffer... */
+	strcpy(tokbuf, name);	/* Use built-in token buffer... */
 	ucase(tokbuf);		/* so ucase() doesn't wreck arg string */
 	return lookup(tokbuf);	/* Now use normal lookup() on it */
 }
@@ -3517,7 +3552,7 @@ int size;
 		Hstore = 0;	/* Allocate heap area and clear it */
 		isize--;
 	}
-	V strcpy(tokbuf, name);	/* Use built-in token buffer... */
+	strcpy(tokbuf, name);	/* Use built-in token buffer... */
 	ucase(tokbuf);		/* so ucase() doesn't wreck arg string */
 	enter(tokbuf);		/* Make dictionary entry for it */
 	di = createword;	/* Save word address */
@@ -3649,11 +3684,11 @@ char *sp;
 				   strlen(proname[i].pname)) == 0) {
 				if((ap = strchr(sp + 3, ' ')) != NULL) {
 					sscanf(ap + 1, "%li",
-							proname[i].pparam);
+					       proname[i].pparam);
 #ifdef PROLOGUEDEBUG
 					printf("Prologue set %sto %ld\n",
-						 proname[i].pname,
-						 *proname[i].pparam);
+					       proname[i].pname,
+					       *proname[i].pparam);
 #endif
 					return 1;
 				}
@@ -3703,9 +3738,9 @@ char *sp;
 					dictword *dw = dict;
 
 					/* Pass 1.  Rip through the dictionary
-					  to make sure this word is not past the
-					  marker that guards against forgetting
-					  too much.  */
+					   to make sure this word is not past the
+					   marker that guards against forgetting
+					   too much.  */
 
 					while(dw != NULL) {
 						if(dw == dictprot) {
@@ -3884,8 +3919,8 @@ char *sp;
 					     sizeof(stackitem)) /
 					    sizeof(stackitem);
 					Ho(l);
-					*((char *)hptr) = l;	/* Store in-line skip length */
-					V strcpy(((char *)hptr) + 1, tokbuf);
+					*((char *) hptr) = l;	/* Store in-line skip length */
+					strcpy(((char *) hptr) + 1, tokbuf);
 					hptr += l;
 				} else {
 					printf("%s", tokbuf);
@@ -3900,15 +3935,16 @@ char *sp;
 					/* Compile string literal instruction, followed by
 					   in-line skip length and the string literal */
 					Hstore = s_strlit;
-					*((char *)hptr) = l;	/* Store in-line skip length */
-					V strcpy(((char *)hptr) + 1, tokbuf);
+					*((char *) hptr) = l;	/* Store in-line skip length */
+					strcpy(((char *) hptr) + 1, tokbuf);
 					hptr += l;
 				} else {
 					So(1);
-					V strcpy(strbuf[cstrbuf], tokbuf);
+					strcpy(strbuf[cstrbuf], tokbuf);
 					Push = (stackitem) strbuf[cstrbuf];
 					cstrbuf =
-					    (cstrbuf + 1) % ((int)atl_ntempstr);
+					    (cstrbuf +
+					     1) % ((int) atl_ntempstr);
 				}
 			}
 			break;

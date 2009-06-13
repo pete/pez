@@ -296,6 +296,6 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #define FileSent    0x831FDF9DL       /* Courtesy Marinchip Radioactive
 					 random number generator */
-#define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {V printf("\nNot a file\n");return;}
+#define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {printf("\nNot a file\n");return;}
 #define FileD(x)  ((FILE *) *(((stackitem *) (x)) + 1))
 #define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
