@@ -6,7 +6,7 @@ VERSION = 1.2
 COPTIONS = -g -Wall -fPIC -DPIC -DREENTRANT
 CC = gcc
 
-LIBRARIES = -lm
+LIBRARIES = -lm -ldl
 
 INCLUDE =
 
