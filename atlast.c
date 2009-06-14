@@ -61,13 +61,15 @@
 #define SHORTCUTC		/* Shortcut integer comparison */
 #define STRING			/* String functions */
 #define SYSTEM			/* System command function */
+#define FFI			/* Foreign function interface */
+
 #ifndef NOMEMCHECK
 #define TRACE			/* Execution tracing */
 #define WALKBACK		/* Walkback trace */
 #define WORDSUSED		/* Logging of words used and unused */
 #endif				/* NOMEMCHECK */
-#endif				/* !INDIVIDUALLY */
 
+#endif				/* !INDIVIDUALLY */
 
 #include "atldef.h"
 
@@ -2716,6 +2718,46 @@ prim P_system()
 }
 #endif				/* SYSTEM */
 
+#ifdef FFI
+#include <dlfcn.h>
+
+/* Just a thin wrapper around the system's dlopen. 
+   ( libname flags -- libhandle )
+*/
+prim P_dlopen()
+{
+	void *lib;
+	Sl(2);
+	lib = dlopen((char *)S1, S0);
+	S1 = (long)lib;
+	Pop;
+}
+
+/*
+   Pushes the RTLD_LAZY flag onto the stack.
+   ( -- RTLD_LAZY )
+*/
+prim P_rtld_lazy()
+{
+	So(1);
+	Push = RTLD_LAZY;
+}
+
+/*
+   Resolves a symbol.
+   ( libhandle symname -- function_address )
+*/
+prim P_dlsym()
+{
+	void *f;
+	Sl(2);
+	f = dlsym((void *)S1, (char *)S0);
+	Pop;
+	S0 = (long)f;
+}
+
+#endif				// FFI
+
 #ifdef TRACE
 prim P_trace()
 {				/* Set or clear tracing of execution */
@@ -2838,8 +2880,6 @@ prim P_fwdresolve()
 	*((stackitem *) S0) = offset;
 	Pop;
 }
-
-
 
 #endif				/* COMPILERW */
 
@@ -3027,6 +3067,13 @@ static struct primfcn primt[] = {
 
 #ifdef SYSTEM
 	{"0SYSTEM", P_system},
+#endif
+#ifdef FFI
+	{"0DLOPEN", P_dlopen},
+	{"0DLSYM", P_dlsym},
+
+	// dl* flags:
+	{"0RTLD_LAZY", P_rtld_lazy},
 #endif
 #ifdef TRACE
 	{"0TRACE", P_trace},

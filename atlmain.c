@@ -19,8 +19,6 @@
 #define FALSE	0
 #define TRUE	1
 
-#define V   (void)
-
 /*  Globals imported  */
 
 #ifndef HIGHC
@@ -108,12 +106,12 @@ char *argv[];
 				return 1;
 			}
 			fname = TRUE;
-			V strcpy(fn, cp);
+			strcpy(fn, cp);
 			if(strchr(fn, '.') == NULL)
-				V strcat(fn, ".atl");
+				strcat(fn, ".atl");
 			ifp = fopen(fn, "r");
 			if(ifp == NULL) {
-				V fprintf(stderr, "Unable to open file %s\n",
+				fprintf(stderr, "Unable to open file %s\n",
 					  fn);
 				return 1;
 			}
@@ -128,9 +126,9 @@ char *argv[];
 		char fn[132];
 		FILE *fp;
 
-		V strcpy(fn, include[i]);
+		strcpy(fn, include[i]);
 		if(strchr(fn, '.') == NULL)
-			V strcat(fn, ".atl");
+			strcat(fn, ".atl");
 		fp = fopen(fn,
 #ifdef FBmode
 			   "rb"
@@ -139,14 +137,14 @@ char *argv[];
 #endif
 		    );
 		if(fp == NULL) {
-			V fprintf(stderr, "Unable to open include file %s\n",
+			fprintf(stderr, "Unable to open include file %s\n",
 				  include[i]);
 			return 1;
 		}
 		stat = atl_load(fp);
-		V fclose(fp);
+		fclose(fp);
 		if(stat != ATL_SNORM) {
-			V printf("\nError %d in include file %s\n", stat,
+			printf("\nError %d in include file %s\n", stat,
 				 include[i]);
 		}
 	}
@@ -155,13 +153,13 @@ char *argv[];
 	   the main ATLAST execution loop. */
 
 #ifndef HIGHC
-	V signal(SIGINT, ctrlc);
+	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
 	while(TRUE) {
 		char t[132];
 
 		if(!fname)
-			V printf(atl_comment ? "(  " :	/* Show pending comment */
+			printf(atl_comment ? "(  " :	/* Show pending comment */
 				 /* Show compiling state */
 				  (((heap != NULL) && state) ? ":> " : "-> "));
 		if(fgets(t, 132, ifp) == NULL) {
@@ -172,9 +170,9 @@ char *argv[];
 			}
 			break;
 		}
-		V atl_eval(t);
+		atl_eval(t);
 	}
 	if(!fname)
-		V printf("\n");
+		printf("\n");
 	return 0;
 }

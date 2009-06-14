@@ -4,3 +4,4 @@ atlmain.o
 primdeftest
 regout.txt
 tmp
+*.so
