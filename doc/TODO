@@ -1,10 +1,11 @@
 These are the things that remain to be done to make Atlast a workable VM
 for Roboto.
 
-* Make it buildable as a .so.
-
 * Misc cleanup
-	* Make my own idioms conform a little more to the Atlast codebase.
+	* Make my own idioms conform a little more to the Atlast codebase, where
+	  it makes sense.
+	* Fix up some of Atlast's quirks, where it makes sense.  (e.g., change
+	  'Push = x' to 'Push(x)'.)
 
 * Enable multiple instances within a single process.
 
