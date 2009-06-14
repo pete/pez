@@ -13,5 +13,6 @@ for Roboto.
 	* Also, do both if possible.
 
 * Add a C ffi
-	* Add support for dlload et al
+	* (More) support for dlload et al
 	* Some nice wrapping for same
+	* The hard part:  calling the functions!
