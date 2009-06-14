@@ -2881,8 +2881,6 @@ prim P_fwdresolve()
 	Pop;
 }
 
-
-
 #endif				/* COMPILERW */
 
 /*  Table of primitive words  */
