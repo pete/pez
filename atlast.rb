@@ -25,7 +25,7 @@ if __FILE__ == $0
 	include Atlast
 	atl_init
 	loop {
-		print "-> "
+		print "-> " if $stdin.tty?
 		$stdout.flush
 		atl_eval(gets || exit)
 	}
