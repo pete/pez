@@ -99,15 +99,15 @@ typedef enum { False = 0, True = 1 } Boolean;
 #define Truth	-1L		/* Stack value for truth */
 #define Falsity 0L		/* Stack value for falsity */
 
-/* Utility definition to get an  array's  element  count  (at  compile
-   time).   For  example:
+/* Utility definition to get an array's element count (at compile
+   time).   For example:
 
        int  arr[] = {1,2,3,4,5};
        ...
        printf("%d", ELEMENTS(arr));
 
-   would print a five.  ELEMENTS("abc") can also be used to  tell  how
-   many  bytes are in a string constant INCLUDING THE TRAILING NULL. */
+   would print a five.  ELEMENTS("abc") can also be used to tell how
+   many bytes are in a string constant INCLUDING THE TRAILING NULL. */
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
 
