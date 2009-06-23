@@ -186,7 +186,7 @@ static char *fopenmodes[] = {
 #ifndef FMspecial
 	    /* Default fopen() mode table for SVID-compatible systems not
 	       overridden by a special table above. */
-	    "", "r", "", "r+",
+	"", "r", "", "r+",
 	"", "r", "", "r+",
 	"", "", "w", "w+",
 	"", "", "w", "w+"
@@ -1478,7 +1478,7 @@ prim P_decimal()
 prim P_dot()
 {				/* Print top of stack, pop it */
 	Sl(1);
-	printf(base == 16 ? "%lX " : "%ld ", S0);
+	printf(base == 16 ? "%lx " : "%ld ", S0);
 	Pop;
 }
 
@@ -1486,13 +1486,13 @@ prim P_question()
 {				/* Print value at address */
 	Sl(1);
 	Hpc(S0);
-	printf(base == 16 ? "%lX " : "%ld ", *((stackitem *) S0));
+	printf(base == 16 ? "%lx " : "%ld ", *((stackitem *) S0));
 	Pop;
 }
 
 prim P_cr()
 {				/* Carriage return */
-	printf("\n");
+	printf("\n"); fflush(stdout);
 }
 
 prim P_dots()
@@ -1504,7 +1504,7 @@ prim P_dots()
 		printf("Empty.");
 	else {
 		for(tsp = stack; tsp < stk; tsp++) {
-			printf(base == 16 ? "%lX " : "%ld ", *tsp);
+			printf(base == 16 ? "%lx " : "%ld ", *tsp);
 		}
 	}
 }
@@ -1532,6 +1532,18 @@ prim P_type()
 	Sl(1);
 	Hpc(S0);
 	printf("%s", (char *) S0);
+	Pop;
+}
+
+/*
+   Print the string at the top of the stack, followed by \n.
+   ( string -- )
+*/
+prim P_puts()
+{
+	Sl(1);
+	// Hpc(S0);
+	puts((char *)S0);
 	Pop;
 }
 
@@ -2623,7 +2635,7 @@ prim P_tolink()
 	if(DfOff(wnext) != 0)
 		printf("\n>LINK Foulup--wnext is not at zero!\n");
 /*  Sl(1);
-		    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
+			    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
 
 prim P_frombody()
@@ -2643,7 +2655,7 @@ prim P_fromlink()
 	if(DfOff(wnext) != 0)
 		printf("\nLINK> Foulup--wnext is not at zero!\n");
 /*  Sl(1);
-		    S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
+			    S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
 
 #undef DfOff
@@ -2721,6 +2733,40 @@ prim P_system()
 #ifdef FFI
 #include <dlfcn.h>
 
+/*
+   ( libname -- status )
+   Loads a .so file that must contain at least one of the following in order
+   to be useful:
+   	1.  A function declared as prim atl_ffi_init() that performs the
+	    necessary initializations
+	2.  An array named atl_ffi_definitions with type struct primfcn that
+	    contains the definitions of new words to be added when the library
+	    is loaded.
+   If the status is false, there has been an error, which can be checked with
+   dlerror.
+*/
+prim P_ffi_load()
+{
+	void *lib;
+	void (*init)();
+	struct primfcn *defs;
+
+	Sl(1);
+	lib = dlopen((char *) S0, RTLD_NOW);
+	if(!lib) {
+		S0 = Falsity;
+		return;
+	}
+
+	init = dlsym(lib, "atl_ffi_init");
+	defs = dlsym(lib, "atl_ffi_definitions");
+	if(!(init || defs)) { S0 = Falsity; return; }
+	S0 = Truth; 
+	dlerror(); // Which clears the last error.
+	if(init) init();
+	if(defs) atl_primdef(defs);
+}
+
 /* Just a thin wrapper around the system's dlopen. 
    ( libname flags -- libhandle )
 */
@@ -2728,8 +2774,8 @@ prim P_dlopen()
 {
 	void *lib;
 	Sl(2);
-	lib = dlopen((char *)S1, S0);
-	S1 = (long)lib;
+	lib = dlopen((char *) S1, S0);
+	S1 = (long) lib;
 	Pop;
 }
 
@@ -2751,9 +2797,62 @@ prim P_dlsym()
 {
 	void *f;
 	Sl(2);
-	f = dlsym((void *)S1, (char *)S0);
+	f = dlsym((void *) S1, (char *) S0);
 	Pop;
-	S0 = (long)f;
+	S0 = (long) f;
+}
+
+/*
+   Returns the last error returned by dlopen/dlsym/dlclose.
+   ( -- error_string )
+*/
+prim P_dlerror()
+{
+	So(1);
+	Push = (long) dlerror();
+}
+
+/* 
+   Calls a void (*)() from the top of the stack.
+*/
+prim P_call_void_0()
+{
+	void (*f)() = (void (*)())S0;
+	So(1);
+	Pop;
+	f();
+}
+
+/*
+   Calls a void (*)(word) from the top of the stack.
+*/
+prim P_call_void_1w()
+{
+	void (*f)(stackitem) = (void (*)(stackitem))S0;
+	So(2);
+	f(S1);
+	Pop2;
+}
+
+/*
+   Calls a word (*)() from the top of the stack.
+*/
+prim P_call_word_0()
+{
+	stackitem (*f)() = (stackitem (*)())S0;
+	So(1);
+	S0 = f();
+}
+
+/*
+   Calls a word (*)(word) from the top of the stack.
+*/
+prim P_call_word_1w()
+{
+	stackitem (*f)(stackitem) = (stackitem (*)(stackitem))S0;
+	So(2);
+	Pop;
+	S0 = f(S0);
 }
 
 #endif				// FFI
@@ -3069,11 +3168,19 @@ static struct primfcn primt[] = {
 	{"0SYSTEM", P_system},
 #endif
 #ifdef FFI
+	{"0FFI-LOAD", P_ffi_load},
 	{"0DLOPEN", P_dlopen},
 	{"0DLSYM", P_dlsym},
+	{"0DLERROR", P_dlerror},
 
 	// dl* flags:
 	{"0RTLD_LAZY", P_rtld_lazy},
+
+	// Generic calls:
+	{"0CALL-VOID-0", P_call_void_0},
+	{"0CALL-VOID-1W", P_call_void_1w},
+	{"0CALL-WORD-0", P_call_word_0},
+	{"0CALL-WORD-1W", P_call_word_1w},
 #endif
 #ifdef TRACE
 	{"0TRACE", P_trace},
@@ -3138,6 +3245,7 @@ static struct primfcn primt[] = {
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
 	{"0TYPE", P_type},
+	{"0PUTS", P_puts},
 	{"0WORDS", P_words},
 #endif				/* CONIO */
 
@@ -3169,7 +3277,7 @@ static struct primfcn primt[] = {
 		     allocated word items, we get one buffer for all
 		     the items and link them internally within the buffer. */
 
-Exported void atl_primdef(pt)
+void atl_primdef(pt)
 struct primfcn *pt;
 {
 	struct primfcn *pf = pt;
