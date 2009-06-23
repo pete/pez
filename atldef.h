@@ -18,6 +18,9 @@
 
 */
 
+#ifndef __ATLDEF_H
+#define __ATLDEF_H
+
 #include "atlast.h"                   /* Define user linkage structures */
 
 typedef void (*codeptr)();	      /* Machine code pointer */
@@ -260,6 +263,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Ho(n)  Msh(n) if ((hptr+(n))>heaptop){heapover(); return Memerrs;}
 #define Hpc(n) if ((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){badpointer(); return Memerrs;}
 #endif
+
 #define Hstore *hptr++		      /* Store item on heap */
 #define state  (*heap)		      /* Execution state is first heap word */
 
@@ -299,3 +303,5 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {printf("\nNot a file\n");return;}
 #define FileD(x)  ((FILE *) *(((stackitem *) (x)) + 1))
 #define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
+
+#endif

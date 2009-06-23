@@ -17,6 +17,9 @@
 
 */
 
+#ifndef __ATLAST_H
+#define __ATLAST_H
+
 typedef long atl_int;		      /* Stack integer type */
 typedef double atl_real;	      /* Real number type */
 
@@ -59,3 +62,5 @@ extern atl_int atl_errline;	      /* Line number where last atl_load()
 extern void atl_init(), atl_mark(), atl_unwind(), atl_break();
 extern int atl_eval(), atl_load();
 extern void atl_memstat();
+
+#endif
