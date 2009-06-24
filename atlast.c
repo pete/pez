@@ -1244,11 +1244,6 @@ prim P_flit()
 prim P_fplus()
 {				/* Add floating point numbers */
 	Sl(2 * Realsize);
-	/*
-	   printf("%f + %f = ", ((atl_real *)stk)[-1], ((atl_real *)stk)[-2]);
-	   ((atl_real *)stk)[-2] += ((atl_real *)stk)[-1];
-	   printf("%f\n", ((atl_real *)stk)[-2]);
-	 */
 	SREAL1(REAL1 + REAL0);
 	Realpop;
 }
