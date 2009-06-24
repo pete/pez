@@ -1824,6 +1824,13 @@ prim P_pick()
 	S0 = stk[-(2 + S0)];
 }
 
+prim P_nip()
+{
+	Sl(2);
+	S1 = S0;
+	Pop;
+}
+
 prim P_rot()
 {				/* Rotate 3 top stack items */
 	stackitem t;
@@ -3102,6 +3109,7 @@ static struct primfcn primt[] = {
 	{"0SWAP", P_swap},
 	{"0OVER", P_over},
 	{"0PICK", P_pick},
+	{"0NIP", P_nip},
 	{"0ROT", P_rot},
 	{"0-ROT", P_minusrot},
 	{"0ROLL", P_roll},
