@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 
 #ifdef ALIGNMENT
 #ifdef __TURBOC__
@@ -62,6 +64,7 @@
 #define STRING			/* String functions */
 #define SYSTEM			/* System command function */
 #define FFI			/* Foreign function interface */
+#define PROCESS			/* Process-level facilities */
 
 #ifndef NOMEMCHECK
 #define TRACE			/* Execution tracing */
@@ -113,10 +116,10 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 /*  Globals visible to calling programs  */
 
-atl_int atl_stklen = 100;	/* Evaluation stack length */
-atl_int atl_rstklen = 100;	/* Return stack length */
-atl_int atl_heaplen = 1000;	/* Heap length */
-atl_int atl_ltempstr = 256;	/* Temporary string buffer length */
+atl_int atl_stklen = 1000;	/* Evaluation stack length */
+atl_int atl_rstklen = 1000;	/* Return stack length */
+atl_int atl_heaplen = 10000;	/* Heap length */
+atl_int atl_ltempstr = 2560;	/* Temporary string buffer length */
 atl_int atl_ntempstr = 4;	/* Number of temporary string buffers */
 
 atl_int atl_trace = Falsity;	/* Tracing if true */
@@ -1393,6 +1396,21 @@ prim P_fix()
 	Push = i;
 }
 
+/*
+   ( -- time-as-float )
+   Returns the time as number of seconds since the epoch, as a floating point
+   value.
+*/
+prim P_ftime()
+{
+	struct timeval tv; 
+	double d;
+
+	So(Realsize);
+	gettimeofday(&tv, 0);
+	d = (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
+	Realpush(d);
+}
 
 #ifdef MATH
 
@@ -1868,6 +1886,16 @@ prim P_rfetch()
 	Rsl(1);
 	So(1);
 	Push = (stackitem) R0;
+}
+
+/*
+   ( -- time )
+   Returns time as number of seconds since the epoch.
+*/
+prim P_time()
+{
+	So(1);
+	Push = time(NULL);
 }
 
 #ifdef Macintosh
@@ -2857,6 +2885,70 @@ prim P_call_word_1w()
 
 #endif				// FFI
 
+#ifdef PROCESS
+#include <sys/wait.h>
+#include <signal.h>
+
+/*
+   ( message status -- )
+   Prints a message to stderr with a \n, and dies with the specified status.
+*/
+prim P_diebang()
+{
+	fflush(stdout);
+	// No underflow-checking here.  die! shouldn't fail, ever, even if it
+	// ends up segfaulting instead.
+	fprintf(stderr, "%s\n", (char *)S1);
+	exit(S0);
+}
+
+/*
+   ( -- pid|0 )
+   Forks a new process.  The child process will see a zero on the stack, and the
+   parent will see the child's pid.
+*/
+prim P_fork()
+{
+	So(1);
+	Push = fork();
+}
+
+/*
+   ( -- status pid )
+   Waits for the next child process to exit, returning a pid and the process's
+   status.
+*/
+prim P_wait()
+{
+	So(2);
+	Push = 0;
+	Push = wait((int *)(stk - 1));
+}
+
+/*
+   ( -- pid )
+   Returns the pid of the current process.
+*/
+prim P_pid()
+{
+	So(1);
+	Push = getpid();
+}
+
+/*
+   ( pid signal -- status )
+   Sends a signal to a pid, returning the status.
+*/
+prim P_kill()
+{
+	Sl(2);
+	S1 = kill(S1, S0);
+	Pop;
+}
+
+
+#endif				// PROCESS
+
 #ifdef TRACE
 prim P_trace()
 {				/* Set or clear tracing of execution */
@@ -3021,6 +3113,7 @@ static struct primfcn primt[] = {
 	{"0>R", P_tor},
 	{"0R>", P_rfrom},
 	{"0R@", P_rfetch},
+	{"0TIME", P_time},
 
 #ifdef SHORTCUTA
 	{"01+", P_1plus},
@@ -3119,6 +3212,7 @@ static struct primfcn primt[] = {
 	{"0F.", P_fdot},
 	{"0FLOAT", P_float},
 	{"0FIX", P_fix},
+	{"0FTIME", P_ftime},
 
 #ifdef MATH
 	{"0ACOS", P_acos},
@@ -3182,6 +3276,18 @@ static struct primfcn primt[] = {
 	{"0CALL-WORD-0", P_call_word_0},
 	{"0CALL-WORD-1W", P_call_word_1w},
 #endif
+
+#ifdef PROCESS
+	{"0DIE!", P_diebang},
+	// at-exit is going to have to wait until I figure out a good way to do
+	// it.  I am thinking a queue of words to push to 
+	// {"0AT-EXIT", P_at_exit},
+	{"0FORK", P_fork},
+	{"0WAIT", P_wait},
+	{"0PID", P_pid},
+	{"0KILL", P_kill},
+#endif
+
 #ifdef TRACE
 	{"0TRACE", P_trace},
 #endif

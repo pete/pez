@@ -218,6 +218,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Pop stk--		      /* Pop the top item off the stack */
 #define Pop2 stk -= 2		      /* Pop two items off the stack */
 #define Npop(n) stk -= (n)	      /* Pop N items off the stack */
+// TODO:  See Realpush().
 #define Push *stk++		      /* Push item onto stack */
 
 #ifdef MEMSTAT
@@ -295,6 +296,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define REAL2 ((atl_real *)stk)[-3]
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
+inline static void Realpush(double d) { stk += Realsize; SREAL0(d); }
 
 /*  File I/O definitions (used only if FILEIO is configured).  */
 
