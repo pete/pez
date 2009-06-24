@@ -45,7 +45,7 @@ regression:
 
 clean:
 	rm -f $(APPS)
-	rm -f *.bak *.o .so *.dvi *.aux *.log
+	rm -f *.bak *.o *.so *.dvi *.aux *.log
 	rm -f core core.* cscope.out *.tar.gz
 	rm -rf dist
 	( cd tex ; make clean )
