@@ -1,15 +1,9 @@
 /*
+   Pez
+   Main Interpreter and Compiler
 
-			      A T L A S T
-
-	 Autodesk Threaded Language Application System Toolkit
-
-		    Main Interpreter and Compiler
-
-     Designed and implemented in January of 1990 by John Walker.
-
-		This program is in the public domain.
-
+   See doc/CREDITS for information about the authors.  
+   This program is in the public domain.
 */
 
 #include <stdio.h>
@@ -2164,12 +2158,6 @@ prim P_exit()
 	Rpop;
 }
 
-prim P_tail_call()
-{
-	Compiling;
-	printf("\nOK: %s\n", curword->wname + 1);
-}
-
 prim P_branch()
 {				/* Jump to in-line address */
 	ip += (stackitem) * ip;	/* Jump addresses are IP-relative */
@@ -3240,7 +3228,6 @@ static struct primfcn primt[] = {
 
 	{"0(NEST)", P_nest},
 	{"0EXIT", P_exit},
-	{"1TAIL-CALL", P_tail_call},
 	{"0(LIT)", P_dolit},
 	{"0BRANCH", P_branch},
 	{"0?BRANCH", P_qbranch},
