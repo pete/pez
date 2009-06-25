@@ -21,7 +21,7 @@
 #ifndef __ATLDEF_H
 #define __ATLDEF_H
 
-#include "atlast.h"                   /* Define user linkage structures */
+#include "pez.h"                   /* Define user linkage structures */
 
 typedef void (*codeptr)();	      /* Machine code pointer */
 
@@ -71,37 +71,37 @@ typedef struct {
     stackitem *mheap;		      /* Heap allocation marker */
     dictword ***mrstack;	      /* Return stack position marker */
     dictword *mdict;		      /* Dictionary marker */
-} atl_statemark;
+} pez_statemark;
 
 #ifdef EXPORT
 #define Exported
 #ifndef NOMANGLE
-#define stk	    atl__sp
-#define stack	    atl__sk
-#define stackbot    atl__sb
-#define stacktop    atl__st
-#define rstk	    atl__rp
-#define rstack	    atl__rk
-#define rstackbot   atl__rb
-#define rstacktop   atl__rt
-#define heap	    atl__hb
-#define hptr	    atl__hp
-#define heapbot     atl__hs
-#define heaptop     atl__ht
-#define dict	    atl__dh
-#define dictprot    atl__dp
-#define strbuf	    atl__ts
-#define cstrbuf     atl__tn
-#define ip	    atl__ip
-#define curword     atl__cw
-#define createword  atl__wd
+#define stk	    pez__sp
+#define stack	    pez__sk
+#define stackbot    pez__sb
+#define stacktop    pez__st
+#define rstk	    pez__rp
+#define rstack	    pez__rk
+#define rstackbot   pez__rb
+#define rstacktop   pez__rt
+#define heap	    pez__hb
+#define hptr	    pez__hp
+#define heapbot     pez__hs
+#define heaptop     pez__ht
+#define dict	    pez__dh
+#define dictprot    pez__dp
+#define strbuf	    pez__ts
+#define cstrbuf     pez__tn
+#define ip	    pez__ip
+#define curword     pez__cw
+#define createword  pez__wd
 #endif /* NOMANGLE */
 
 #ifdef MEMSTAT
 #ifndef NOMANGLE
-#define stackmax    atl__sx
-#define rstackmax   atl__rx
-#define heapmax     atl__hx
+#define stackmax    pez__sx
+#define rstackmax   pez__rx
+#define heapmax     pez__hx
 #endif /* NOMANGLE */
 extern stackitem *stackmax, *heapmax;
 extern dictword ***rstackmax;
@@ -109,11 +109,11 @@ extern dictword ***rstackmax;
 
 #ifdef ALIGNMENT
 #ifndef NOMANGLE
-#define rbuf0	    atl__r0
-#define rbuf1	    atl__r1
-#define rbuf2	    atl__r2
+#define rbuf0	    pez__r0
+#define rbuf1	    pez__r1
+#define rbuf2	    pez__r2
 #endif /* NOMANGLE */
-extern atl_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
+extern pez_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
 #endif
 
 #define FmodeR	    1		      /* Read mode */
@@ -130,8 +130,8 @@ extern char **strbuf;
 extern int cstrbuf;
 
 #ifndef NOMANGLE
-#define P_create    atl__Pcr
-#define P_dodoes    atl__Pds
+#define P_create    pez__Pcr
+#define P_dodoes    pez__Pds
 #endif /* NOMANGLE */
 extern void P_create(), P_dodoes();
 #else  /* EXPORT */
@@ -141,12 +141,12 @@ extern void P_create(), P_dodoes();
 #ifndef NOMEMCHECK
 #ifdef EXPORT
 #ifndef NOMANGLE
-#define stakover    atl__Eso
-#define rstakover   atl__Erso
-#define heapover    atl__Eho
-#define badpointer  atl__Ebp
-#define stakunder   atl__Esu
-#define rstakunder  atl__Ersu
+#define stakover    pez__Eso
+#define rstakover   pez__Erso
+#define heapover    pez__Eho
+#define badpointer  pez__Ebp
+#define stakunder   pez__Esu
+#define rstakunder  pez__Ersu
 #endif /* NOMANGLE */
 extern
 #endif
@@ -155,12 +155,12 @@ void stakover(), rstakover(), heapover(), badpointer(),
 #endif
 
 /* Functions called by exported extensions. */
-extern void atl_primdef(), atl_error();
-extern dictword *atl_lookup(), *atl_vardef();
-extern stackitem *atl_body();
-extern int atl_exec();
+extern void pez_primdef(), pez_error();
+extern dictword *pez_lookup(), *pez_vardef();
+extern stackitem *pez_body();
+extern int pez_exec();
 #ifdef EXPORT
-extern char *atl_fgetsp();
+extern char *pez_fgetsp();
 #endif
 
 /*  If explicit alignment is not requested, enable it in any case for
@@ -272,28 +272,28 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 /*  Real number definitions (used only if REAL is configured).	*/
 
-#define Realsize (sizeof(atl_real)/sizeof(stackitem)) /* Stack cells / real */
+#define Realsize (sizeof(pez_real)/sizeof(stackitem)) /* Stack cells / real */
 #define Realpop  stk -= Realsize      /* Pop real from stack */
 #define Realpop2 stk -= (2 * Realsize) /* Pop two reals from stack */
 
 /* FIXME TODO testing this stuff...
 #ifdef ALIGNMENT
-#define REAL0 *((atl_real *) memcpy((char *) &rbuf0, (char *) &S1, sizeof(atl_real)))
-#define REAL1 *((atl_real *) memcpy((char *) &rbuf1, (char *) &S3, sizeof(atl_real)))
-#define REAL2 *((atl_real *) memcpy((char *) &rbuf2, (char *) &S5, sizeof(atl_real)))
-#define SREAL0(x) rbuf2=(x); (void)memcpy((char *) &S1, (char *) &rbuf2, sizeof(atl_real))
-#define SREAL1(x) rbuf2=(x); (void)memcpy((char *) stk - Realsize, (char *) &rbuf2, sizeof(atl_real))
+#define REAL0 *((pez_real *) memcpy((char *) &rbuf0, (char *) &S1, sizeof(pez_real)))
+#define REAL1 *((pez_real *) memcpy((char *) &rbuf1, (char *) &S3, sizeof(pez_real)))
+#define REAL2 *((pez_real *) memcpy((char *) &rbuf2, (char *) &S5, sizeof(pez_real)))
+#define SREAL0(x) rbuf2=(x); (void)memcpy((char *) &S1, (char *) &rbuf2, sizeof(pez_real))
+#define SREAL1(x) rbuf2=(x); (void)memcpy((char *) stk - Realsize, (char *) &rbuf2, sizeof(pez_real))
 #else
-#define REAL0	*((atl_real *) &S1)   // First real on stack
-#define REAL1	*((atl_real *) &S3)   // Second real on stack
-#define REAL2	*((atl_real *) &S5)   // Third real on stack
-#define SREAL0(x) *((atl_real *) stk) = (x)
-#define SREAL1(x) *((atl_real *) stk - Realsize) = (x)
+#define REAL0	*((pez_real *) &S1)   // First real on stack
+#define REAL1	*((pez_real *) &S3)   // Second real on stack
+#define REAL2	*((pez_real *) &S5)   // Third real on stack
+#define SREAL0(x) *((pez_real *) stk) = (x)
+#define SREAL1(x) *((pez_real *) stk - Realsize) = (x)
 #endif
 */
-#define REAL0 ((atl_real *)stk)[-1]
-#define REAL1 ((atl_real *)stk)[-2]
-#define REAL2 ((atl_real *)stk)[-3]
+#define REAL0 ((pez_real *)stk)[-1]
+#define REAL1 ((pez_real *)stk)[-2]
+#define REAL2 ((pez_real *)stk)[-3]
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
 inline static void Realpush(double d) { stk += Realsize; SREAL0(d); }

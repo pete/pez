@@ -1,8 +1,8 @@
 #include <SDL/SDL.h>
 #include <dlfcn.h>
 
-#include "atlast.h"
-#include "atldef.h"
+#include "pez.h"
+#include "pezdef.h"
 
 prim P_sdl_init()
 {
@@ -17,12 +17,12 @@ prim P_maybe_lock()
 	Pop;
 }
 
-struct primfcn atl_ffi_definitions[] = {
+struct primfcn pez_ffi_definitions[] = {
 	{"0SDL-INIT", P_sdl_init},
 	{"0?LOCK", P_maybe_lock},
 	{0, 0},
 };
 
-void atl_ffi_init()
+void pez_ffi_init()
 {
 }

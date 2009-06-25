@@ -1,6 +1,6 @@
-atlast
-atlast.o
-atlmain.o
+pez
+pez.o
+pezmain.o
 primdeftest
 regout.txt
 tmp

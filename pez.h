@@ -20,23 +20,23 @@
 #ifndef __ATLAST_H
 #define __ATLAST_H
 
-typedef long atl_int;		      /* Stack integer type */
-typedef double atl_real;	      /* Real number type */
+typedef long pez_int;		      /* Stack integer type */
+typedef double pez_real;	      /* Real number type */
 
 /*  External symbols accessible by the calling program.  */
 
-extern atl_int atl_stklen;	      /* Initial/current stack length */
-extern atl_int atl_rstklen;	      /* Initial/current return stack length */
-extern atl_int atl_heaplen;	      /* Initial/current heap length */
-extern atl_int atl_ltempstr;	      /* Temporary string buffer length */
-extern atl_int atl_ntempstr;	      /* Number of temporary string buffers */
+extern pez_int pez_stklen;	      /* Initial/current stack length */
+extern pez_int pez_rstklen;	      /* Initial/current return stack length */
+extern pez_int pez_heaplen;	      /* Initial/current heap length */
+extern pez_int pez_ltempstr;	      /* Temporary string buffer length */
+extern pez_int pez_ntempstr;	      /* Number of temporary string buffers */
 
-extern atl_int atl_trace;	      /* Trace mode */
-extern atl_int atl_walkback;	      /* Error walkback enabled mode */
-extern atl_int atl_comment;	      /* Currently ignoring comment */
-extern atl_int atl_redef;	      /* Allow redefinition of words without
+extern pez_int pez_trace;	      /* Trace mode */
+extern pez_int pez_walkback;	      /* Error walkback enabled mode */
+extern pez_int pez_comment;	      /* Currently ignoring comment */
+extern pez_int pez_redef;	      /* Allow redefinition of words without
                                          issuing the "not unique" warning. */
-extern atl_int atl_errline;	      /* Line number where last atl_load()
+extern pez_int pez_errline;	      /* Line number where last pez_load()
 					 errored or zero if no error. */
 
 /*  ATL_EVAL return status codes  */
@@ -55,12 +55,12 @@ extern atl_int atl_errline;	      /* Line number where last atl_load()
 #define ATL_RUNCOMM	-11	      /* Unterminated comment in file */
 #define ATL_BREAK	-12	      /* Asynchronous break signal received */
 #define ATL_DIVZERO	-13	      /* Attempt to divide by zero */
-#define ATL_APPLICATION -14	      /* Application primitive atl_error() */
+#define ATL_APPLICATION -14	      /* Application primitive pez_error() */
 
 /*  Entry points  */
 
-extern void atl_init(), atl_mark(), atl_unwind(), atl_break();
-extern int atl_eval(), atl_load();
-extern void atl_memstat();
+extern void pez_init(), pez_mark(), pez_unwind(), pez_break();
+extern int pez_eval(), pez_load();
+extern void pez_memstat();
 
 #endif

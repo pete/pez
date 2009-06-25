@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include "atldef.h"
+#include "pezdef.h"
 
 prim ptime()
 {
@@ -38,9 +38,9 @@ static struct primfcn timep[] = {
 int main()
 {
 	char t[132];
-	atl_init();
-	atl_primdef(timep);
+	pez_init();
+	pez_primdef(timep);
 	while(printf("-> "), fgets(t, 132, stdin) != NULL)
-		atl_eval(t);
+		pez_eval(t);
 	return 0;
 }

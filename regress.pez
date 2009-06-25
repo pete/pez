@@ -1129,4 +1129,4 @@ errcount
         wordsunused
 ;
 
-.( "For console I/O tests, use \"atlast -iregress\" and enter TESTCONS\n"
+.( "For console I/O tests, use \"pez -iregress\" and enter TESTCONS\n"

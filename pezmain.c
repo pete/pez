@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include <signal.h>
-#include "atldef.h"
+#include "pezdef.h"
 
 #define FALSE	0
 #define TRUE	1
@@ -33,7 +33,7 @@ static void ctrlc(sig)
 int sig;
 {
 	if(sig == SIGINT)
-		atl_break();
+		pez_break();
 }
 #endif				/* HIGHC */
 
@@ -66,7 +66,7 @@ char *argv[];
 				break;
 
 			case 'H':
-				atl_heaplen = atol(cp + 1);
+				pez_heaplen = atol(cp + 1);
 				break;
 
 			case 'I':
@@ -74,15 +74,15 @@ char *argv[];
 				break;
 
 			case 'R':
-				atl_rstklen = atol(cp + 1);
+				pez_rstklen = atol(cp + 1);
 				break;
 
 			case 'S':
-				atl_stklen = atol(cp + 1);
+				pez_stklen = atol(cp + 1);
 				break;
 
 			case 'T':
-				atl_trace = TRUE;
+				pez_trace = TRUE;
 				break;
 
 			case '?':
@@ -108,7 +108,7 @@ char *argv[];
 			fname = TRUE;
 			strcpy(fn, cp);
 			if(strchr(fn, '.') == NULL)
-				strcat(fn, ".atl");
+				strcat(fn, ".pez");
 			ifp = fopen(fn, "r");
 			if(ifp == NULL) {
 				fprintf(stderr, "Unable to open file %s\n",
@@ -128,7 +128,7 @@ char *argv[];
 
 		strcpy(fn, include[i]);
 		if(strchr(fn, '.') == NULL)
-			strcat(fn, ".atl");
+			strcat(fn, ".pez");
 		fp = fopen(fn,
 #ifdef FBmode
 			   "rb"
@@ -141,7 +141,7 @@ char *argv[];
 				  include[i]);
 			return 1;
 		}
-		stat = atl_load(fp);
+		stat = pez_load(fp);
 		fclose(fp);
 		if(stat != ATL_SNORM) {
 			printf("\nError %d in include file %s\n", stat,
@@ -159,7 +159,7 @@ char *argv[];
 		char t[132];
 
 		if(!fname)
-			printf(atl_comment ? "(  " :	/* Show pending comment */
+			printf(pez_comment ? "(  " :	/* Show pending comment */
 				 /* Show compiling state */
 				  (((heap != NULL) && state) ? ":> " : "-> "));
 		if(fgets(t, 132, ifp) == NULL) {
@@ -170,7 +170,7 @@ char *argv[];
 			}
 			break;
 		}
-		atl_eval(t);
+		pez_eval(t);
 	}
 	if(!fname)
 		printf("\n");

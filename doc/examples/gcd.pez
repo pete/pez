@@ -1,0 +1,4 @@
+: gcd ( a b -- gcd )
+	dup 0 = if drop exit then
+	swap over mod gcd ;
+

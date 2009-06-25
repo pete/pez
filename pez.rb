@@ -6,16 +6,16 @@ require 'ffi'
 module Atlast
 	extend FFI::Library
 
-	ffi_lib './libatlast.so'
+	ffi_lib './libpez.so'
 
-	[[:atl_init, [], :void],
-	 [:atl_break, [], :void],
-	 [:atl_eval, [:string], :int],
-	 [:atl_memstat, [], :void],
+	[[:pez_init, [], :void],
+	 [:pez_break, [], :void],
+	 [:pez_eval, [:string], :int],
+	 [:pez_memstat, [], :void],
 	 # These don't quite work well with FFI (or with 0.2 at least; maybe fixed):
-	 # [:atl_load, [:pointer], :int],
-	 # [:atl_mark, [:pointer], :void],
-	 # [:atl_unwind, [:pointer], :void],
+	 # [:pez_load, [:pointer], :int],
+	 # [:pez_mark, [:pointer], :void],
+	 # [:pez_unwind, [:pointer], :void],
 	].each { |fdef|
 		attach_function *fdef
 	}
@@ -23,10 +23,10 @@ end
 
 if __FILE__ == $0
 	include Atlast
-	atl_init
+	pez_init
 	loop {
 		print "-> " if $stdin.tty?
 		$stdout.flush
-		atl_eval(gets || exit)
+		pez_eval(gets || exit)
 	}
 end

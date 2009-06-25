@@ -34,12 +34,12 @@
 #endif				/*Macintosh */
 
 /*  Custom configuration.  If the tag CUSTOM has been defined (usually on
-    the compiler call line), we include the file "atlcfig.h", which may
+    the compiler call line), we include the file "pezcfig.h", which may
     then define INDIVIDUALLY and select the subpackages needed for its
     application.  */
 
 #ifdef CUSTOM
-#include "atlcfig.h"
+#include "pezcfig.h"
 #endif
 
 /*  Subpackage configuration.  If INDIVIDUALLY is defined, the inclusion
@@ -74,7 +74,7 @@
 
 #endif				/* !INDIVIDUALLY */
 
-#include "atldef.h"
+#include "pezdef.h"
 
 #ifdef MATH
 #include <math.h>
@@ -116,18 +116,18 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 /*  Globals visible to calling programs  */
 
-atl_int atl_stklen = 1000;	/* Evaluation stack length */
-atl_int atl_rstklen = 1000;	/* Return stack length */
-atl_int atl_heaplen = 10000;	/* Heap length */
-atl_int atl_ltempstr = 2560;	/* Temporary string buffer length */
-atl_int atl_ntempstr = 4;	/* Number of temporary string buffers */
+pez_int pez_stklen = 1000;	/* Evaluation stack length */
+pez_int pez_rstklen = 1000;	/* Return stack length */
+pez_int pez_heaplen = 10000;	/* Heap length */
+pez_int pez_ltempstr = 2560;	/* Temporary string buffer length */
+pez_int pez_ntempstr = 4;	/* Number of temporary string buffers */
 
-atl_int atl_trace = Falsity;	/* Tracing if true */
-atl_int atl_walkback = Truth;	/* Walkback enabled if true */
-atl_int atl_comment = Falsity;	/* Currently ignoring a comment */
-atl_int atl_redef = Truth;	/* Allow redefinition without issuing
+pez_int pez_trace = Falsity;	/* Tracing if true */
+pez_int pez_walkback = Truth;	/* Walkback enabled if true */
+pez_int pez_comment = Falsity;	/* Currently ignoring a comment */
+pez_int pez_redef = Truth;	/* Allow redefinition without issuing
 				   the "not unique" message. */
-atl_int atl_errline = 0;	/* Line where last atl_load failed */
+pez_int pez_errline = 0;	/* Line where last pez_load failed */
 
 /*  Local variables  */
 
@@ -202,9 +202,9 @@ static char tokbuf[128];	/* Token buffer */
 static char *instream = NULL;	/* Current input stream line */
 static long tokint;		/* Scanned integer */
 #ifdef REAL
-static atl_real tokreal;	/* Scanned real number */
+static pez_real tokreal;	/* Scanned real number */
 #ifdef ALIGNMENT
-Exported atl_real rbuf0, rbuf1, rbuf2;	/* Real temporary buffers */
+Exported pez_real rbuf0, rbuf1, rbuf2;	/* Real temporary buffers */
 #endif
 #endif
 static long base = 10;		/* Number base */
@@ -293,7 +293,7 @@ char **cp;
 		int tl = 0;
 		Boolean istring = False, rstring = False;
 
-		if(atl_comment) {
+		if(pez_comment) {
 			while(*sp != ')') {
 				if(*sp == EOS) {
 					*cp = sp;
@@ -302,7 +302,7 @@ char **cp;
 				sp++;
 			}
 			sp++;
-			atl_comment = Falsity;
+			pez_comment = Falsity;
 		}
 
 		while(isspace(*sp))	/* Skip leading blanks */
@@ -413,7 +413,7 @@ char **cp;
 				sp++;
 				continue;
 			}
-			atl_comment = Truth;
+			pez_comment = Truth;
 			*cp = sp;
 			return TokNull;
 		}
@@ -498,7 +498,7 @@ char *tkname;
 		    of line character is stored in the string buffer.
 		    */
 
-Exported char *atl_fgetsp(s, n, stream)
+Exported char *pez_fgetsp(s, n, stream)
 char *s;
 int n;
 FILE *stream;
@@ -535,26 +535,26 @@ FILE *stream;
 /*  ATL_MEMSTAT  --  Print memory usage summary.  */
 
 #ifdef MEMSTAT
-void atl_memstat()
+void pez_memstat()
 {
 	static char fmt[] = "   %-12s %6ld    %6ld    %6ld       %3ld\n";
 
-	printf("\n             Memory Usage Summary\n\n");
-	printf("                 Current   Maximum    Items     Percent\n");
-	printf("  Memory Area     usage     used    allocated   in use \n");
+	printf("\n             Memory Usage Summary\n\n"
+	       "                 Current   Maximum    Items     Percent\n"
+	       "  Memory Area     usage     used    allocated   in use \n");
 
 	printf(fmt, "Stack",
 	       ((long) (stk - stack)),
 	       ((long) (stackmax - stack)),
-	       atl_stklen, (100L * (stk - stack)) / atl_stklen);
+	       pez_stklen, (100L * (stk - stack)) / pez_stklen);
 	printf(fmt, "Return stack",
 	       ((long) (rstk - rstack)),
 	       ((long) (rstackmax - rstack)),
-	       atl_rstklen, (100L * (rstk - rstack)) / atl_rstklen);
+	       pez_rstklen, (100L * (rstk - rstack)) / pez_rstklen);
 	printf(fmt, "Heap",
 	       ((long) (hptr - heap)),
 	       ((long) (heapmax - heap)),
-	       atl_heaplen, (100L * (hptr - heap)) / atl_heaplen);
+	       pez_heaplen, (100L * (hptr - heap)) / pez_heaplen);
 }
 #endif				/* MEMSTAT */
 
@@ -1080,7 +1080,7 @@ prim P_strlit()
 	So(1);
 	Push = (stackitem) (((char *) ip) + 1);
 #ifdef TRACE
-	if(atl_trace) {
+	if(pez_trace) {
 		printf("\"%s\" ", (((char *) ip) + 1));
 	}
 #endif				/* TRACE */
@@ -1178,7 +1178,7 @@ prim P_fstrform()
 	Sl(2 + Realsize);
 	Hpc(S0);
 	Hpc(S1);
-	sprintf((char *) S0, (char *) S1, ((atl_real *) (stk - 2))[-1]);
+	sprintf((char *) S0, (char *) S1, ((pez_real *) (stk - 2))[-1]);
 	Npop(2 + Realsize);
 }
 #endif				/* REAL */
@@ -1201,7 +1201,7 @@ prim P_strreal()
 {				/* String to real *//* str -- endptr value */
 	int i;
 	union {
-		atl_real fs;
+		pez_real fs;
 		stackitem fss[Realsize];
 	} fsu;
 	char *eptr;
@@ -1228,10 +1228,10 @@ prim P_flit()
 
 	So(Realsize);
 #ifdef TRACE
-	if(atl_trace) {
-		atl_real tr;
+	if(pez_trace) {
+		pez_real tr;
 
-		memcpy((char *) &tr, (char *) ip, sizeof(atl_real));
+		memcpy((char *) &tr, (char *) ip, sizeof(pez_real));
 		printf("%g ", tr);
 	}
 #endif				/* TRACE */
@@ -1372,7 +1372,7 @@ prim P_fdot()
 
 prim P_float()
 {				/* Convert integer to floating */
-	atl_real r;
+	pez_real r;
 
 	Sl(1)
 	    So(Realsize - 1);
@@ -1514,7 +1514,7 @@ prim P_dots()
 
 	printf("Stack: ");
 	if(stk == stackbot)
-		printf("Empty.");
+		printf("Empty. ");
 	else {
 		for(tsp = stack; tsp < stk; tsp++) {
 			printf(base == 16 ? "%lx " : "%ld ", *tsp);
@@ -1640,7 +1640,7 @@ prim P_fgetline()
 	Hpc(S0);
 	Isfile(S1);
 	Isopen(S1);
-	if(atl_fgetsp((char *) S0, 132, FileD(S1)) == NULL) {
+	if(pez_fgetsp((char *) S0, 132, FileD(S1)) == NULL) {
 		S1 = Falsity;
 	} else {
 		S1 = Truth;
@@ -1726,7 +1726,7 @@ prim P_fload()
 	Isopen(S0);
 	fd = FileD(S0);
 	Pop;
-	estat = atl_load(fd);
+	estat = pez_load(fd);
 	So(1);
 	Push = estat;
 }
@@ -1737,8 +1737,8 @@ prim P_fload()
 prim P_evaluate()
 {				/* string -- status */
 	int es = ATL_SNORM;
-	atl_statemark mk;
-	atl_int scomm = atl_comment;	/* Stack comment pending state */
+	pez_statemark mk;
+	pez_int scomm = pez_comment;	/* Stack comment pending state */
 	dictword **sip = ip;	/* Stack instruction pointer */
 	char *sinstr = instream;	/* Stack input stream */
 	char *estring;
@@ -1747,19 +1747,19 @@ prim P_evaluate()
 	Hpc(S0);
 	estring = (char *) S0;	/* Get string to evaluate */
 	Pop;			/* Pop so it sees arguments below it */
-	atl_mark(&mk);		/* Mark in case of error */
-	ip = NULL;		/* Fool atl_eval into interp state */
-	if((es = atl_eval(estring)) != ATL_SNORM) {
-		atl_unwind(&mk);
+	pez_mark(&mk);		/* Mark in case of error */
+	ip = NULL;		/* Fool pez_eval into interp state */
+	if((es = pez_eval(estring)) != ATL_SNORM) {
+		pez_unwind(&mk);
 	}
 	/* If there were no other errors, check for a runaway comment.  If
 	   we ended the file in comment-ignore mode, set the runaway comment
 	   error status and unwind the file.  */
-	if((es == ATL_SNORM) && (atl_comment != 0)) {
+	if((es == ATL_SNORM) && (pez_comment != 0)) {
 		es = ATL_RUNCOMM;
-		atl_unwind(&mk);
+		pez_unwind(&mk);
 	}
-	atl_comment = scomm;	/* Unstack comment pending status */
+	pez_comment = scomm;	/* Unstack comment pending status */
 	ip = sip;		/* Unstack instruction pointer */
 	instream = sinstr;	/* Unstack input stream */
 	So(1);
@@ -2134,7 +2134,7 @@ prim P_dolit()
 {				/* Push instruction stream literal */
 	So(1);
 #ifdef TRACE
-	if(atl_trace) {
+	if(pez_trace) {
 		printf("%ld ", (long) *ip);
 	}
 #endif
@@ -2162,6 +2162,12 @@ prim P_exit()
 #endif
 	ip = R0;		/* Set IP to top of return stack */
 	Rpop;
+}
+
+prim P_tail_call()
+{
+	Compiling;
+	printf("\nOK: %s\n", curword->wname + 1);
 }
 
 prim P_branch()
@@ -2444,7 +2450,7 @@ prim P_abortq()
 		pwalkback();
 #endif				/* WALKBACK */
 		P_abort();	/* Abort */
-		atl_comment = state = Falsity;	/* Reset all interpretation state */
+		pez_comment = state = Falsity;	/* Reset all interpretation state */
 		forgetpend = defpend = stringlit = tickpend = ctickpend = False;
 	}
 }
@@ -2767,9 +2773,9 @@ prim P_system()
    ( libname -- status )
    Loads a .so file that must contain at least one of the following in order
    to be useful:
-   	1.  A function declared as prim atl_ffi_init() that performs the
+   	1.  A function declared as prim pez_ffi_init() that performs the
 	    necessary initializations
-	2.  An array named atl_ffi_definitions with type struct primfcn that
+	2.  An array named pez_ffi_definitions with type struct primfcn that
 	    contains the definitions of new words to be added when the library
 	    is loaded.
    If the status is false, there has been an error, which can be checked with
@@ -2788,13 +2794,13 @@ prim P_ffi_load()
 		return;
 	}
 
-	init = dlsym(lib, "atl_ffi_init");
-	defs = dlsym(lib, "atl_ffi_definitions");
+	init = dlsym(lib, "pez_ffi_init");
+	defs = dlsym(lib, "pez_ffi_definitions");
 	if(!(init || defs)) { S0 = Falsity; return; }
 	S0 = Truth; 
 	dlerror(); // Which clears the last error.
 	if(init) init();
-	if(defs) atl_primdef(defs);
+	if(defs) pez_primdef(defs);
 }
 
 /* Just a thin wrapper around the system's dlopen. 
@@ -2955,7 +2961,7 @@ prim P_kill()
 prim P_trace()
 {				/* Set or clear tracing of execution */
 	Sl(1);
-	atl_trace = (S0 == 0) ? Falsity : Truth;
+	pez_trace = (S0 == 0) ? Falsity : Truth;
 	Pop;
 }
 #endif				/* TRACE */
@@ -2964,7 +2970,7 @@ prim P_trace()
 prim P_walkback()
 {				/* Set or clear error walkback */
 	Sl(1);
-	atl_walkback = (S0 == 0) ? Falsity : Truth;
+	pez_walkback = (S0 == 0) ? Falsity : Truth;
 	Pop;
 }
 #endif				/* WALKBACK */
@@ -3234,6 +3240,7 @@ static struct primfcn primt[] = {
 
 	{"0(NEST)", P_nest},
 	{"0EXIT", P_exit},
+	{"1TAIL-CALL", P_tail_call},
 	{"0(LIT)", P_dolit},
 	{"0BRANCH", P_branch},
 	{"0?BRANCH", P_qbranch},
@@ -3304,7 +3311,7 @@ static struct primfcn primt[] = {
 #endif
 
 #ifdef MEMSTAT
-	{"0MEMSTAT", atl_memstat},
+	{"0MEMSTAT", pez_memstat},
 #endif
 
 	{"0:", P_colon},
@@ -3386,7 +3393,7 @@ static struct primfcn primt[] = {
 		     allocated word items, we get one buffer for all
 		     the items and link them internally within the buffer. */
 
-void atl_primdef(pt)
+void pez_primdef(pt)
 struct primfcn *pt;
 {
 	struct primfcn *pf = pt;
@@ -3448,7 +3455,7 @@ struct primfcn *pt;
 
 static void pwalkback()
 {
-	if(atl_walkback && ((curword != NULL) || (wbptr > wback))) {
+	if(pez_walkback && ((curword != NULL) || (wbptr > wback))) {
 		printf("Walkback:\n");
 		if(curword != NULL) {
 			printf("   %s\n", curword->wname + 1);
@@ -3473,13 +3480,13 @@ char *kind;
 	pwalkback();
 #endif				/* WALKBACK */
 	P_abort();
-	atl_comment = state = Falsity;	/* Reset all interpretation state */
+	pez_comment = state = Falsity;	/* Reset all interpretation state */
 	forgetpend = defpend = stringlit = tickpend = ctickpend = False;
 }
 
 /*  ATL_ERROR  --  Handle error detected by user-defined primitive.  */
 
-Exported void atl_error(kind)
+Exported void pez_error(kind)
 char *kind;
 {
 	trouble(kind);
@@ -3564,7 +3571,7 @@ dictword *wp;
 {
 	curword = wp;
 #ifdef TRACE
-	if(atl_trace) {
+	if(pez_trace) {
 		printf("\nTrace: %s ", curword->wname + 1);
 	}
 #endif				/* TRACE */
@@ -3582,7 +3589,7 @@ dictword *wp;
 #endif				/* BREAK */
 		curword = *ip++;
 #ifdef TRACE
-		if(atl_trace) {
+		if(pez_trace) {
 			printf("\nTrace: %s ", curword->wname + 1);
 		}
 #endif				/* TRACE */
@@ -3598,12 +3605,12 @@ dictword *wp;
 		  pointers are initialised to the correct addresses.  If
                   the caller preallocates the buffers, it's up to him to
 		  ensure that the length allocated agrees with the lengths
-		  given by the atl_... cells.  */
+		  given by the pez_... cells.  */
 
-void atl_init()
+void pez_init()
 {
 	if(dict == NULL) {
-		atl_primdef(primt);	/* Define primitive words */
+		pez_primdef(primt);	/* Define primitive words */
 		dictprot = dict;	/* Set protected mark in dictionary */
 
 		/* Look up compiler-referenced words in the new dictionary and
@@ -3626,28 +3633,28 @@ void atl_init()
 
 		if(stack == NULL) {	/* Allocate stack if needed */
 			stack = (stackitem *)
-			    alloc(((unsigned int) atl_stklen) *
+			    alloc(((unsigned int) pez_stklen) *
 				  sizeof(stackitem));
 		}
 		stk = stackbot = stack;
 #ifdef MEMSTAT
 		stackmax = stack;
 #endif
-		stacktop = stack + atl_stklen;
+		stacktop = stack + pez_stklen;
 		if(rstack == NULL) {	/* Allocate return stack if needed */
 			rstack = (dictword ***)
-			    alloc(((unsigned int) atl_rstklen) *
+			    alloc(((unsigned int) pez_rstklen) *
 				  sizeof(dictword **));
 		}
 		rstk = rstackbot = rstack;
 #ifdef MEMSTAT
 		rstackmax = rstack;
 #endif
-		rstacktop = rstack + atl_rstklen;
+		rstacktop = rstack + pez_rstklen;
 #ifdef WALKBACK
 		if(wback == NULL) {
 			wback =
-			    (dictword **) alloc(((unsigned int) atl_rstklen) *
+			    (dictword **) alloc(((unsigned int) pez_rstklen) *
 						sizeof(dictword *));
 		}
 		wbptr = wback;
@@ -3665,18 +3672,18 @@ void atl_init()
 
 			/* Force length of temporary strings to even number of
 			   stackitems. */
-			atl_ltempstr += sizeof(stackitem) -
-			    (atl_ltempstr % sizeof(stackitem));
-			cp = alloc((((unsigned int) atl_heaplen) *
+			pez_ltempstr += sizeof(stackitem) -
+			    (pez_ltempstr % sizeof(stackitem));
+			cp = alloc((((unsigned int) pez_heaplen) *
 				    sizeof(stackitem)) +
-				   ((unsigned int) (atl_ntempstr *
-						    atl_ltempstr)));
+				   ((unsigned int) (pez_ntempstr *
+						    pez_ltempstr)));
 			heapbot = (stackitem *) cp;
-			strbuf = (char **) alloc(((unsigned int) atl_ntempstr) *
+			strbuf = (char **) alloc(((unsigned int) pez_ntempstr) *
 						 sizeof(char *));
-			for(i = 0; i < atl_ntempstr; i++) {
+			for(i = 0; i < pez_ntempstr; i++) {
 				strbuf[i] = cp;
-				cp += ((unsigned int) atl_ltempstr);
+				cp += ((unsigned int) pez_ltempstr);
 			}
 			cstrbuf = 0;
 			heap = (stackitem *) cp;	/* Allocatable heap starts after
@@ -3691,7 +3698,7 @@ void atl_init()
 #ifdef MEMSTAT
 		heapmax = hptr;
 #endif
-		heaptop = heap + atl_heaplen;
+		heaptop = heap + pez_heaplen;
 
 		/* Now that dynamic memory is up and running, allocate constants
 		   and variables built into the system.  */
@@ -3719,10 +3726,10 @@ void atl_init()
 			stdfiles[2].sfd = stderr;
 
 			for(i = 0; i < ELEMENTS(stdfiles); i++) {
-				if((dw = atl_vardef(stdfiles[i].sfn,
+				if((dw = pez_vardef(stdfiles[i].sfn,
 						    2 * sizeof(stackitem))) !=
 				   NULL) {
-					stackitem *si = atl_body(dw);
+					stackitem *si = pez_body(dw);
 					*si++ = FileSent;
 					*si = (stackitem) stdfiles[i].sfd;
 				}
@@ -3737,7 +3744,7 @@ void atl_init()
                     word item if found or NULL if the word isn't
 		    in the dictionary. */
 
-dictword *atl_lookup(name)
+dictword *pez_lookup(name)
 char *name;
 {
 	strcpy(tokbuf, name);	/* Use built-in token buffer... */
@@ -3748,7 +3755,7 @@ char *name;
 /*  ATL_BODY  --  Returns the address of the body of a word, given
 		  its dictionary entry. */
 
-stackitem *atl_body(dw)
+stackitem *pez_body(dw)
 dictword *dw;
 {
 	return ((stackitem *) dw) + Dictwordl;
@@ -3759,7 +3766,7 @@ dictword *dw;
 		  returned.  The in-progress evaluation status is
 		  preserved. */
 
-int atl_exec(dw)
+int pez_exec(dw)
 dictword *dw;
 {
 	int sestat = evalstat, restat;
@@ -3788,13 +3795,13 @@ dictword *dw;
 
 /*  ATL_VARDEF  --  Define a variable word.  Called with the word's
 		    name and the number of bytes of storage to allocate
-		    for its body.  All words defined with atl_vardef()
+		    for its body.  All words defined with pez_vardef()
 		    have the standard variable action of pushing their
 		    body address on the stack when invoked.  Returns
 		    the dictionary item for the new word, or NULL if
 		    the heap overflows. */
 
-dictword *atl_vardef(name, size)
+dictword *pez_vardef(name, size)
 char *name;
 int size;
 {
@@ -3826,8 +3833,8 @@ int size;
 
 /*  ATL_MARK  --  Mark current state of the system.  */
 
-void atl_mark(mp)
-atl_statemark *mp;
+void pez_mark(mp)
+pez_statemark *mp;
 {
 	mp->mstack = stk;	/* Save stack position */
 	mp->mheap = hptr;	/* Save heap allocation marker */
@@ -3837,16 +3844,16 @@ atl_statemark *mp;
 
 /*  ATL_UNWIND	--  Restore system state to previously saved state.  */
 
-void atl_unwind(mp)
-atl_statemark *mp;
+void pez_unwind(mp)
+pez_statemark *mp;
 {
 
-	/* If atl_mark() was called before the system was initialised, and
+	/* If pez_mark() was called before the system was initialised, and
 	   we've initialised since, we cannot unwind.  Just ignore the
-	   unwind request.  The user must manually atl_init before an
-	   atl_mark() request is made. */
+	   unwind request.  The user must manually pez_init before an
+	   pez_mark() request is made. */
 
-	if(mp->mdict == NULL)	/* Was mark made before atl_init ? */
+	if(mp->mdict == NULL)	/* Was mark made before pez_init ? */
 		return;		/* Yes.  Cannot unwind past init */
 
 	stk = mp->mstack;	/* Roll back stack allocation */
@@ -3873,7 +3880,7 @@ atl_statemark *mp;
 		   system state directly, as it may be in an unstable
 		   condition. */
 
-void atl_break()
+void pez_break()
 {
 	broken = True;		/* Set break request */
 }
@@ -3881,39 +3888,39 @@ void atl_break()
 
 /*  ATL_LOAD  --  Load a file into the system.	*/
 
-int atl_load(fp)
+int pez_load(fp)
 FILE *fp;
 {
 	int es = ATL_SNORM;
 	char s[134];
-	atl_statemark mk;
-	atl_int scomm = atl_comment;	/* Stack comment pending state */
+	pez_statemark mk;
+	pez_int scomm = pez_comment;	/* Stack comment pending state */
 	dictword **sip = ip;	/* Stack instruction pointer */
 	char *sinstr = instream;	/* Stack input stream */
 	int lineno = 0;		/* Current line number */
 
-	atl_errline = 0;	/* Reset line number of error */
-	atl_mark(&mk);
-	ip = NULL;		/* Fool atl_eval into interp state */
-	while(atl_fgetsp(s, 132, fp) != NULL) {
+	pez_errline = 0;	/* Reset line number of error */
+	pez_mark(&mk);
+	ip = NULL;		/* Fool pez_eval into interp state */
+	while(pez_fgetsp(s, 132, fp) != NULL) {
 		lineno++;
-		if((es = atl_eval(s)) != ATL_SNORM) {
-			atl_errline = lineno;	/* Save line number of error */
-			atl_unwind(&mk);
+		if((es = pez_eval(s)) != ATL_SNORM) {
+			pez_errline = lineno;	/* Save line number of error */
+			pez_unwind(&mk);
 			break;
 		}
 	}
 	/* If there were no other errors, check for a runaway comment.  If
 	   we ended the file in comment-ignore mode, set the runaway comment
 	   error status and unwind the file.  */
-	if((es == ATL_SNORM) && (atl_comment == Truth)) {
+	if((es == ATL_SNORM) && (pez_comment == Truth)) {
 #ifdef MEMMESSAGE
 		printf("\nRunaway `(' comment.\n");
 #endif
 		es = ATL_RUNCOMM;
-		atl_unwind(&mk);
+		pez_unwind(&mk);
 	}
-	atl_comment = scomm;	/* Unstack comment pending status */
+	pez_comment = scomm;	/* Unstack comment pending status */
 	ip = sip;		/* Unstack instruction pointer */
 	instream = sinstr;	/* Unstack input stream */
 	return es;
@@ -3923,19 +3930,19 @@ FILE *fp;
 		      Returns 1 if the statement was part of the
 		      prologue and 0 otherwise. */
 
-int atl_prologue(sp)
+int pez_prologue(sp)
 char *sp;
 {
 	static struct {
 		char *pname;
-		atl_int *pparam;
+		pez_int *pparam;
 	} proname[] = {
 		{
-		"STACK ", &atl_stklen}, {
-		"RSTACK ", &atl_rstklen}, {
-		"HEAP ", &atl_heaplen}, {
-		"TEMPSTRL ", &atl_ltempstr}, {
-		"TEMPSTRN ", &atl_ntempstr}
+		"STACK ", &pez_stklen}, {
+		"RSTACK ", &pez_rstklen}, {
+		"HEAP ", &pez_heaplen}, {
+		"TEMPSTRL ", &pez_ltempstr}, {
+		"TEMPSTRN ", &pez_ntempstr}
 	};
 
 	if(strncmp(sp, "\\ *", 3) == 0) {
@@ -3964,7 +3971,7 @@ char *sp;
 
 /*  ATL_EVAL  --  Evaluate a string containing ATLAST words.  */
 
-int atl_eval(sp)
+int pez_eval(sp)
 char *sp;
 {
 	int i;
@@ -3984,9 +3991,9 @@ char *sp;
 
 #ifdef PROLOGUE
 	if(dict == NULL) {
-		if(atl_prologue(sp))
+		if(pez_prologue(sp))
 			return evalstat;
-		atl_init();
+		pez_init();
 	}
 #endif				/* PROLOGUE */
 
@@ -4082,7 +4089,7 @@ char *sp;
 				   it on the return stack. */
 				defpend = False;
 				ucase(tokbuf);
-				if(atl_redef && (lookup(tokbuf) != NULL))
+				if(pez_redef && (lookup(tokbuf) != NULL))
 					printf("\n%s isn't unique.", tokbuf);
 				enter(tokbuf);
 			} else {
@@ -4142,7 +4149,7 @@ char *sp;
 			if(state) {
 				int i;
 				union {
-					atl_real r;
+					pez_real r;
 					stackitem s[Realsize];
 				} tru;
 
@@ -4158,7 +4165,7 @@ char *sp;
 			} else {
 				int i;
 				union {
-					atl_real r;
+					pez_real r;
 					stackitem s[Realsize];
 				} tru;
 
@@ -4208,7 +4215,7 @@ char *sp;
 					Push = (stackitem) strbuf[cstrbuf];
 					cstrbuf =
 					    (cstrbuf +
-					     1) % ((int) atl_ntempstr);
+					     1) % ((int) pez_ntempstr);
 				}
 			}
 			break;

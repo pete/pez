@@ -10,37 +10,37 @@ LIBRARIES = -lm -ldl
 
 INCLUDE =
 
-ATLCONFIG = -DMEMSTAT -DALIGNMENT -DEXPORT -DREADONLYSTRINGS
+ATLCONFIG = -DMEMSTAT -DALIGNMENT -DEXPORT -DREADONLYSTRINGS # -DNOMEMCHECK
 
 CFLAGS += $(COPTIONS) $(INCLUDE) $(ATLCONFIG)
 
-ATLOBJ = atlast.o atlmain.o
+ATLOBJ = pez.o pezmain.o
 
-APPS = atlast primdeftest
+APPS = pez primdeftest
 
-all:	$(APPS) libatlast.so
+all:	$(APPS) libpez.so
 
-atlast: $(ATLOBJ)
-	$(CC) $(CFLAGS) $(ATLOBJ) -o atlast $(LIBRARIES)
+pez: $(ATLOBJ)
+	$(CC) $(CFLAGS) $(ATLOBJ) -o pez $(LIBRARIES)
 
-libatlast.so: $(ATLOBJ)
-	$(CC) -shared $(CFLAGS) $(ATLOBJ) -o libatlast.so
+libpez.so: $(ATLOBJ)
+	$(CC) -shared $(CFLAGS) $(ATLOBJ) -o libpez.so
 
-atlast.o:   atlast.c atldef.h
-atldef.h:   atlast.h
-atlmain.o:  atlmain.c atlast.h
+pez.o:   pez.c pezdef.h
+pezdef.h:   pez.h
+pezmain.o:  pezmain.c pez.h
 
 primdeftest:
-	$(CC) $(CFLAGS) primdeftest.c atlast.c -o primdeftest $(LIBRARIES)
+	$(CC) $(CFLAGS) primdeftest.c pez.c -o primdeftest $(LIBRARIES)
 
 #	Run the Atlast regression test
 regression:
 	echo testcons >/tmp/regin.tmp
 	echo Test 1234 >>/tmp/regin.tmp
-	echo ls atlast.c >>/tmp/regin.tmp
+	echo ls pez.c >>/tmp/regin.tmp
 	echo  >>/tmp/regin.tmp
 	echo  >>/tmp/regin.tmp
-	./atlast -iregress </tmp/regin.tmp >/tmp/regout.tmp
+	./pez -iregress </tmp/regin.tmp >/tmp/regout.tmp
 	diff regout.txt /tmp/regout.tmp
 
 clean:
@@ -53,22 +53,22 @@ clean:
 dist:
 	rm -rf dist
 	mkdir dist
-	mkdir dist/atlast-$(VERSION)
-	cp -p atlast.c atlast.h tex/atlast.pdf atldef.h \
-		atlast.html \
-		atlmain.c COPYING log.txt Makefile MANIFEST \
+	mkdir dist/pez-$(VERSION)
+	cp -p pez.c pez.h tex/pez.pdf pezdef.h \
+		pez.html \
+		pezmain.c COPYING log.txt Makefile MANIFEST \
 		primdeftest.c \
-		regout.txt regress.atl dist/atlast-$(VERSION)
-	mkdir dist/atlast-$(VERSION)/tex
-	cp -p tex/*.tex tex/*.sty tex/Makefile dist/atlast-$(VERSION)/tex
+		regout.txt regress.pez dist/pez-$(VERSION)
+	mkdir dist/pez-$(VERSION)/tex
+	cp -p tex/*.tex tex/*.sty tex/Makefile dist/pez-$(VERSION)/tex
 	find dist -type f -exec chmod 644 {} \;
-	( cd dist ; tar cfvz ../atlast-$(VERSION).tar.gz atlast-$(VERSION) )
+	( cd dist ; tar cfvz ../pez-$(VERSION).tar.gz pez-$(VERSION) )
 	rm -rf dist
 
-lint:	lintatlast
+lint:	lintpez
 
-lintatlast:
-	lint atlast.c atlmain.c $(LIBRARIES) $(ATLCONFIG)
+lintpez:
+	lint pez.c pezmain.c $(LIBRARIES) $(ATLCONFIG)
 
-repl: atlast
-	rlwrap ./atlast
+repl: pez
+	rlwrap ./pez
