@@ -1,0 +1,37 @@
+Pez is a small, lightweight, 100% C (for now), embeddable or standalone,
+public domain, portable dialect of Forth.  It is based on the Atlast
+system (see doc/CREDITS for more information).
+
+The primary goal of the Pez project, much like the goal of the Atlast
+project, is to bring dead-simple scriptability and dynamism to otherwise
+static code, with a focus on user-level scripting of applications.
+There are a number of compile-time options for trimming down and
+limiting in the case of untrusted input, and also a large number of
+OS-level facilities both added and planned.
+
+I highly recommend having a look at doc/atlast.pdf, written by Mr.
+Walker in 1990, especially the introduction which is still shockingly
+relevant now, about 20 years later.
+
+There are a number of benefits to adding user-level scripting to an
+application.  You get a free doman-specific language to expose to users
+however you see fit.  You get a free configuration file parser in the
+same language as your application's DSL.  You get a dynamic internal
+scripting language a la LUA.  You get a safe, plain-text, cross-platform
+language for communicating between your applications.  It can even be
+used as a complete, full-featured standalone language.  And it's
+lightweight to boot:  running on a 64-bit Linux, I'm looking at about 8k
+of memory for the REPL for a full system.
+
+Pez has added to the Atlast system a number of features:
+* Portability to 64-bit platforms
+* A Foreign Function Interface, for dynamically loading libraries to interface
+  with system libraries.
+* More complete access to standard system calls, such as fork(), exec(),
+  etc.
+* Numerous small improvements, and more large improvements on the way.
+
+I certainly hope that you find this codebase to be as useful and as much
+fun as I have.
+
+Pete Elmore
