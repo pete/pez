@@ -1,25 +1,18 @@
 /*
 
-			      A T L A S T
-
-	 Autodesk Threaded Language Application System Toolkit
-
-		 Definitions for components of ATLAST
-
-     Designed and implemented in January of 1990 by John Walker.
-
-
-    This  file	contains the definitions for modules within the ATLAST
+   Pez
+   Definitions for components of PEZ
+    This  file	contains the definitions for modules within the PEZ
     language system itself.  Definitions used by programs that link to
-    ATLAST   are   in	ATLAST.H,  which  is  included	by  this  file
+    PEZ   are   in	PEZ.H,  which  is  included	by  this  file
     automatically.
 
-		This program is in the public domain.
-
+   See doc/CREDITS for information about the authors.  
+   This program is in the public domain.
 */
 
-#ifndef __ATLDEF_H
-#define __ATLDEF_H
+#ifndef __PEZDEF_H
+#define __PEZDEF_H
 
 #include "pez.h"                   /* Define user linkage structures */
 

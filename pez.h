@@ -1,24 +1,18 @@
 /*
 
-			      A T L A S T
-
-	  Autodesk Threaded Language Application System Toolkit
-
-		     Program Linkage Definitions
-
-     Designed and implemented in January of 1990 by John Walker.
-
+   Pez
+   Program Linkage Definitions
      This  module  contains  the  definitions  needed by programs that
-     invoke the ATLAST system.	It does contain the  definitions  used
-     internally   within  ATLAST  (which  might  create  conflicts  if
+     invoke the PEZ system.	It does contain the  definitions  used
+     internally   within  PEZ  (which  might  create  conflicts  if
      included in calling programs).
 
-		This program is in the public domain.
-
+   See doc/CREDITS for information about the authors.  
+   This program is in the public domain.
 */
 
-#ifndef __ATLAST_H
-#define __ATLAST_H
+#ifndef __PEZ_H
+#define __PEZ_H
 
 typedef long pez_int;		      /* Stack integer type */
 typedef double pez_real;	      /* Real number type */
@@ -39,23 +33,23 @@ extern pez_int pez_redef;	      /* Allow redefinition of words without
 extern pez_int pez_errline;	      /* Line number where last pez_load()
 					 errored or zero if no error. */
 
-/*  ATL_EVAL return status codes  */
+/*  PEZ_EVAL return status codes  */
 
-#define ATL_SNORM	0	      /* Normal evaluation */
-#define ATL_STACKOVER	-1	      /* Stack overflow */
-#define ATL_STACKUNDER	-2	      /* Stack underflow */
-#define ATL_RSTACKOVER	-3	      /* Return stack overflow */
-#define ATL_RSTACKUNDER -4	      /* Return stack underflow */
-#define ATL_HEAPOVER	-5	      /* Heap overflow */
-#define ATL_BADPOINTER	-6	      /* Pointer outside the heap */
-#define ATL_UNDEFINED	-7	      /* Undefined word */
-#define ATL_FORGETPROT	-8	      /* Attempt to forget protected word */
-#define ATL_NOTINDEF	-9	      /* Compiler word outside definition */
-#define ATL_RUNSTRING	-10	      /* Unterminated string */
-#define ATL_RUNCOMM	-11	      /* Unterminated comment in file */
-#define ATL_BREAK	-12	      /* Asynchronous break signal received */
-#define ATL_DIVZERO	-13	      /* Attempt to divide by zero */
-#define ATL_APPLICATION -14	      /* Application primitive pez_error() */
+#define PEZ_SNORM	0	      /* Normal evaluation */
+#define PEZ_STACKOVER	-1	      /* Stack overflow */
+#define PEZ_STACKUNDER	-2	      /* Stack underflow */
+#define PEZ_RSTACKOVER	-3	      /* Return stack overflow */
+#define PEZ_RSTACKUNDER -4	      /* Return stack underflow */
+#define PEZ_HEAPOVER	-5	      /* Heap overflow */
+#define PEZ_BADPOINTER	-6	      /* Pointer outside the heap */
+#define PEZ_UNDEFINED	-7	      /* Undefined word */
+#define PEZ_FORGETPROT	-8	      /* Attempt to forget protected word */
+#define PEZ_NOTINDEF	-9	      /* Compiler word outside definition */
+#define PEZ_RUNSTRING	-10	      /* Unterminated string */
+#define PEZ_RUNCOMM	-11	      /* Unterminated comment in file */
+#define PEZ_BREAK	-12	      /* Asynchronous break signal received */
+#define PEZ_DIVZERO	-13	      /* Attempt to divide by zero */
+#define PEZ_APPLICATION -14	      /* Application primitive pez_error() */
 
 /*  Entry points  */
 

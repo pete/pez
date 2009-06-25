@@ -1,6 +1,6 @@
-/*			      ATLMAIN.C
+/*			      PEZMAIN.C
 
-	      Main driver program for interactive ATLAST
+	      Main driver program for interactive PEZ
 
      Designed and implemented in January of 1990 by John Walker.
 
@@ -87,7 +87,7 @@ char *argv[];
 
 			case '?':
 			case 'U':
-				PR("Usage:  ATLAST [options] [inputfile]\n");
+				PR("Usage:  PEZ [options] [inputfile]\n");
 				PR("        Options:\n");
 				PR("           -D     Treat file as definitions\n");
 				PR("           -Hn    Heap length n\n");
@@ -143,14 +143,14 @@ char *argv[];
 		}
 		stat = pez_load(fp);
 		fclose(fp);
-		if(stat != ATL_SNORM) {
+		if(stat != PEZ_SNORM) {
 			printf("\nError %d in include file %s\n", stat,
 				 include[i]);
 		}
 	}
 
 	/* Now that all the preliminaries are out of the way, fall into
-	   the main ATLAST execution loop. */
+	   the main PEZ execution loop. */
 
 #ifndef HIGHC
 	signal(SIGINT, ctrlc);

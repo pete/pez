@@ -204,7 +204,7 @@ Exported pez_real rbuf0, rbuf1, rbuf2;	/* Real temporary buffers */
 static long base = 10;		/* Number base */
 Exported dictword **ip = NULL;	/* Instruction pointer */
 Exported dictword *curword = NULL;	/* Current word being executed */
-static int evalstat = ATL_SNORM;	/* Evaluator status */
+static int evalstat = PEZ_SNORM;	/* Evaluator status */
 static Boolean defpend = False;	/* Token definition pending */
 static Boolean forgetpend = False;	/* Forget pending */
 static Boolean tickpend = False;	/* Take address of next word */
@@ -222,7 +222,7 @@ static Boolean broken = False;	/* Asynchronous break received */
 static
 #endif
 #endif
-char copyright[] = "ATLAST: This program is in the public domain.";
+char copyright[] = "PEZ: This program is in the public domain.";
 #endif
 
 /* The following static cells save the compile addresses of words
@@ -374,7 +374,7 @@ char **cp;
 #ifdef MEMMESSAGE
 				printf("\nRunaway string: %s\n", tokbuf);
 #endif
-				evalstat = ATL_RUNSTRING;
+				evalstat = PEZ_RUNSTRING;
 				return TokNull;
 			}
 			return TokString;
@@ -480,7 +480,7 @@ char *tkname;
 
 #ifdef FgetspNeeded
 
-/*  ATL_FGETSP	--  Portable database version of FGETS.  This reads the
+/*  PEZ_FGETSP	--  Portable database version of FGETS.  This reads the
 		    next line into a buffer a la fgets().  A line is
 		    delimited by either a carriage return or a line
 		    feed, optionally followed by the other character
@@ -526,7 +526,7 @@ FILE *stream;
 }
 #endif				/* FgetspNeeded */
 
-/*  ATL_MEMSTAT  --  Print memory usage summary.  */
+/*  PEZ_MEMSTAT  --  Print memory usage summary.  */
 
 #ifdef MEMSTAT
 void pez_memstat()
@@ -1730,7 +1730,7 @@ prim P_fload()
 
 prim P_evaluate()
 {				/* string -- status */
-	int es = ATL_SNORM;
+	int es = PEZ_SNORM;
 	pez_statemark mk;
 	pez_int scomm = pez_comment;	/* Stack comment pending state */
 	dictword **sip = ip;	/* Stack instruction pointer */
@@ -1743,14 +1743,14 @@ prim P_evaluate()
 	Pop;			/* Pop so it sees arguments below it */
 	pez_mark(&mk);		/* Mark in case of error */
 	ip = NULL;		/* Fool pez_eval into interp state */
-	if((es = pez_eval(estring)) != ATL_SNORM) {
+	if((es = pez_eval(estring)) != PEZ_SNORM) {
 		pez_unwind(&mk);
 	}
 	/* If there were no other errors, check for a runaway comment.  If
 	   we ended the file in comment-ignore mode, set the runaway comment
 	   error status and unwind the file.  */
-	if((es == ATL_SNORM) && (pez_comment != 0)) {
-		es = ATL_RUNCOMM;
+	if((es == PEZ_SNORM) && (pez_comment != 0)) {
+		es = PEZ_RUNCOMM;
 		pez_unwind(&mk);
 	}
 	pez_comment = scomm;	/* Unstack comment pending status */
@@ -3375,7 +3375,7 @@ static struct primfcn primt[] = {
 	{NULL, (codeptr) 0}
 };
 
-/*  ATL_PRIMDEF  --  Initialise the dictionary with the built-in primitive
+/*  PEZ_PRIMDEF  --  Initialise the dictionary with the built-in primitive
 		     words.  To save the memory overhead of separately
 		     allocated word items, we get one buffer for all
 		     the items and link them internally within the buffer. */
@@ -3471,13 +3471,13 @@ char *kind;
 	forgetpend = defpend = stringlit = tickpend = ctickpend = False;
 }
 
-/*  ATL_ERROR  --  Handle error detected by user-defined primitive.  */
+/*  PEZ_ERROR  --  Handle error detected by user-defined primitive.  */
 
 Exported void pez_error(kind)
 char *kind;
 {
 	trouble(kind);
-	evalstat = ATL_APPLICATION;	/* Signify application-detected error */
+	evalstat = PEZ_APPLICATION;	/* Signify application-detected error */
 }
 
 #ifndef NOMEMCHECK
@@ -3487,7 +3487,7 @@ char *kind;
 Exported void stakover()
 {
 	trouble("Stack overflow");
-	evalstat = ATL_STACKOVER;
+	evalstat = PEZ_STACKOVER;
 }
 
 /*  STAKUNDER  --  Recover from stack underflow.  */
@@ -3495,7 +3495,7 @@ Exported void stakover()
 Exported void stakunder()
 {
 	trouble("Stack underflow");
-	evalstat = ATL_STACKUNDER;
+	evalstat = PEZ_STACKUNDER;
 }
 
 /*  RSTAKOVER  --  Recover from return stack overflow.	*/
@@ -3503,7 +3503,7 @@ Exported void stakunder()
 Exported void rstakover()
 {
 	trouble("Return stack overflow");
-	evalstat = ATL_RSTACKOVER;
+	evalstat = PEZ_RSTACKOVER;
 }
 
 /*  RSTAKUNDER	--  Recover from return stack underflow.  */
@@ -3511,7 +3511,7 @@ Exported void rstakover()
 Exported void rstakunder()
 {
 	trouble("Return stack underflow");
-	evalstat = ATL_RSTACKUNDER;
+	evalstat = PEZ_RSTACKUNDER;
 }
 
 /*  HEAPOVER  --  Recover from heap overflow.  Note that a heap
@@ -3522,7 +3522,7 @@ Exported void rstakunder()
 Exported void heapover()
 {
 	trouble("Heap overflow");
-	evalstat = ATL_HEAPOVER;
+	evalstat = PEZ_HEAPOVER;
 }
 
 /*  BADPOINTER	--  Abort if bad pointer reference detected.  */
@@ -3530,7 +3530,7 @@ Exported void heapover()
 Exported void badpointer()
 {
 	trouble("Bad pointer");
-	evalstat = ATL_BADPOINTER;
+	evalstat = PEZ_BADPOINTER;
 }
 
 /*  NOTCOMP  --  Compiler word used outside definition.  */
@@ -3538,7 +3538,7 @@ Exported void badpointer()
 static void notcomp()
 {
 	trouble("Compiler word outside definition");
-	evalstat = ATL_NOTINDEF;
+	evalstat = PEZ_NOTINDEF;
 }
 
 /*  DIVZERO  --  Attempt to divide by zero.  */
@@ -3546,7 +3546,7 @@ static void notcomp()
 static void divzero()
 {
 	trouble("Divide by zero");
-	evalstat = ATL_DIVZERO;
+	evalstat = PEZ_DIVZERO;
 }
 
 #endif				/* !NOMEMCHECK */
@@ -3570,7 +3570,7 @@ dictword *wp;
 #endif
 		if(broken) {	/* Did we receive a break signal */
 			trouble("Break signal");
-			evalstat = ATL_BREAK;
+			evalstat = PEZ_BREAK;
 			break;
 		}
 #endif				/* BREAK */
@@ -3585,7 +3585,7 @@ dictword *wp;
 	curword = NULL;
 }
 
-/*  ATL_INIT  --  Initialise the ATLAST system.  The dynamic storage areas
+/*  PEZ_INIT  --  Initialise the PEZ system.  The dynamic storage areas
 		  are allocated unless the caller has preallocated buffers
 		  for them and stored the addresses into the respective
 		  pointers.  In either case, the storage management
@@ -3727,7 +3727,7 @@ void pez_init()
 	}
 }
 
-/*  ATL_LOOKUP	--  Look up a word in the dictionary.  Returns its
+/*  PEZ_LOOKUP	--  Look up a word in the dictionary.  Returns its
                     word item if found or NULL if the word isn't
 		    in the dictionary. */
 
@@ -3739,7 +3739,7 @@ char *name;
 	return lookup(tokbuf);	/* Now use normal lookup() on it */
 }
 
-/*  ATL_BODY  --  Returns the address of the body of a word, given
+/*  PEZ_BODY  --  Returns the address of the body of a word, given
 		  its dictionary entry. */
 
 stackitem *pez_body(dw)
@@ -3748,7 +3748,7 @@ dictword *dw;
 	return ((stackitem *) dw) + Dictwordl;
 }
 
-/*  ATL_EXEC  --  Execute a word, given its dictionary address.  The
+/*  PEZ_EXEC  --  Execute a word, given its dictionary address.  The
                   evaluation status for that word's execution is
 		  returned.  The in-progress evaluation status is
 		  preserved. */
@@ -3758,7 +3758,7 @@ dictword *dw;
 {
 	int sestat = evalstat, restat;
 
-	evalstat = ATL_SNORM;
+	evalstat = PEZ_SNORM;
 #ifdef BREAK
 	broken = False;		/* Reset break received */
 #endif
@@ -3768,7 +3768,7 @@ dictword *dw;
 	Rpush = ip;		/* Push instruction pointer */
 	ip = NULL;		/* Keep exword from running away */
 	exword(dw);
-	if(evalstat == ATL_SNORM) {	/* If word ran to completion */
+	if(evalstat == PEZ_SNORM) {	/* If word ran to completion */
 		Rsl(1);
 		ip = R0;	/* Pop the return stack */
 		Rpop;
@@ -3780,7 +3780,7 @@ dictword *dw;
 	return restat;
 }
 
-/*  ATL_VARDEF  --  Define a variable word.  Called with the word's
+/*  PEZ_VARDEF  --  Define a variable word.  Called with the word's
 		    name and the number of bytes of storage to allocate
 		    for its body.  All words defined with pez_vardef()
 		    have the standard variable action of pushing their
@@ -3797,11 +3797,11 @@ int size;
 
 #undef Memerrs
 #define Memerrs NULL
-	evalstat = ATL_SNORM;
+	evalstat = PEZ_SNORM;
 	Ho(Dictwordl + isize);
 #undef Memerrs
 #define Memerrs
-	if(evalstat != ATL_SNORM)	/* Did the heap overflow */
+	if(evalstat != PEZ_SNORM)	/* Did the heap overflow */
 		return NULL;	/* Yes.  Return NULL */
 	createword = (dictword *) hptr;	/* Develop address of word */
 	createword->wcode = P_var;	/* Store default code */
@@ -3818,7 +3818,7 @@ int size;
 	return di;		/* Return new word */
 }
 
-/*  ATL_MARK  --  Mark current state of the system.  */
+/*  PEZ_MARK  --  Mark current state of the system.  */
 
 void pez_mark(mp)
 pez_statemark *mp;
@@ -3829,7 +3829,7 @@ pez_statemark *mp;
 	mp->mdict = dict;	/* Save last item in dictionary */
 }
 
-/*  ATL_UNWIND	--  Restore system state to previously saved state.  */
+/*  PEZ_UNWIND	--  Restore system state to previously saved state.  */
 
 void pez_unwind(mp)
 pez_statemark *mp;
@@ -3860,7 +3860,7 @@ pez_statemark *mp;
 
 #ifdef BREAK
 
-/*  ATL_BREAK  --  Asynchronously interrupt execution.	Note that this
+/*  PEZ_BREAK  --  Asynchronously interrupt execution.	Note that this
 		   function only sets a flag, broken, that causes
 		   exword() to halt after the current word.  Since
                    this can be called at any time, it daren't touch the
@@ -3873,12 +3873,12 @@ void pez_break()
 }
 #endif				/* BREAK */
 
-/*  ATL_LOAD  --  Load a file into the system.	*/
+/*  PEZ_LOAD  --  Load a file into the system.	*/
 
 int pez_load(fp)
 FILE *fp;
 {
-	int es = ATL_SNORM;
+	int es = PEZ_SNORM;
 	char s[134];
 	pez_statemark mk;
 	pez_int scomm = pez_comment;	/* Stack comment pending state */
@@ -3891,7 +3891,7 @@ FILE *fp;
 	ip = NULL;		/* Fool pez_eval into interp state */
 	while(pez_fgetsp(s, 132, fp) != NULL) {
 		lineno++;
-		if((es = pez_eval(s)) != ATL_SNORM) {
+		if((es = pez_eval(s)) != PEZ_SNORM) {
 			pez_errline = lineno;	/* Save line number of error */
 			pez_unwind(&mk);
 			break;
@@ -3900,11 +3900,11 @@ FILE *fp;
 	/* If there were no other errors, check for a runaway comment.  If
 	   we ended the file in comment-ignore mode, set the runaway comment
 	   error status and unwind the file.  */
-	if((es == ATL_SNORM) && (pez_comment == Truth)) {
+	if((es == PEZ_SNORM) && (pez_comment == Truth)) {
 #ifdef MEMMESSAGE
 		printf("\nRunaway `(' comment.\n");
 #endif
-		es = ATL_RUNCOMM;
+		es = PEZ_RUNCOMM;
 		pez_unwind(&mk);
 	}
 	pez_comment = scomm;	/* Unstack comment pending status */
@@ -3913,7 +3913,7 @@ FILE *fp;
 	return es;
 }
 
-/*  ATL_PROLOGUE  --  Recognise and process prologue statement.
+/*  PEZ_PROLOGUE  --  Recognise and process prologue statement.
 		      Returns 1 if the statement was part of the
 		      prologue and 0 otherwise. */
 
@@ -3956,7 +3956,7 @@ char *sp;
 	return 0;
 }
 
-/*  ATL_EVAL  --  Evaluate a string containing ATLAST words.  */
+/*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
 
 int pez_eval(sp)
 char *sp;
@@ -3966,7 +3966,7 @@ char *sp;
 #undef Memerrs
 #define Memerrs evalstat
 	instream = sp;
-	evalstat = ATL_SNORM;	/* Set normal evaluation status */
+	evalstat = PEZ_SNORM;	/* Set normal evaluation status */
 #ifdef BREAK
 	broken = False;		/* Reset asynchronous break */
 #endif
@@ -3984,7 +3984,7 @@ char *sp;
 	}
 #endif				/* PROLOGUE */
 
-	while((evalstat == ATL_SNORM) && (i = token(&instream)) != TokNull) {
+	while((evalstat == PEZ_SNORM) && (i = token(&instream)) != TokNull) {
 		dictword *di;
 
 		switch (i) {
@@ -4007,7 +4007,7 @@ char *sp;
 							    ("\nForget protected.\n");
 #endif
 							evalstat =
-							    ATL_FORGETPROT;
+							    PEZ_FORGETPROT;
 							di = NULL;
 						}
 						if(strcmp(dw->wname + 1, tokbuf)
@@ -4056,7 +4056,7 @@ char *sp;
 #ifdef MEMMESSAGE
 					printf(" '%s' undefined ", tokbuf);
 #endif
-					evalstat = ATL_UNDEFINED;
+					evalstat = PEZ_UNDEFINED;
 				}
 			} else if(tickpend) {
 				tickpend = False;
@@ -4068,7 +4068,7 @@ char *sp;
 #ifdef MEMMESSAGE
 					printf(" '%s' undefined ", tokbuf);
 #endif
-					evalstat = ATL_UNDEFINED;
+					evalstat = PEZ_UNDEFINED;
 				}
 			} else if(defpend) {
 				/* If a definition is pending, define the token and
@@ -4114,7 +4114,7 @@ char *sp;
 #ifdef MEMMESSAGE
 					printf(" '%s' undefined ", tokbuf);
 #endif
-					evalstat = ATL_UNDEFINED;
+					evalstat = PEZ_UNDEFINED;
 					state = Falsity;
 				}
 			}

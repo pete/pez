@@ -1,5 +1,5 @@
 
-#	Unix makefile for ATLAST
+#	Unix makefile for PEZ
 
 VERSION = 1.2
 
@@ -10,21 +10,21 @@ LIBRARIES = -lm -ldl
 
 INCLUDE =
 
-ATLCONFIG = -DMEMSTAT -DALIGNMENT -DEXPORT -DREADONLYSTRINGS # -DNOMEMCHECK
+PEZCONFIG = -DMEMSTAT -DALIGNMENT -DEXPORT -DREADONLYSTRINGS # -DNOMEMCHECK
 
-CFLAGS += $(COPTIONS) $(INCLUDE) $(ATLCONFIG)
+CFLAGS += $(COPTIONS) $(INCLUDE) $(PEZCONFIG)
 
-ATLOBJ = pez.o pezmain.o
+PEZOBJ = pez.o pezmain.o
 
 APPS = pez primdeftest
 
 all:	$(APPS) libpez.so
 
-pez: $(ATLOBJ)
-	$(CC) $(CFLAGS) $(ATLOBJ) -o pez $(LIBRARIES)
+pez: $(PEZOBJ)
+	$(CC) $(CFLAGS) $(PEZOBJ) -o pez $(LIBRARIES)
 
-libpez.so: $(ATLOBJ)
-	$(CC) -shared $(CFLAGS) $(ATLOBJ) -o libpez.so
+libpez.so: $(PEZOBJ)
+	$(CC) -shared $(CFLAGS) $(PEZOBJ) -o libpez.so
 
 pez.o:   pez.c pezdef.h
 pezdef.h:   pez.h
@@ -68,7 +68,7 @@ dist:
 lint:	lintpez
 
 lintpez:
-	lint pez.c pezmain.c $(LIBRARIES) $(ATLCONFIG)
+	lint pez.c pezmain.c $(LIBRARIES) $(PEZCONFIG)
 
 repl: pez
 	rlwrap ./pez
