@@ -916,33 +916,33 @@ variable fp1
 
 \   Run all the regression subtests
 
-"int\n" type
+"int" puts
 testint
-"stk\n" type
+"stk" puts
 teststk
-"2stk\n" type
+"2stk" puts
 test2stk
-"heap\n" type
+"heap" puts
 testheap
-"var\n" type
+"var" puts
 testvar
-"array\n" type
+"array" puts
 testarray
-"rstk\n" type
+"rstk" puts
 testrstk
-"loop" type cr
+"loop" puts
 testloop
-"float" type cr
+"float" puts
 testfloat
-"math" type cr
+"math" puts
 testmath
-"str" type cr
+"str" puts
 teststr
-"file" type cr
+"file" puts
 testfile
-"dict" type cr
+"dict" puts
 testdict
-"eval" type cr
+"eval" puts
 testeval
 
 \   Low-level control structure primitives
