@@ -2380,14 +2380,14 @@ prim P_xploop()
 	Rsl(3);
 
 	niter = ((stackitem) R0) + S0;
-	Pop;
-	if((niter >= ((stackitem) R1)) && (((stackitem) R0) < ((stackitem) R1))) {
+	if(niter == (stackitem)R1 || abs(S0) > abs((stackitem)R0 - (stackitem)R1)) {
 		rstk -= 3;	/* Pop iteration variable and limit */
 		ip++;		/* Skip the jump address */
 	} else {
 		ip += (stackitem) * ip;
 		R0 = (rstackitem) niter;
 	}
+	Pop;
 }
 
 prim P_leave()
