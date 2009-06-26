@@ -29,7 +29,8 @@ Pez has added to the Atlast system a number of features:
   with system libraries.
 * More complete access to standard system calls, such as fork(), exec(),
   etc.
-* Numerous small improvements, and more large improvements on the way.
+* Numerous small improvements, and more large improvements on the way.  See
+  doc/TODO.
 
 I certainly hope that you find this codebase to be as useful and as much
 fun as I have.

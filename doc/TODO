@@ -1,11 +1,4 @@
-These are the things that remain to be done to make Atlast a workable VM
-for Roboto.
-
-* Misc cleanup
-	* Make my own idioms conform a little more to the Atlast codebase, where
-	  it makes sense.
-	* Fix up some of Atlast's quirks, where it makes sense.  (e.g., change
-	  'Push = x' to 'Push(x)'.)
+This is a sort of unordered roadmap for Pez.
 
 * Enable multiple instances within a single process.
 
@@ -13,9 +6,21 @@ for Roboto.
 	* I expect text to be easier than binary images.
 	* Also, do both if possible.
 
-* Add a C ffi
-	* (More) support for dlload et al
-	* Some nice wrapping for same
-	* The hard part:  calling the functions!
+* Add examples for the FFI, and write a couple of libraries.
+
+* A make install task, and a Pkgfile for CRUX at least.
+
+* Set up something like $LIBDIR/pez, to make it a little more easy to distribute
+  a standard library along with Pez and load files from it.
+
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
   depends on how much of a pain that turns out to be.
+
+* Misc cleanup
+	* Make my own idioms conform a little more to the Atlast codebase, where
+	  it makes sense.
+	* Fix up some of Atlast's quirks, where it makes sense.  (e.g., change
+	  'Push = x' to 'Push(x)'.)
+
+* Investigate a few key optimizations, as I'm planning on using Pez as an
+  intermediate language for Roboto.
