@@ -2919,6 +2919,16 @@ prim P_setenv()
 }
 
 /*
+   ( varname -- success=Truth|error=Falsity )
+   Removes a variable from the environment.
+*/
+prim P_unsetenv()
+{
+	Sl(1);
+	S0 = -unsetenv((char *)S0) - 1;
+}
+
+/*
    ( message status -- )
    Prints a message to stderr with a \n, and dies with the specified status.
 */
@@ -3323,6 +3333,7 @@ static struct primfcn primt[] = {
 	{"0ENVIRON", P_environ},
 	{"0GETENV", P_getenv},
 	{"0SETENV", P_setenv},
+	{"0UNSETENV", P_unsetenv},
 	{"0DIE!", P_diebang},
 	// at-exit is going to have to wait until I figure out a good way to do
 	// it.  I am thinking a queue of words to push to 
