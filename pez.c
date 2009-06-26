@@ -2885,6 +2885,39 @@ prim P_call_word_1w()
 #include <sys/wait.h>
 #include <signal.h>
 
+extern char **environ;
+/*
+   ( -- environment )
+   Pushes the environ pointer onto the stack.  You probably actually want to
+   interact with getenv/setenv unless you're iterating over the environment.
+*/
+prim P_environ()
+{
+	So(1);
+	Push = (stackitem)environ;
+}
+
+/*
+   ( varname -- envvar|0 )
+   Returns the value for the named variable, or NULL if it isn't set.
+*/
+prim P_getenv()
+{
+	Sl(1);
+	S0 = (stackitem)getenv((char *)S0);
+}
+
+/*
+   ( varname value -- success=Truth|error=falsity )
+   Sets an environment variable.
+*/
+prim P_setenv()
+{
+	Sl(2);
+	S1 = -setenv((char *)S1, (char *)S0, 1) - 1;
+	Pop;
+}
+
 /*
    ( message status -- )
    Prints a message to stderr with a \n, and dies with the specified status.
@@ -2907,6 +2940,18 @@ prim P_fork()
 {
 	So(1);
 	Push = fork();
+}
+
+/*
+   ( path argv -- )
+   exec()s another binary.  Does not return unless there's an error.  Path
+   should be the path to the other executable, and argv should be an array of
+   strings, with a NULL after the last string.
+*/
+prim P_execv()
+{
+	Sl(2);
+	execv((char *)S1, (char **)S0);
 }
 
 /*
@@ -3275,11 +3320,15 @@ static struct primfcn primt[] = {
 #endif
 
 #ifdef PROCESS
+	{"0ENVIRON", P_environ},
+	{"0GETENV", P_getenv},
+	{"0SETENV", P_setenv},
 	{"0DIE!", P_diebang},
 	// at-exit is going to have to wait until I figure out a good way to do
 	// it.  I am thinking a queue of words to push to 
 	// {"0AT-EXIT", P_at_exit},
 	{"0FORK", P_fork},
+	{"0EXECV", P_execv},
 	{"0WAIT", P_wait},
 	{"0PID", P_pid},
 	{"0KILL", P_kill},
