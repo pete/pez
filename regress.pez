@@ -514,6 +514,7 @@ variable k
     "DO-+LOOP" tests:
         0 10 0 do 3 + 1 +loop 30 ok?
         0 21 1 do i + 3 +loop 70 ok?
+	0 0 99 do 1 + -1 +loop 99 ok?
 
     "?DO" tests:
         0 10 0 ?do 2+ loop 20 ok?
