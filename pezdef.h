@@ -269,7 +269,6 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Realpop  stk -= Realsize      /* Pop real from stack */
 #define Realpop2 stk -= (2 * Realsize) /* Pop two reals from stack */
 
-/* FIXME TODO testing this stuff...
 #ifdef ALIGNMENT
 #define REAL0 *((pez_real *) memcpy((char *) &rbuf0, (char *) &S1, sizeof(pez_real)))
 #define REAL1 *((pez_real *) memcpy((char *) &rbuf1, (char *) &S3, sizeof(pez_real)))
@@ -277,19 +276,14 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define SREAL0(x) rbuf2=(x); (void)memcpy((char *) &S1, (char *) &rbuf2, sizeof(pez_real))
 #define SREAL1(x) rbuf2=(x); (void)memcpy((char *) stk - Realsize, (char *) &rbuf2, sizeof(pez_real))
 #else
-#define REAL0	*((pez_real *) &S1)   // First real on stack
-#define REAL1	*((pez_real *) &S3)   // Second real on stack
-#define REAL2	*((pez_real *) &S5)   // Third real on stack
-#define SREAL0(x) *((pez_real *) stk) = (x)
-#define SREAL1(x) *((pez_real *) stk - Realsize) = (x)
-#endif
-*/
-#define REAL0 ((pez_real *)stk)[-1]
-#define REAL1 ((pez_real *)stk)[-2]
-#define REAL2 ((pez_real *)stk)[-3]
+#define REAL0 (((pez_real *)stk)[-1])
+#define REAL1 (((pez_real *)stk)[-2])
+#define REAL2 (((pez_real *)stk)[-3])
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
-inline static void Realpush(double d) { stk += Realsize; SREAL0(d); }
+#endif
+#define Realpush(x) ((pez_real *)stk++) = (x)
+
 
 /*  File I/O definitions (used only if FILEIO is configured).  */
 

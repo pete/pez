@@ -10,7 +10,7 @@ LIBRARIES = -lm -ldl
 
 INCLUDE =
 
-PEZCONFIG = -DMEMSTAT -DALIGNMENT -DEXPORT -DREADONLYSTRINGS # -DNOMEMCHECK
+PEZCONFIG = -DMEMSTAT -DEXPORT -DREADONLYSTRINGS # -DNOMEMCHECK -DALIGNMENT
 
 CFLAGS += $(COPTIONS) $(INCLUDE) $(PEZCONFIG)
 
@@ -33,7 +33,7 @@ pezmain.o:  pezmain.c pez.h
 primdeftest:
 	$(CC) $(CFLAGS) primdeftest.c pez.c -o primdeftest $(LIBRARIES)
 
-#	Run the Atlast regression test
+#	Run the Pez regression test
 regression:
 	echo testcons >/tmp/regin.tmp
 	echo Test 1234 >>/tmp/regin.tmp
