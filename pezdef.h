@@ -269,16 +269,22 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Realpop  stk -= Realsize      /* Pop real from stack */
 #define Realpop2 stk -= (2 * Realsize) /* Pop two reals from stack */
 
+#define REALSTACK ((pez_real *)stk)
 #ifdef ALIGNMENT
-#define REAL0 *((pez_real *) memcpy((char *) &rbuf0, (char *) &S1, sizeof(pez_real)))
-#define REAL1 *((pez_real *) memcpy((char *) &rbuf1, (char *) &S3, sizeof(pez_real)))
-#define REAL2 *((pez_real *) memcpy((char *) &rbuf2, (char *) &S5, sizeof(pez_real)))
-#define SREAL0(x) rbuf2=(x); (void)memcpy((char *) &S1, (char *) &rbuf2, sizeof(pez_real))
-#define SREAL1(x) rbuf2=(x); (void)memcpy((char *) stk - Realsize, (char *) &rbuf2, sizeof(pez_real))
+#define REAL0 *((pez_real *) memcpy((char *) &rbuf0, (char *)(REALSTACK - 1), \
+			sizeof(pez_real)))
+#define REAL1 *((pez_real *) memcpy((char *) &rbuf1, (char *)(REALSTACK - 2), \
+			sizeof(pez_real)))
+#define REAL2 *((pez_real *) memcpy((char *) &rbuf2, (char *)(REALSTACK - 3), \
+			sizeof(pez_real)))
+#define SREAL0(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 1), \
+		(char *) &rbuf2, sizeof(pez_real))
+#define SREAL1(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 2), \
+		(char *) &rbuf2, sizeof(pez_real))
 #else
-#define REAL0 ((pez_real *)stk)[-1]
-#define REAL1 ((pez_real *)stk)[-2]
-#define REAL2 ((pez_real *)stk)[-3]
+#define REAL0 REALSTACK[-1]
+#define REAL1 REALSTACK[-2]
+#define REAL2 REALSTACK[-3]
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
 #endif
