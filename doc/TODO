@@ -3,12 +3,13 @@ This is a sort of unordered roadmap for Pez.
 * Support running as script (#!/usr/bin/env pez)
 
 * Enable multiple instances within a single process.  This is both nice to have
-  and necessary for the concurrency model I want to implement.  It's going to be
-  kind of tedious, though, as it will require moving all of the static variables
-  into a struct (representing the interpreter; each with its own stack, return
-  stack, input stream, heap, etc.), then changing all of the primitives to take
-  a pointer to the interpreter as an argument.  So I'm sort of lazily putting it
-  off for now.
+  and necessary for the concurrency model I want to implement (a stack-based
+  language works best as shared-nothing, I think), or to instantiate sandboxed
+  interpreters from inside Pez programs.  It's going to be kind of tedious,
+  though, as it will require moving all of the static variables into a struct
+  (representing the interpreter; each with its own stack, return stack, input
+  stream, heap, etc.), then changing all of the primitives to take a pointer to
+  the interpreter as an argument.  So I'm sort of lazily putting it off for now.
 
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
