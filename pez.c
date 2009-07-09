@@ -3622,7 +3622,7 @@ dictword *wp;
 		printf("\nTrace: %s ", curword->wname + 1);
 	}
 #endif				/* TRACE */
-	(*curword->wcode) ();	/* Execute the first word */
+	(*curword->wcode)();	/* Execute the first word */
 	while(ip != NULL) {
 #ifdef BREAK
 #ifdef Keybreak
@@ -3640,7 +3640,7 @@ dictword *wp;
 			printf("\nTrace: %s ", curword->wname + 1);
 		}
 #endif				/* TRACE */
-		(*curword->wcode) ();	/* Execute the next word */
+		(*curword->wcode)();	/* Execute the next word */
 	}
 	curword = NULL;
 }
