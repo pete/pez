@@ -198,6 +198,10 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Keybreak() {static int n=0; if ((n=(n+1)&127)==0) {UbI(); broken=ads_usrbrk();}}
 #endif
 
+#ifndef Keybreak
+#define Keybreak()
+#endif
+
 /*  Dynamic storage manipulation primitives  */
 
 /*  Stack access definitions  */

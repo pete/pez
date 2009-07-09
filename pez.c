@@ -3620,9 +3620,7 @@ dictword *wp;
 	(*curword->wcode)();	/* Execute the first word */
 	while(ip != NULL) {
 #ifdef BREAK
-#ifdef Keybreak
 		Keybreak();	/* Poll for asynchronous interrupt */
-#endif
 		if(broken) {	/* Did we receive a break signal */
 			trouble("Break signal");
 			evalstat = PEZ_BREAK;
