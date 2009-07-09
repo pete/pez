@@ -1,0 +1,13 @@
+ctags support is relatively simple to add to Pez.  Just add the following lines
+(including the initial double-hyphens) to your ~/.ctags:
+
+--langdef=pez
+--langmap=pez:.pez
+--regex-pez=/(\b|^):\s+([^ \t(\\]+)/\2/w,words/
+--regex-pez=/(\b|^)variable\s+([^ \t(\\]+)/\2/v,variables/
+--regex-pez=/(\b|^)constant\s+([^ \t(\\]+)/\2/c,constants/
+--regex-pez=/(\b|^)array\s+([^ \t(\\]+)/\2/a,arrays/
+
+See the ctags man page or http://ctags.sourceforge.net/ for more information on
+specifying new languages in ctags.  Most editors support it (especially most vi
+clones and Emacs).
