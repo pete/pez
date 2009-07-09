@@ -290,6 +290,12 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #endif
 #define Realpush(x) do { So(Realsize); ((pez_real *)stk++)[0] = (x); } while(0)
 
+#ifdef TRACE
+#define trace if(pez_trace)
+#else // TRACE
+#define trace if(0)
+#endif
+
 
 /*  File I/O definitions (used only if FILEIO is configured).  */
 

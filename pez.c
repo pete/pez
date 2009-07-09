@@ -1073,11 +1073,9 @@ prim P_strlit()
 {				/* Push address of string literal */
 	So(1);
 	Push = (stackitem) (((char *) ip) + 1);
-#ifdef TRACE
-	if(pez_trace) {
-		printf("\"%s\" ", (((char *) ip) + 1));
-	}
-#endif				/* TRACE */
+
+	trace { printf("\"%s\" ", (((char *) ip) + 1)); }
+
 	Skipstring;		/* Advance IP past it */
 }
 
@@ -1221,14 +1219,12 @@ prim P_flit()
 	int i;
 
 	So(Realsize);
-#ifdef TRACE
-	if(pez_trace) {
+	trace {
 		pez_real tr;
 
 		memcpy((char *) &tr, (char *) ip, sizeof(pez_real));
 		printf("%g ", tr);
 	}
-#endif				/* TRACE */
 
 	for(i = 0; i < Realsize; i++) {
 		Push = (stackitem) * ip++;
@@ -2127,11 +2123,9 @@ prim P_fat()
 prim P_dolit()
 {				/* Push instruction stream literal */
 	So(1);
-#ifdef TRACE
-	if(pez_trace) {
+	trace {
 		printf("%ld ", (long) *ip);
 	}
-#endif
 	Push = (stackitem) * ip++;	/* Push the next datum from the
 					   instruction stream. */
 }
@@ -2609,6 +2603,10 @@ prim P_execute()
 	Pop;			/* Pop data stack before execution */
 	exword(wp);		/* Recursively call exword() to run
 				   the word. */
+}
+
+prim P_tail_call()
+{
 }
 
 prim P_body()
@@ -3372,6 +3370,7 @@ static struct primfcn primt[] = {
 	{"0'", P_tick},
 	{"1[']", P_bracktick},
 	{"0EXECUTE", P_execute},
+	{"0TAIL-CALL", P_tail_call},
 	{"0>BODY", P_body},
 	{"0STATE", P_state},
 
@@ -3617,11 +3616,7 @@ static void exword(wp)
 dictword *wp;
 {
 	curword = wp;
-#ifdef TRACE
-	if(pez_trace) {
-		printf("\nTrace: %s ", curword->wname + 1);
-	}
-#endif				/* TRACE */
+	trace { printf("\nTrace: %s ", curword->wname + 1); }
 	(*curword->wcode)();	/* Execute the first word */
 	while(ip != NULL) {
 #ifdef BREAK
@@ -3635,11 +3630,7 @@ dictword *wp;
 		}
 #endif				/* BREAK */
 		curword = *ip++;
-#ifdef TRACE
-		if(pez_trace) {
-			printf("\nTrace: %s ", curword->wname + 1);
-		}
-#endif				/* TRACE */
+		trace { printf("\nTrace: %s ", curword->wname + 1); }
 		(*curword->wcode)();	/* Execute the next word */
 	}
 	curword = NULL;
