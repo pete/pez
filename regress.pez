@@ -442,6 +442,11 @@ variable k
 
 \   Return stack mechanics
 
+: a-very-inefficient-zero
+	dup if 1- tail-call a-very-inefficient-zero then
+	1+ \ To make the test fail.
+	;
+
 : testrstk
     ">R" tests:
         11 7 >r 11 ok?
@@ -452,6 +457,9 @@ variable k
 
     "R>" tests:
         r> r>   3 7   2 nok?
+
+    "TAIL-CALL" tests:
+    	5 a-very-inefficient-zero 0 ok?
 ;
 
 \   Conditional and looping primitives
