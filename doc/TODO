@@ -1,5 +1,35 @@
 This is a sort of unordered roadmap for Pez.
 
+* Support running as script (#!/usr/bin/env pez)
+
+* NOMEMCHECK enables the following:
+	1. Walkback
+	2. Tracing
+	3. 'Compiling' check
+	4. Zero division errors
+	5. Pointers must only point within the heap.
+	6. Heap bounds checking
+	7. Return stack bounds checking
+	8. Stack bounds checking
+	9. Array bounds checking
+	A. Array allocation checking
+  Split it into "RUNTIME_DIAGNOSTICS" (1, 2), "BOUNDS_CHECK" (6-9),
+  "RESTRICTED_POINTERS" (5.  It's still desirable to have the feature for
+  embedding, less so for standalone programs), "MATH_CHECK" (4).  (A) will
+  always be enabled; I can't think of a use for it besides using it as a clever
+  way to free heap space.  (There are plans for allowing more direct
+  manipulation of some of these anyway, when multiple instances of the
+  interpreter are possible.)
+
+* Enable multiple instances within a single process.  This is both nice to have
+  and necessary for the concurrency model I want to implement (a stack-based
+  language works best as shared-nothing, I think), or to instantiate sandboxed
+  interpreters from inside Pez programs.  It's going to be kind of tedious,
+  though, as it will require moving all of the static variables into a struct
+  (representing the interpreter; each with its own stack, return stack, input
+  stream, heap, etc.), then changing all of the primitives to take a pointer to
+  the interpreter as an argument.  So I'm sort of lazily putting it off for now.
+
 * NOMEMCHECK enables the following:
 	1. Walkback
 	2. Tracing
@@ -30,7 +60,8 @@ This is a sort of unordered roadmap for Pez.
 * A make install task, and a Pkgfile for CRUX at least.
 
 * Set up something like $LIBDIR/pez, to make it a little more easy to distribute
-  a standard library along with Pez and load files from it.
+  a standard library (both FFI .so files and regular .pez files) with Pez and
+  load files from it.
 
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
   depends on how much of a pain that turns out to be.
