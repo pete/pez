@@ -76,6 +76,5 @@ This is a sort of unordered roadmap for Pez.
   intermediate language for Roboto.
 
 * Along those lines, there are a few Roboto features that may be pushed down to
-  Pez, like garbage collection and tail-call optimization, although this will
-  only happen where it does not interfere with Pez as a standalone language or
-  embedded scripting language.
+  Pez, like garbage collection, although this will only happen where it does not
+  interfere with Pez as a standalone language or embedded scripting language.
