@@ -442,10 +442,12 @@ variable k
 
 \   Return stack mechanics
 
+( Turns the top item on the stack to zero by subtracting one if it is nonzero
+  and then tail-recursing, then adding one to ensure that the tail-call doesn't
+  return.
+)
 : a-very-inefficient-zero
-	dup if 1- tail-call a-very-inefficient-zero then
-	1+ \ To make the test fail.
-	;
+	dup if 1- tail-call a-very-inefficient-zero 1+ then ;
 
 : testrstk
     ">R" tests:
