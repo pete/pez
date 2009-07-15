@@ -30,27 +30,6 @@ This is a sort of unordered roadmap for Pez.
   stream, heap, etc.), then changing all of the primitives to take a pointer to
   the interpreter as an argument.  So I'm sort of lazily putting it off for now.
 
-* NOMEMCHECK enables the following:
-	1. Walkback
-	2. Tracing
-	3. 'Compiling' check
-	4. Zero division errors
-	5. Pointers must only point within the heap.
-	6. Heap bounds checking
-	7. Return stack bounds checking
-	8. Stack bounds checking
-	9. Array bounds checking
-	A. Array allocation checking
-  Split it into "RUNTIME_DIAGNOSTICS" (1, 2), "BOUNDS_CHECK" (6-9),
-  "RESTRICTED_POINTERS" (5.  It's still desirable to have the feature for
-  embedding, less so for standalone programs), "MATH_CHECK" (4).  (A) will
-  always be enabled; I can't think of a use for it besides using it as a clever
-  way to free heap space.  (There are plans for allowing more direct
-  manipulation of some of these anyway, when multiple instances of the
-  interpreter are possible.)
-
-* Enable multiple instances of Pez within a single process.
-
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
 	* Also, do both if possible.
