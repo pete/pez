@@ -210,6 +210,7 @@ static Boolean forgetpend = False;	/* Forget pending */
 static Boolean tickpend = False;	/* Take address of next word */
 static Boolean ctickpend = False;	/* Compile-time tick ['] pending */
 static Boolean cbrackpend = False;	/* [COMPILE] pending */
+static Boolean tail_call_pending = False;
 Exported dictword *createword = NULL;	/* Address of word pending creation */
 static Boolean stringlit = False;	/* String literal anticipated */
 #ifdef BREAK
@@ -2134,11 +2135,15 @@ prim P_dolit()
 
 prim P_nest()
 {				/* Invoke compiled word */
-	Rso(1);
+	if(tail_call_pending) {
+		tail_call_pending = False;
+	} else {
+		Rso(1);
 #ifdef WALKBACK
-	*wbptr++ = curword;	/* Place word on walkback stack */
+		*wbptr++ = curword;	/* Place word on walkback stack */
 #endif
-	Rpush = ip;		/* Push instruction pointer */
+		Rpush = ip;
+	}
 	ip = (((dictword **) curword) + Dictwordl);
 }
 
@@ -2289,7 +2294,7 @@ prim P_xdo()
 {				/* Execute DO */
 	Sl(2);
 	Rso(3);
-	Rpush = ip + ((stackitem) * ip);	/* Push exit address from loop */
+	Rpush = ip + ((stackitem) * ip);	// Push exit address from loop
 	ip++;			/* Increment past exit address word */
 	Rpush = (rstackitem) S1;	/* Push loop limit on return stack */
 	Rpush = (rstackitem) S0;	/* Iteration variable initial value to
@@ -2607,6 +2612,7 @@ prim P_execute()
 
 prim P_tail_call()
 {
+	tail_call_pending = True;
 }
 
 prim P_body()
