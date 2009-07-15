@@ -867,6 +867,18 @@ prim P_plusbang()
 	Pop2;
 }
 
+/*
+   ( addr -- )
+   Increments (by 1) the variable at the specified address.
+*/
+prim P_1plusbang()
+{
+	Sl(1);
+	Hpc(S0);
+	(*((stackitem *)S0))++;
+	Pop;
+}
+
 prim P_allot()
 {				/* Allocate heap bytes */
 	stackitem n;
@@ -3214,6 +3226,7 @@ static struct primfcn primt[] = {
 	{"0!", P_bang},
 	{"0@", P_at},
 	{"0+!", P_plusbang},
+	{"01+!", P_1plusbang},
 	{"0ALLOT", P_allot},
 	{"0,", P_comma},
 	{"0C!", P_cbang},
