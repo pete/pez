@@ -10,3 +10,4 @@ config.h
 config.log
 config.status
 configure
+autoscan.log
