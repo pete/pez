@@ -10,6 +10,8 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 AC_PROG_MAKE_SET
 
+AC_CHECK_PROG([RUBY], [ruby], 1, 0)
+
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-ldl':
 AC_CHECK_LIB([dl], [dlopen])
