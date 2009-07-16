@@ -2,9 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
+
 AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
 AC_CONFIG_SRCDIR([pez.c])
-AC_CONFIG_HEADER([config.h])
+# AM_INIT_AUTOMAKE(pez, 1.3)
+AM_INIT_AUTOMAKE
+
+AC_CANONICAL_HOST
 
 # Checks for programs.
 AC_PROG_CC
