@@ -1,8 +1,12 @@
 pez
-pez.o
-pezmain.o
+*.o
+*.so
 primdeftest
 regout.txt
 tmp
-*.so
 autom4te.cache
+Makefile
+config.h
+config.log
+config.status
+configure
