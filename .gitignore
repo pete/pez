@@ -5,3 +5,4 @@ primdeftest
 regout.txt
 tmp
 *.so
+autom4te.cache
