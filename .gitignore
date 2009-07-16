@@ -12,3 +12,4 @@ config.status
 configure
 autoscan.log
 Makefile.in
+aclocal.m4
