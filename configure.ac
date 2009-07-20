@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.61)
 
-AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+AC_INIT(pez, 1.3, pete.elmore@gmail.com)
 AC_CONFIG_SRCDIR([pez.c])
 # AM_INIT_AUTOMAKE(pez, 1.3)
 AM_INIT_AUTOMAKE
@@ -15,6 +15,7 @@ AC_PROG_CC
 AC_PROG_MAKE_SET
 
 AC_CHECK_PROG([RUBY], [ruby], 1, 0)
+AC_CHECK_PROG([RLWRAP], [rlwrap], rlwrap,)
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-ldl':
@@ -38,5 +39,10 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 
-AC_CONFIG_FILES([Makefile])
-AC_OUTPUT
+AC_DEFINE(MEMSTAT)
+AC_DEFINE(EXPORT)
+
+# AC_CONFIG_FILES([Makefile])
+AC_OUTPUT(Makefile)
+# AC_OUTPUT(Makefile lib/Makefile doc/Makefile)
+
