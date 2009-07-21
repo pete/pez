@@ -12,7 +12,9 @@ config.status
 configure
 autoscan.log
 Makefile.in
-aclocal.m4
 .deps
 pez-*.tar.gz
-libtool
+*.lo
+*.la
+.libs
+ltmain.sh

@@ -5,8 +5,11 @@ AC_PREREQ(2.61)
 
 AC_INIT(pez, 1.3, pete.elmore@gmail.com)
 AC_CONFIG_SRCDIR([pez.c])
+
 # AM_INIT_AUTOMAKE(pez, 1.3)
 AM_INIT_AUTOMAKE
+
+AC_PROG_LIBTOOL
 
 AC_CANONICAL_HOST
 
@@ -42,6 +45,8 @@ AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 AC_DEFINE(MEMSTAT)
 AC_DEFINE(EXPORT)
 AC_DEFINE(READONLYSTRINGS)
+
+AC_PROG_INSTALL
 
 # AC_CONFIG_FILES([Makefile])
 AC_OUTPUT(Makefile)
