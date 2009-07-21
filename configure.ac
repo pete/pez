@@ -41,6 +41,7 @@ AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 
 AC_DEFINE(MEMSTAT)
 AC_DEFINE(EXPORT)
+AC_DEFINE(READONLYSTRINGS)
 
 # AC_CONFIG_FILES([Makefile])
 AC_OUTPUT(Makefile)
