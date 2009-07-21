@@ -11,6 +11,7 @@ run ()
     fi
 }
 
+run libtoolize --force --copy
 run aclocal
 run automake
 run autoconf
