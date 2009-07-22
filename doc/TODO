@@ -59,8 +59,6 @@ This is a sort of unordered roadmap for Pez.
 
 * Add examples for the FFI, and write a couple of libraries.
 
-* A make install task, and a Pkgfile for CRUX at least.
-
 * Set up something like $LIBDIR/pez, to make it a little more easy to distribute
   a standard library (both FFI .so files and regular .pez files) with Pez and
   load files from it.
