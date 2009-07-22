@@ -1,6 +1,29 @@
 This is a sort of unordered roadmap for Pez.
 
 * Support running as script (#!/usr/bin/env pez)
+  I think it is probably better to change the comment character (more
+  like a word that does m4's dnl than a "comment character") from \ to
+  #, than to make some sort of exception for #! if it starts a file.
+
+* Change error behavior from "keep going starting at the next word" to
+  "discard the rest of the input stream, return to toplevel".  This
+  seems to be a better plan for both embedded code and for running as a
+  standalone script.  Especially if an error is encountered in a
+  definition, the current behavior is to keep going, but in interpret
+  mode rather than compile mode, so the word that was getting defined
+  *starts*running*!  Seems like a bad plan.
+
+* Autotools tweaks.  Specifically, I'm incompetent with that build
+  system, and a few things need to happen:
+  	* pez.h really badly needs to be installed.
+	* The standard collection of FFI libraries (most of which are
+	  yet to be written, except for a minimal SDL proof-of-concept)
+	  need to be built and installed in /usr/lib/pez/ (or wherever
+	  autotools and the runner of ./configure decide is
+	  appropriate) and the path to this library defined where Pez
+	  can see it, so that it can install and load libraries.
+	* The various compile-time options need to be settable by
+	  configure rather than CFLAGS.
 
 * NOMEMCHECK enables the following:
 	1. Walkback
