@@ -9,9 +9,7 @@ Makefile
 config.h
 config.log
 config.status
-configure
 autoscan.log
-Makefile.in
 .deps
 pez-*.tar.gz
 *.lo
