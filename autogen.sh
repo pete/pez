@@ -11,7 +11,7 @@ run ()
     fi
 }
 
-run libtoolize --force --copy
-run aclocal
-run automake
+run libtoolize -f -c
+run aclocal -I m4
+run automake --add-missing -c
 run autoconf

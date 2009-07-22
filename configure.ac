@@ -3,7 +3,8 @@
 
 AC_PREREQ(2.61)
 
-AC_INIT(pez, 1.3, pete.elmore@gmail.com)
+AC_INIT([pez],[1.3],[pete.elmore@gmail.com])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([pez.c])
 
 # AM_INIT_AUTOMAKE(pez, 1.3)
@@ -49,6 +50,8 @@ AC_DEFINE(READONLYSTRINGS)
 AC_PROG_INSTALL
 
 # AC_CONFIG_FILES([Makefile])
-AC_OUTPUT(Makefile)
-# AC_OUTPUT(Makefile lib/Makefile doc/Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+# AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])
+AC_OUTPUT
 
