@@ -28,7 +28,7 @@ variable errors
 
 \  DERBIS  --  Check for debris left on the stack
 
-: derbis
+: debris
     depth if
         checking type ." ": "
         ." "Derbis left on " .s cr
@@ -62,7 +62,7 @@ variable nsi
     nsi @ 2* 0 do
         drop
     loop
-    derbis
+    debris
 ;
 
 \  OK?  --  Validate a single stack result
@@ -82,7 +82,7 @@ variable nsi
     else
         fdrop fdrop
     then
-    derbis
+    debris
 ;
 
 \   SOK?  --  Validate a string stack result.  This tests for
@@ -99,7 +99,7 @@ variable nsi
     else
         2drop
     then
-    derbis
+    debris
 ;
 
 \  TESTINT  --  Test integer arithmetic words
