@@ -6,6 +6,8 @@
    This program is in the public domain.
 */
 
+#include <config.h>
+
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>

@@ -2,10 +2,11 @@
 
    Pez
    Program Linkage Definitions
-     This  module  contains  the  definitions  needed by programs that
-     invoke the PEZ system.	It does contain the  definitions  used
-     internally   within  PEZ  (which  might  create  conflicts  if
-     included in calling programs).
+
+   This module contains the definitions needed by programs that
+   invoke the PEZ system.  It does contain the definitions used
+   internally within PEZ (which might create conflicts if
+   included in calling programs).
 
    See doc/CREDITS for information about the authors.  
    This program is in the public domain.
@@ -13,6 +14,8 @@
 
 #ifndef __PEZ_H
 #define __PEZ_H
+
+#include <config.h>
 
 typedef long pez_int;		      /* Stack integer type */
 typedef double pez_real;	      /* Real number type */
