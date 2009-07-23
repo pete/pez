@@ -328,6 +328,7 @@ char **cp;
 						rstring = True;
 						break;
 					}
+					// TODO:  lookup table.
 					switch (c) {
 					case 'b':
 						c = '\b';
@@ -386,8 +387,10 @@ char **cp;
 		if(tokbuf[0] == EOS)
 			return TokNull;
 
-		/* See if token is a comment to end of line character.  If so, discard
-		   the rest of the line and return null for this token request. */
+		/* See if token is a comment to end of line character.  If so,
+		 * discard the rest of the line and return null for this token
+		 * request.  
+		 */
 
 		if(strcmp(tokbuf, "\\") == 0) {
 			while(*sp != EOS)
