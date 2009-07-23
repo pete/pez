@@ -17,7 +17,7 @@ if [ -z "$libtoolize" ]; then
 fi
 
 if [ ! -z "$libtoolize" ]; then
-	run libtoolize -f -c
+	run $libtoolize -f -c
 else
 	echo "Can't re-libtoolize.  If the build breaks, try installing libtoolize."
 fi
@@ -25,3 +25,4 @@ fi
 run aclocal -I m4
 run automake --add-missing -c
 run autoconf
+run autoheader
