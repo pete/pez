@@ -31,7 +31,7 @@ variable errors
 : debris
     depth if
         checking type ." ": "
-        ." "Derbis left on " .s cr
+        ." "Debris left on " .s cr
         oops!
        clear
     then
