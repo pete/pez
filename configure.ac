@@ -49,7 +49,6 @@ AC_DEFINE(READONLYSTRINGS)
 
 AC_PROG_INSTALL
 
-# AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 # AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])

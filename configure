@@ -14086,7 +14086,6 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
-# AC_CONFIG_FILES([Makefile])
 ac_config_files="$ac_config_files Makefile"
 
 cat >confcache <<\_ACEOF
