@@ -154,7 +154,7 @@ variable nsi
 
     "/MOD" tests:
         15 6 /mod drop 3 ok?
-        15 6 /mod swap drop 2 ok?
+        15 6 /mod nip 2 ok?
 
     "MIN" tests:
         17 53 min 17 ok?
@@ -250,15 +250,15 @@ variable nsi
 : teststk
     "DEPTH" tests:
         depth 0 ok?
-        1 2 3 depth rot 2drop swap drop 3 ok?
+        1 2 3 depth rot 2drop nip 3 ok?
 
     "CLEAR" tests:
         clear depth 0 ok?
         1 2 3 4 5 clear depth 0 ok?
 
     "DUP" tests:
-        11 dup depth swap drop swap drop 2 ok?
-        -9999999 dup swap drop -9999999 ok?
+        11 dup depth nip nip 2 ok?
+        -9999999 dup nip -9999999 ok?
 
     "?DUP" tests:
         0 ?dup 0 ok?
