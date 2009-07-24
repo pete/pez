@@ -35,4 +35,8 @@ Pez has added to the Atlast system a number of features:
 I certainly hope that you find this codebase to be as useful and as much
 fun as I have.
 
+If you're a Ruby fanatic, by the way, there is also Rupez, which lets
+you talk to libpez by means of the fantastic RubyFFI.  See
+http://github.com/automatthew/rupez for the code.
+
 Pete Elmore

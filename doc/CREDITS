@@ -11,6 +11,7 @@ Pez.  (All of which has been done with an eye to using it as a VM for
 his yet-to-be-released language.)
 
 The awesome name Pez (so appropriate for a stack-based language) was the
-idea of Matthew King.
+idea of Matthew King.  Matthew has also helped with bug fixes and OS X
+compatibility issues.
 
 Jeff Hodges was invaluable in helping to get autotools working properly.
