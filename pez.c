@@ -1832,6 +1832,9 @@ prim P_pick()
 	S0 = stk[-(2 + S0)];
 }
 
+/*
+   ( a b -- b )
+*/
 prim P_nip()
 {
 	Sl(2);
