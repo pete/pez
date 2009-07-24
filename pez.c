@@ -1962,6 +1962,14 @@ prim P_2over()
 	Push = s;
 }
 
+prim P_2nip()
+{
+	Sl(4);
+	S2 = S0;
+	S3 = S1;
+	Pop2;
+}
+
 prim P_2rot()
 {				/* Move third pair to top of stack */
 	stackitem t1, t2;
@@ -3209,6 +3217,7 @@ static struct primfcn primt[] = {
 	{"02DROP", P_2drop},
 	{"02SWAP", P_2swap},
 	{"02OVER", P_2over},
+	{"02NIP", P_2nip},
 	{"02ROT", P_2rot},
 	{"02VARIABLE", P_2variable},
 	{"02CONSTANT", P_2constant},
