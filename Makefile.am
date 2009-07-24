@@ -20,7 +20,7 @@ lib_LTLIBRARIES = libpez.la
 
 libpez_la_SOURCES = pez.c
 # I swear, the docs say this works:
-# libpez_la_LIBTOOLFLAGS = -version-info 1:3:0
+# libpez_la_LIBTOOLFLAGS = -version-info 1:3:1
 
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez
