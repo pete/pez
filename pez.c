@@ -2686,12 +2686,16 @@ prim P_toname()
 	S0 += DfOff(wname);
 }
 
+/*
+   Find link field from compile addr 
+ */
 prim P_tolink()
-{				/* Find link field from compile addr */
+{				
 	if(DfOff(wnext) != 0)
 		printf("\n>LINK Foulup--wnext is not at zero!\n");
-/*  Sl(1);
-			    S0 += DfOff(wnext);  *//* Null operation.  Wnext is first */
+	// Null operation.  Wnext is first.
+	// Sl(1);
+	// SO += DfOff(wnext)
 }
 
 prim P_frombody()
