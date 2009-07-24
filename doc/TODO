@@ -1,10 +1,5 @@
 This is a sort of unordered roadmap for Pez.
 
-* Support running as script (#!/usr/bin/env pez)
-  I think it is probably better to change the comment character (more
-  like a word that does m4's dnl than a "comment character") from \ to
-  #, than to make some sort of exception for #! if it starts a file.
-
 * Change error behavior from "keep going starting at the next word" to
   "discard the rest of the input stream, return to toplevel".  This
   seems to be a better plan for both embedded code and for running as a
