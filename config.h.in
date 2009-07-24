@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* SECONDONE */
+/* TODO: These are going away. */
 #undef EXPORT
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
@@ -83,7 +83,7 @@
    */
 #undef LT_OBJDIR
 
-/* memSECONDONE */
+/* TODO: These are going away. */
 #undef MEMSTAT
 
 /* Name of package */
@@ -104,7 +104,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* readSECONDONE */
+/* TODO: These are going away. */
 #undef READONLYSTRINGS
 
 /* Define as the return type of signal handlers (`int' or `void'). */

@@ -44,9 +44,9 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 
-AC_DEFINE([EXPORT], [], [])
-AC_DEFINE([READONLYSTRINGS], [], [])
-AC_DEFINE([MEMSTAT], [], [])
+AC_DEFINE([EXPORT], [1], [TODO: These are going away.])
+AC_DEFINE([READONLYSTRINGS], [1], [TODO: These are going away.])
+AC_DEFINE([MEMSTAT], [1], [TODO: These are going away.])
 
 AC_PROG_INSTALL
 

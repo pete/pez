@@ -13983,19 +13983,18 @@ done
 
 
 cat >>confdefs.h <<\_ACEOF
-#define EXPORT FIRSTONE ASDF
+#define EXPORT 1
 _ACEOF
 
 
 cat >>confdefs.h <<\_ACEOF
-#define READONLYSTRINGS readFIRSTONE
+#define READONLYSTRINGS 1
 _ACEOF
 
 
 cat >>confdefs.h <<\_ACEOF
-#define MEMSTAT memFIRSTONE
+#define MEMSTAT 1
 _ACEOF
-
 
 
 # Find a good install program.  We prefer a C program (faster),
