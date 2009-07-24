@@ -392,7 +392,7 @@ char **cp;
 		 * request.  
 		 */
 
-		if(strcmp(tokbuf, "\\") == 0) {
+		if(strcmp(tokbuf, "#") == 0 || strcmp(tokbuf, "#!") == 0) {
 			while(*sp != EOS)
 				sp++;
 			*cp = sp;
@@ -4014,7 +4014,7 @@ char *sp;
 		"TEMPSTRN ", &pez_ntempstr}
 	};
 
-	if(strncmp(sp, "\\ *", 3) == 0) {
+	if(strncmp(sp, "# *", 3) == 0) {
 		int i;
 		char *vp = sp + 3, *ap;
 
