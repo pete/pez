@@ -1,0 +1,27 @@
+#! /usr/bin/env pez
+
+# The 99 Bottles of Beer song, in Pez
+
+: pluralize-bottle ( n -- bottle-or-bottles )
+	1 = if "bottle" else "bottles" then ;
+
+: bottle(s) ( n -- ) 
+	dup pluralize-bottle swap ?dup 
+	0= if "No more " type else . then type ;
+
+: of-beer ( -- ) " of beer" type ;
+: on-the-wall ( -- ) " on the wall" type ;
+: take-one-down ( -- ) "Take one down," puts ;
+: pass-it-around ( -- ) "Pass it around," puts ;
+
+: song ( start -- )
+	0 swap do
+		i bottle(s) of-beer on-the-wall "," puts
+		i bottle(s) of-beer "." puts
+		take-one-down
+		pass-it-around
+		i 1- bottle(s) of-beer on-the-wall "." puts
+		cr
+	-1 +loop ;
+
+99 song
