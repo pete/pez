@@ -37,10 +37,10 @@ int sig;
 }
 #endif				/* HIGHC */
 
-int print_usage(FILE *s)
+int print_usage(FILE *s, char *pname)
 {
 	return fprintf(s,
-			"Usage:  PEZ [options] [inputfile]\n"
+			"Usage:  %s [options] [input file] [pez args]\n"
 			"        Options:\n"
 			"           -D     Treat file as definitions\n"
 			"           -Hn    Heap length n\n"
@@ -48,8 +48,23 @@ int print_usage(FILE *s)
 			"           -Rn    Return stack length n\n"
 			"           -Sn    Stack length n\n"
 			"           -T     Set TRACE mode\n"
-			"           -U     Print this message\n");
+			"           -U     Print this message\n", 
+			pname);
 }
+
+static void init_pez_argv(int argc)
+{
+	int size = sizeof(char *) * argc;
+	pez_argv = malloc(size);
+	if(!pez_argv) { 
+		fprintf(stderr, "Couldn't allocate enough memory to duplicate "
+				"argv (%d bytes).\n"
+				"Something's real bad wrong.\n", size);
+		exit(2);
+	}
+	memset(pez_argv, 0, size);
+}
+
 
 /*  MAIN  --  Main program.  */
 
@@ -59,14 +74,19 @@ char *argv[];
 {
 	int i;
 	int fname = FALSE, defmode = FALSE;
+	int optdone = 0;
 	FILE *ifp;
 	char *include[20];
+	char *cp, opt;
 	int in = 0;
+	char **pez_argv_current;
+
+	init_pez_argv(argc);
+	pez_argv_current = pez_argv;
 
 	ifp = stdin;
-	for(i = 1; i < argc; i++) {
-		char *cp, opt;
 
+	for(i = 1; i < argc; i++) {
 		cp = argv[i];
 		if(*cp == '-') {
 			opt = *(++cp);
@@ -76,6 +96,8 @@ char *argv[];
 			// for one, and try to make these a little closer to
 			// what users would expect, like -h printing help rather
 			// than -u or -?.
+			// Aside from that, I suppose we should have a real
+			// parser here.
 			switch (opt) {
 
 			case 'D':
@@ -102,29 +124,40 @@ char *argv[];
 				pez_trace = TRUE;
 				break;
 
+			case '-':
+				optdone = 1;
+				break;
+
 			case '?':
 			case 'U':
-				print_usage(stdout);
+				print_usage(stdout, argv[0]);
 				return 0;
+			default:
+				optdone = 1;
+				break;
 			}
 		} else {
-			char fn[132];
+			break;
+		}
+	}
 
-			if(fname) {
-				fprintf(stderr, "Duplicate file name.\n");
-				return 1;
-			}
+	// Keeping i from before:
+	while(i < argc) {
+		cp = argv[i];
+		char fn[132];
+
+		if(fname) {
+			(*(pez_argv_current++)) = cp;
+		} else {
 			fname = TRUE;
 			strcpy(fn, cp);
-			if(strchr(fn, '.') == NULL)
-				strcat(fn, ".pez");
 			ifp = fopen(fn, "r");
 			if(ifp == NULL) {
-				fprintf(stderr, "Unable to open file %s\n",
-					  fn);
+				fprintf(stderr, "Unable to open file %s\n", fn);
 				return 1;
 			}
 		}
+		i++;
 	}
 
 	/* If any include files were named, load each in turn before
