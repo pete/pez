@@ -127,6 +127,8 @@ pez_int pez_redef = Truth;	/* Allow redefinition without issuing
 				   the "not unique" message. */
 pez_int pez_errline = 0;	/* Line where last pez_load failed */
 
+char **pez_argv = { NULL };
+
 /*  Local variables  */
 
     /* The evaluation stack */
