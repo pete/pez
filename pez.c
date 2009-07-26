@@ -59,7 +59,7 @@
 #define SHORTCUTC		/* Shortcut integer comparison */
 #define STRING			/* String functions */
 #define SYSTEM			/* System command function */
-#define FFI			/* Foreign function interface */
+#define FFI			    /* Foreign function interface */
 #define PROCESS			/* Process-level facilities */
 
 #ifndef NOMEMCHECK
@@ -98,15 +98,17 @@ typedef enum { False = 0, True = 1 } Boolean;
 #define Truth	-1L		/* Stack value for truth */
 #define Falsity 0L		/* Stack value for falsity */
 
-/* Utility definition to get an array's element count (at compile
-   time).   For example:
+/* 
+    Utility definition to get an array's element count (at compile
+    time).   For example:
 
-       int  arr[] = {1,2,3,4,5};
-       ...
-       printf("%d", ELEMENTS(arr));
+        int  arr[] = {1,2,3,4,5};
+        ...
+        printf("%d", ELEMENTS(arr));
 
-   would print a five.  ELEMENTS("abc") can also be used to tell how
-   many bytes are in a string constant INCLUDING THE TRAILING NULL. */
+    would print a five.  ELEMENTS("abc") can also be used to tell how
+    many bytes are in a string constant INCLUDING THE TRAILING NULL. 
+*/
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
 
@@ -3121,23 +3123,31 @@ prim P_literal()
 	Pop;
 }
 
+/*
+    Compile address of next inline word
+*/
 prim P_compile()
-{				/* Compile address of next inline word */
+{
 	Compiling;
 	Ho(1);
-	Hstore = (stackitem) * ip++;	/* Compile the next datum from the
-					   instruction stream. */
+	Hstore = (stackitem) * ip++; // Compile next datum from instruction stream.
 }
 
+/*
+    Mark backward backpatch address
+*/
 prim P_backmark()
-{				/* Mark backward backpatch address */
+{
 	Compiling;
 	So(1);
-	Push = (stackitem) hptr;	/* Push heap address onto stack */
+	Push = (stackitem) hptr; // Push heap address onto stack 
 }
 
+/*
+    Emit backward jump offset
+*/
 prim P_backresolve()
-{				/* Emit backward jump offset */
+{				
 	stackitem offset;
 
 	Compiling;
@@ -3157,8 +3167,11 @@ prim P_fwdmark()
 	Hstore = 0;
 }
 
+/*
+Emit forward jump offset
+*/
 prim P_fwdresolve()
-{				/* Emit forward jump offset */
+{
 	stackitem offset;
 
 	Compiling;
