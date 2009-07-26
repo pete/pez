@@ -1,0 +1,12 @@
+#! /usr/bin/env pez
+
+# It's so canonical, your guitar will explode in your hands.  True story.
+
+( Note that the spaces after the comment strings "#" and "#!" are absolutely
+  necessary.  Parentheses delimit multi-line comments, and also require the
+  spaces.
+)
+
+"Hello, World!" puts
+
+# Sort of anticlimactic, right?
