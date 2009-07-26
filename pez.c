@@ -116,7 +116,7 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
-pez_int pez_heaplen = 10000;	/* Heap length */
+pez_int pez_heaplen = 20000;	/* Heap length */
 pez_int pez_ltempstr = 2560;	/* Temporary string buffer length */
 pez_int pez_ntempstr = 4;	/* Number of temporary string buffers */
 
@@ -127,6 +127,7 @@ pez_int pez_redef = Truth;	/* Allow redefinition without issuing
 				   the "not unique" message. */
 pez_int pez_errline = 0;	/* Line where last pez_load failed */
 
+pez_int pez_argc = 0;
 char **pez_argv = { NULL };
 
 /*  Local variables  */
@@ -1498,6 +1499,22 @@ prim P_hex()
 prim P_decimal()
 {
 	base = 10;
+}
+
+prim P_argc()
+{
+	char **pa;
+	if(!pez_argc && pez_argv[0]) {
+		pa = pez_argv;
+		while(*pa++) pez_argc++;
+	}
+
+	Push = pez_argc;
+}
+
+prim P_argv()
+{
+	Push = (stackitem)pez_argv;
 }
 
 prim P_dot()
@@ -3465,6 +3482,8 @@ static struct primfcn primt[] = {
 #ifdef CONIO
 	{"0HEX", P_hex},
 	{"0DECIMAL", P_decimal},
+	{"0ARGC", P_argc},
+	{"0ARGV", P_argv},
 	{"0.", P_dot},
 	{"0?", P_question},
 	{"0CR", P_cr},

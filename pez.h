@@ -36,6 +36,9 @@ extern pez_int pez_redef;	      /* Allow redefinition of words without
 extern pez_int pez_errline;	      /* Line number where last pez_load()
 					 errored or zero if no error. */
 
+extern pez_int pez_argc;
+extern char **pez_argv;		// The argv that the pez program sees.
+
 /*  PEZ_EVAL return status codes  */
 
 #define PEZ_SNORM	0	      /* Normal evaluation */
