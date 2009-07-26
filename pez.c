@@ -3168,7 +3168,7 @@ prim P_fwdmark()
 }
 
 /*
-Emit forward jump offset
+   Emit forward jump offset
 */
 prim P_fwdresolve()
 {
