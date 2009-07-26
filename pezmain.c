@@ -37,6 +37,20 @@ int sig;
 }
 #endif				/* HIGHC */
 
+int usage(FILE *s)
+{
+	return fprintf(s,
+			"Usage:  PEZ [options] [inputfile]\n"
+			"        Options:\n"
+			"           -D     Treat file as definitions\n"
+			"           -Hn    Heap length n\n"
+			"           -Ifile Include named definition file\n"
+			"           -Rn    Return stack length n\n"
+			"           -Sn    Stack length n\n"
+			"           -T     Set TRACE mode\n"
+			"           -U     Print this message\n");
+}
+
 /*  MAIN  --  Main program.  */
 
 int main(argc, argv)
@@ -48,7 +62,6 @@ char *argv[];
 	FILE *ifp;
 	char *include[20];
 	int in = 0;
-#define PR(x) (void) fprintf(stderr, x)
 
 	ifp = stdin;
 	for(i = 1; i < argc; i++) {
@@ -59,6 +72,10 @@ char *argv[];
 			opt = *(++cp);
 			if(islower(opt))
 				opt = toupper(opt);
+			// TODO:  No more case-insensitive command-line opts,
+			// for one, and try to make these a little closer to
+			// what users would expect, like -h printing help rather
+			// than -u or -?.
 			switch (opt) {
 
 			case 'D':
@@ -87,22 +104,14 @@ char *argv[];
 
 			case '?':
 			case 'U':
-				PR("Usage:  PEZ [options] [inputfile]\n");
-				PR("        Options:\n");
-				PR("           -D     Treat file as definitions\n");
-				PR("           -Hn    Heap length n\n");
-				PR("           -Ifile Include named definition file\n");
-				PR("           -Rn    Return stack length n\n");
-				PR("           -Sn    Stack length n\n");
-				PR("           -T     Set TRACE mode\n");
-				PR("           -U     Print this message\n");
+				print_usage(stdout);
 				return 0;
 			}
 		} else {
 			char fn[132];
 
 			if(fname) {
-				PR("Duplicate file name.\n");
+				fprintf(stderr, "Duplicate file name.\n");
 				return 1;
 			}
 			fname = TRUE;
