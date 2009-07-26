@@ -131,7 +131,6 @@ extern void P_create(), P_dodoes();
 #define Exported static
 #endif /* EXPORT */
 
-#ifndef NOMEMCHECK
 #ifdef EXPORT
 #ifndef NOMANGLE
 #define stakover    pez__Eso
@@ -145,7 +144,6 @@ extern
 #endif
 void stakover(), rstakover(), heapover(), badpointer(),
      stakunder(), rstakunder();
-#endif
 
 /* Functions called by exported extensions. */
 extern void pez_primdef(), pez_error();
@@ -228,13 +226,13 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Msh(n)
 #endif
 
-#ifdef NOMEMCHECK
-#define Sl(x)
-#define So(n)
-#else
+#ifdef BOUNDS_CHECK
 #define Memerrs
 #define Sl(x) if ((stk-stack)<(x)) {stakunder(); return Memerrs;}
 #define So(n) Mss(n) if ((stk+(n))>stacktop) {stakover(); return Memerrs;}
+#else
+#define Sl(x)
+#define So(n)
 #endif
 
 /*  Return stack access definitions  */
@@ -244,22 +242,22 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define R2  rstk[-3]		      /* Third on return stack */
 #define Rpop rstk--		      /* Pop return stack */
 #define Rpush *rstk++		      /* Push return stack */
-#ifdef NOMEMCHECK
-#define Rsl(x)
-#define Rso(n)
-#else
+#ifdef BOUNDS_CHECK
 #define Rsl(x) if ((rstk-rstack)<(x)) {rstakunder(); return Memerrs;}
 #define Rso(n) Msr(n) if ((rstk+(n))>rstacktop){rstakover(); return Memerrs;}
+#else
+#define Rsl(x)
+#define Rso(n)
 #endif
 
 /*  Heap access definitions  */
 
-#ifdef NOMEMCHECK
-#define Ho(n)
-#define Hpc(n)
-#else
+#ifdef BOUNDS_CHECK
 #define Ho(n)  Msh(n) if ((hptr+(n))>heaptop){heapover(); return Memerrs;}
 #define Hpc(n) if ((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){badpointer(); return Memerrs;}
+#else
+#define Ho(n)
+#define Hpc(n)
 #endif
 
 #define Hstore *hptr++		      /* Store item on heap */

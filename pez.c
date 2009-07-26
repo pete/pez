@@ -29,46 +29,43 @@
 #pragma segment seg2a
 #endif				/*Macintosh */
 
-/*  Custom configuration.  If the tag CUSTOM has been defined (usually on
-    the compiler call line), we include the file "pezcfig.h", which may
-    then define INDIVIDUALLY and select the subpackages needed for its
-    application.  */
-
-#ifdef CUSTOM
-#include "pezcfig.h"
-#endif
-
 /*  Subpackage configuration.  If INDIVIDUALLY is defined, the inclusion
     of subpackages is based on whether their compile-time tags are
     defined.  Otherwise, we automatically enable all the subpackages.  */
 
+// TODO:  These are all going away.  Some of them to config.h, and the rest to
+// be made into initialization flags for interpreters (which, of course, depends
+// on interpreter instances being implemented first).
 #ifndef INDIVIDUALLY
-#define ARRAY			/* Array subscripting words */
-#define BREAK			/* Asynchronous break facility */
-#define COMPILERW		/* Compiler-writing words */
-#define CONIO			/* Interactive console I/O */
-#define DEFFIELDS		/* Definition field access for words */
-#define DOUBLE			/* Double word primitives (2DUP) */
-#define EVALUATE		/* The EVALUATE primitive */
-#define FILEIO			/* File I/O primitives */
-#define MATH			/* Math functions */
-#define MEMMESSAGE		/* Print message for stack/heap errors */
-#define PROLOGUE		/* Prologue processing and auto-init */
-#define REAL			/* Floating point numbers */
-#define SHORTCUTA		/* Shortcut integer arithmetic words */
-#define SHORTCUTC		/* Shortcut integer comparison */
-#define STRING			/* String functions */
-#define SYSTEM			/* System command function */
-#define FFI			    /* Foreign function interface */
-#define PROCESS			/* Process-level facilities */
 
-#ifndef NOMEMCHECK
-#define TRACE			/* Execution tracing */
-#define WALKBACK		/* Walkback trace */
-#define WORDSUSED		/* Logging of words used and unused */
-#endif				/* NOMEMCHECK */
+#define ARRAY			// Array subscripting words 
+#define BREAK			// Asynchronous break facility 
+#define COMPILERW		// Compiler-writing words 
+#define CONIO			// Interactive console I/O 
+#define DEFFIELDS		// Definition field access for words 
+#define DOUBLE			// Double word primitives (2DUP) 
+#define EVALUATE		// The EVALUATE primitive 
+#define FILEIO			// File I/O primitives 
+#define MATH			// Math functions 
+#define MEMMESSAGE		// Print message for stack/heap errors 
+#define PROLOGUE		// Prologue processing and auto-init 
+#define REAL			// Floating point numbers 
+#define SHORTCUTA		// Shortcut integer arithmetic words 
+#define SHORTCUTC		// Shortcut integer comparison 
+#define STRING			// String functions 
+#define SYSTEM			// System command function 
+#define FFI			// Foreign function interface 
+#define PROCESS			// Process-level facilities 
 
-#endif				/* !INDIVIDUALLY */
+#define BOUNDS_CHECK		// For the stack, heap, return stack, and arrays
+#define UNRESTRICTED_POINTERS	// Pointers anywhere, nut just inside the heap.
+#define MATH_CHECK		// x/0 errors.
+#define COMPILATION_SAFETY	// The Compiling macro.
+#define TRACE			// Execution tracing 
+#define WALKBACK		// Walkback trace 
+#define WORDSUSED		// Logging of words used and unused 
+
+#endif				// !INDIVIDUALLY 
 
 #include "pezdef.h"
 
@@ -99,20 +96,23 @@ typedef enum { False = 0, True = 1 } Boolean;
 #define Falsity 0L		/* Stack value for falsity */
 
 /* 
-    Utility definition to get an array's element count (at compile
-    time).   For example:
+    Utility definition to get an array's element count (at compile time, and
+    provided that you're in the same scope as the declaration).   For example:
 
         int  arr[] = {1,2,3,4,5};
         ...
         printf("%d", ELEMENTS(arr));
 
-    would print a five.  ELEMENTS("abc") can also be used to tell how
-    many bytes are in a string constant INCLUDING THE TRAILING NULL. 
+    would print a five.  ELEMENTS("abc") can also be used to tell how many bytes
+    are in a string constant INCLUDING THE TRAILING NULL. 
 */
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
 
 /*  Globals visible to calling programs  */
+
+// TODO:  Bascially all of these globals are going into the struct that
+// represents an instance of a Pez interpreter.
 
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
@@ -246,7 +246,7 @@ static stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 /*  Forward functions  */
 
 STATIC void exword(), trouble();
-#ifndef NOMEMCHECK
+#ifdef MATH_CHECK
 STATIC void notcomp(), divzero();
 #endif
 #ifdef WALKBACK
@@ -602,7 +602,7 @@ static Boolean kbquit()
 
 /*  Primitive word definitions.  */
 
-#ifdef NOMEMCHECK
+#ifdef COMPILATION_SAFETY
 #define Compiling
 #else
 #define Compiling if (state == Falsity) {notcomp(); return;}
@@ -635,12 +635,12 @@ prim P_times()
 prim P_div()
 {				/* Divide two numbers */
 	Sl(2);
-#ifndef NOMEMCHECK
+#ifdef MATH_CHECK
 	if(S0 == 0) {
 		divzero();
 		return;
 	}
-#endif				/* NOMEMCHECK */
+#endif
 	S1 /= S0;
 	Pop;
 }
@@ -648,12 +648,12 @@ prim P_div()
 prim P_mod()
 {				/* Take remainder */
 	Sl(2);
-#ifndef NOMEMCHECK
+#ifdef MATH_CHECK
 	if(S0 == 0) {
 		divzero();
 		return;
 	}
-#endif				/* NOMEMCHECK */
+#endif
 	S1 %= S0;
 	Pop;
 }
@@ -663,12 +663,12 @@ prim P_divmod()
 	stackitem quot;
 
 	Sl(2);
-#ifndef NOMEMCHECK
+#ifdef MATH_CHECK
 	if(S0 == 0) {
 		divzero();
 		return;
 	}
-#endif				/* NOMEMCHECK */
+#endif
 	quot = S1 / S0;
 	S1 %= S0;
 	S0 = quot;
@@ -1020,7 +1020,7 @@ prim P_arraysub()
 	Hpc(array);
 	nsubs = *array++;	/* Load number of subscripts */
 	esize = *array++;	/* Load element size */
-#ifndef NOMEMCHECK
+#ifndef BOUNDS_CHECK
 	isp = &S0;
 	for(i = 0; i < nsubs; i++) {
 		stackitem subn = *isp--;
@@ -1028,7 +1028,7 @@ prim P_arraysub()
 		if(subn < 0 || subn >= array[i])
 			trouble("Subscript out of range");
 	}
-#endif				/* NOMEMCHECK */
+#endif
 	isp = &S0;
 	offset = *isp;		/* Load initial offset */
 	for(i = 1; i < nsubs; i++)
@@ -1044,18 +1044,20 @@ prim P_arraysub()
 			  (esize * offset));
 }
 
+/*
+   ( sub1 sub2 ... subn n esize -- array )
+   Declares an array and stores its elements.
+*/
 prim P_array()
 {				/* Declare array *//* sub1 sub2 ... subn n esize -- array */
 	int i, nsubs, asize = 1;
 	stackitem *isp;
 
 	Sl(2);
-#ifndef NOMEMCHECK
 	if(S0 <= 0)
 		trouble("Bad array element size");
 	if(S1 <= 0)
 		trouble("Bad array subscript count");
-#endif				/* NOMEMCHECK */
 
 	nsubs = S1;		/* Number of subscripts */
 	Sl(nsubs + 2);		/* Verify that dimensions are present */
@@ -1065,10 +1067,8 @@ prim P_array()
 	asize = S0;		/* Fundamental element size */
 	isp = &S2;
 	for(i = 0; i < nsubs; i++) {
-#ifndef NOMEMCHECK
 		if(*isp <= 0)
 			trouble("Bad array dimension");
-#endif				/* NOMEMCHECK */
 		asize *= *isp--;
 	}
 
@@ -1278,12 +1278,12 @@ prim P_ftimes()
 prim P_fdiv()
 {				/* Divide floating point numbers */
 	Sl(2 * Realsize);
-#ifndef NOMEMCHECK
+#ifdef MATH_CHECK
 	if(REAL0 == 0.0) {
 		divzero();
 		return;
 	}
-#endif				/* NOMEMCHECK */
+#endif
 	SREAL1(REAL1 / REAL0);
 	Realpop;
 }
@@ -3623,7 +3623,7 @@ char *kind;
 	evalstat = PEZ_APPLICATION;	/* Signify application-detected error */
 }
 
-#ifndef NOMEMCHECK
+#ifdef BOUNDS_CHECK
 
 /*  STAKOVER  --  Recover from stack overflow.	*/
 
@@ -3668,15 +3668,23 @@ Exported void heapover()
 	evalstat = PEZ_HEAPOVER;
 }
 
-/*  BADPOINTER	--  Abort if bad pointer reference detected.  */
+#endif // BOUNDS_CHECK
 
+
+#ifdef RESTRICTED_POINTERS
+
+/*  BADPOINTER	--  Abort if pointer reference detected outside the heap.  */
 Exported void badpointer()
 {
 	trouble("Bad pointer");
 	evalstat = PEZ_BADPOINTER;
 }
 
+#endif // RESTRICTED_POINTERS
+
 /*  NOTCOMP  --  Compiler word used outside definition.  */
+
+#ifdef COMPILATION_SAFETY
 
 static void notcomp()
 {
@@ -3684,15 +3692,18 @@ static void notcomp()
 	evalstat = PEZ_NOTINDEF;
 }
 
-/*  DIVZERO  --  Attempt to divide by zero.  */
+#endif
 
+#ifdef MATH_CHECK
+
+/*  DIVZERO  --  Attempt to divide by zero.  */
 static void divzero()
 {
 	trouble("Divide by zero");
 	evalstat = PEZ_DIVZERO;
 }
 
-#endif				/* !NOMEMCHECK */
+#endif
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 

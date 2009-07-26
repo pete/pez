@@ -932,8 +932,7 @@ variable fp1
 : testprocess
 	"ENVIRONMENT" tests:
 		"pezregress" "yes" setenv -1 ok?
-		# TODO (See comments regarding NOMEMCHECK in doc/TODO.)
-		# "pezregress" getenv "yes" strcmp 0 ok?
+		"pezregress" getenv "yes" strcmp 0 ok?
 		"pezregress" unsetenv -1 ok?
 ;
 
