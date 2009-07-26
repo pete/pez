@@ -14,7 +14,7 @@ bin_PROGRAMS = pez$(EXEEXT)
 pez_SOURCES = pez.c pezmain.c
 pez_CFLAGS = $(AM_CFLAGS)
 
-EXTRA_DIST = doc/COPYING doc/CREDITS doc/TODO doc/ctags pez.h pezdef.h
+EXTRA_DIST = doc/COPYING doc/CREDITS doc/TODO doc/ctags pez.h pezdef.h regress.pez
 
 lib_LTLIBRARIES = libpez.la
 
