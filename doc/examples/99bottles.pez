@@ -17,7 +17,7 @@
 : song ( start -- )
 	0 swap do
 		i bottle(s) of-beer on-the-wall "," puts
-		i bottle(s) of-beer "." puts
+		i bottle(s) of-beer "!" puts
 		take-one-down
 		pass-it-around
 		i 1- bottle(s) of-beer on-the-wall "." puts
