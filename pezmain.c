@@ -37,7 +37,7 @@ int sig;
 }
 #endif				/* HIGHC */
 
-int usage(FILE *s)
+int print_usage(FILE *s)
 {
 	return fprintf(s,
 			"Usage:  PEZ [options] [inputfile]\n"
