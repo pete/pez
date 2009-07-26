@@ -1670,8 +1670,13 @@ prim P_fputline()
 	Pop;
 }
 
+/*
+   ( stream len buf -- bytes-read )
+   Reads from an input stream up to len bytes, puts them in buf, and returns the
+   the actual number of bytes read.
+*/
 prim P_fread()
-{				/* File read: fd len buf -- length */
+{
 	Sl(3);
 	Hpc(S0);
 	Isfile(S2);
@@ -1680,8 +1685,13 @@ prim P_fread()
 	Pop2;
 }
 
+/*
+   ( len buf stream -- bytes-written )
+   Writes len bytes from buf to stream, returning the actual number of bytes
+   written.
+*/
 prim P_fwrite()
-{				/* File write: len buf fd -- length */
+{
 	Sl(3);
 	Hpc(S1);
 	Isfile(S0);
