@@ -4384,3 +4384,9 @@ char *sp;
 	}
 	return evalstat;
 }
+
+void pez_push_string(char* str) {
+    strcpy(strbuf[cstrbuf], str);
+    Push = (stackitem) strbuf[cstrbuf];
+	cstrbuf = (cstrbuf + 1) % ((int) pez_ntempstr);
+}
