@@ -254,9 +254,13 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #ifdef BOUNDS_CHECK
 #define Ho(n)  Msh(n) if ((hptr+(n))>heaptop){heapover(); return Memerrs;}
-#define Hpc(n) if ((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){badpointer(); return Memerrs;}
 #else
 #define Ho(n)
+#endif
+
+#ifdef RESTRICTED_POINTERS
+#define Hpc(n) if ((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){badpointer(); return Memerrs;}
+#else
 #define Hpc(n)
 #endif
 
