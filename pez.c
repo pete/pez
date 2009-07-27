@@ -3694,6 +3694,10 @@ Exported void badpointer()
 	evalstat = PEZ_BADPOINTER;
 }
 
+#else
+
+Exported void badpointer() { }
+
 #endif				// RESTRICTED_POINTERS
 
 /*  NOTCOMP  --  Compiler word used outside definition.  */
