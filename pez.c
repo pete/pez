@@ -2985,7 +2985,7 @@ prim P_environ()
 prim P_getenv()
 {
 	Sl(1);
-	S0 = (stackitem getenv((char *)S0);
+	S0 = (stackitem)getenv((char *)S0);
 }
 
 /*
