@@ -1566,14 +1566,18 @@ prim P_dotquote()
 	Compconst(s_dotparen);	/* Compile .( word */
 }
 
+/*
+   ( -- )
+   Prints the following inline string literal.
+*/
 prim P_dotparen()
-{				/* Print literal string that follows */
-	if(ip == NULL) {	/* If interpreting */
-		stringlit = True;	/* Set to print next string constant */
-	} else {		/* Otherwise, */
-		printf("%s", ((char *)ip) + 1);	/* print string literal
-							   in in-line code. */
-		Skipstring;	/* And advance IP past it */
+{
+	if(ip) {
+		printf("%s", ((char *)ip) + 1);
+		Skipstring;	// So we don't execute the string.
+	} else {
+		// We have to sort of wing it if the string isn't yet available.
+		stringlit = True;
 	}
 }
 
