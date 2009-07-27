@@ -273,16 +273,16 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #define REALSTACK ((pez_real *)stk)
 #ifdef ALIGNMENT
-#define REAL0 *((pez_real *) memcpy((char *) &rbuf0, (char *)(REALSTACK - 1), \
+#define REAL0 *((pez_real *)memcpy((char *)&rbuf0, (char *)(REALSTACK - 1), \
 			sizeof(pez_real)))
-#define REAL1 *((pez_real *) memcpy((char *) &rbuf1, (char *)(REALSTACK - 2), \
+#define REAL1 *((pez_real *)memcpy((char *)&rbuf1, (char *)(REALSTACK - 2), \
 			sizeof(pez_real)))
-#define REAL2 *((pez_real *) memcpy((char *) &rbuf2, (char *)(REALSTACK - 3), \
+#define REAL2 *((pez_real *)memcpy((char *)&rbuf2, (char *)(REALSTACK - 3), \
 			sizeof(pez_real)))
 #define SREAL0(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 1), \
-		(char *) &rbuf2, sizeof(pez_real))
+		(char *)&rbuf2, sizeof(pez_real))
 #define SREAL1(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 2), \
-		(char *) &rbuf2, sizeof(pez_real))
+		(char *)&rbuf2, sizeof(pez_real))
 #else
 #define REAL0 REALSTACK[-1]
 #define REAL1 REALSTACK[-2]
@@ -304,7 +304,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define FileSent    0x831FDF9DL       /* Courtesy Marinchip Radioactive
 					 random number generator */
 #define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {printf("\nNot a file\n");return;}
-#define FileD(x)  ((FILE *) *(((stackitem *) (x)) + 1))
+#define FileD(x)  ((FILE *)*(((stackitem *)(x)) + 1))
 #define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
 
 #endif

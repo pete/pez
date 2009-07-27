@@ -37,29 +37,28 @@ int sig;
 }
 #endif				/* HIGHC */
 
-int print_usage(FILE *s, char *pname)
+int print_usage(FILE * s, char *pname)
 {
 	return fprintf(s,
-			"Usage:  %s [options] [input file] [pez args]\n"
-			"        Options:\n"
-			"           -D     Treat file as definitions\n"
-			"           -Hn    Heap length n\n"
-			"           -Ifile Include named definition file\n"
-			"           -Rn    Return stack length n\n"
-			"           -Sn    Stack length n\n"
-			"           -T     Set TRACE mode\n"
-			"           -U     Print this message\n", 
-			pname);
+		       "Usage:  %s [options] [input file] [pez args]\n"
+		       "        Options:\n"
+		       "           -D     Treat file as definitions\n"
+		       "           -Hn    Heap length n\n"
+		       "           -Ifile Include named definition file\n"
+		       "           -Rn    Return stack length n\n"
+		       "           -Sn    Stack length n\n"
+		       "           -T     Set TRACE mode\n"
+		       "           -U     Print this message\n", pname);
 }
 
 static void init_pez_argv(int argc)
 {
 	int size = sizeof(char *) * argc;
 	pez_argv = malloc(size);
-	if(!pez_argv) { 
+	if(!pez_argv) {
 		fprintf(stderr, "Couldn't allocate enough memory to duplicate "
-				"argv (%d bytes).\n"
-				"Something's real bad wrong.\n", size);
+			"argv (%d bytes).\n"
+			"Something's real bad wrong.\n", size);
 		exit(2);
 	}
 	memset(pez_argv, 0, size);
@@ -180,14 +179,14 @@ char *argv[];
 		    );
 		if(fp == NULL) {
 			fprintf(stderr, "Unable to open include file %s\n",
-				  include[i]);
+				include[i]);
 			return 1;
 		}
 		stat = pez_load(fp);
 		fclose(fp);
 		if(stat != PEZ_SNORM) {
 			printf("\nError %d in include file %s\n", stat,
-				 include[i]);
+			       include[i]);
 		}
 	}
 
@@ -202,8 +201,8 @@ char *argv[];
 
 		if(!fname)
 			printf(pez_comment ? "(  " :	/* Show pending comment */
-				 /* Show compiling state */
-				  (((heap != NULL) && state) ? ":> " : "-> "));
+			       /* Show compiling state */
+			       (((heap != NULL) && state) ? ":> " : "-> "));
 		if(fgets(t, 132, ifp) == NULL) {
 			if(fname && defmode) {
 				fname = defmode = FALSE;
