@@ -61,6 +61,8 @@ extern char **pez_argv;		// The argv that the pez program sees.
 
 extern void pez_init(), pez_mark(), pez_unwind(), pez_break();
 extern int pez_eval(), pez_load();
+extern void pez_stack_string(char*);
+extern int pez_heap_string(char*);
 extern void pez_memstat();
 
 #endif

@@ -4339,46 +4339,25 @@ char *sp;
 			break;
 #endif				/* REAL */
 
-#ifdef STRING
 		case TokString:
-			if(stringlit) {
-				stringlit = False;
-				if(state) {
-					int l =
-					    (strlen(tokbuf) + 1 +
-					     sizeof(stackitem)) /
-					    sizeof(stackitem);
-					Ho(l);
-					*((char *)hptr) = l;	/* Store in-line skip length */
-					strcpy(((char *)hptr) + 1, tokbuf);
-					hptr += l;
-				} else {
-					printf("%s", tokbuf);
-				}
-			} else {
-				if(state) {
-					int l =
-					    (strlen(tokbuf) + 1 +
-					     sizeof(stackitem)) /
-					    sizeof(stackitem);
-					Ho(l + 1);
-					/* Compile string literal instruction, followed by
-					   in-line skip length and the string literal */
-					Hstore = s_strlit;
-					*((char *)hptr) = l;	/* Store in-line skip length */
-					strcpy(((char *)hptr) + 1, tokbuf);
-					hptr += l;
-				} else {
-					So(1);
-					strcpy(strbuf[cstrbuf], tokbuf);
-					Push = (stackitem)strbuf[cstrbuf];
-					cstrbuf =
-					    (cstrbuf +
-					     1) % ((int)pez_ntempstr);
-				}
-			}
+            if(state) {
+                if(stringlit) {
+                    stringlit = False;
+                } else {
+                    Ho(1);
+				    Hstore = s_strlit; // Address of the P_strlit instruction
+                }
+                pez_heap_string(tokbuf); 
+            } else {
+                if(stringlit) {
+                    stringlit = False;
+                    printf("%s", tokbuf);
+                } else {
+                    So(1);
+                    pez_stack_string(tokbuf);
+                }
+            }
 			break;
-#endif				/* STRING */
 		default:
 			printf("\nUnknown token type %d\n", i);
 			break;
@@ -4387,8 +4366,20 @@ char *sp;
 	return evalstat;
 }
 
-void pez_push_string(char* str) {
-	strncpy(strbuf[cstrbuf], str, pez_ltempstr);
+int pez_heap_string(char* str) {
+    int l =
+	    (strlen(str) + 1 + 
+	     sizeof(stackitem)) /
+	    sizeof(stackitem);
+	Ho(l);
+	*((char *)hptr) = l;	 // Store in-line skip length 
+	strcpy(((char *)hptr) + 1, str);
+	hptr += l;
+    return PEZ_SNORM;
+}
+
+void pez_stack_string(char* str) {
+	strncpy(strbuf[cstrbuf], str, pez_ltempstr - 1);
 	Push = (stackitem)strbuf[cstrbuf];
 	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
 }
