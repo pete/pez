@@ -466,10 +466,8 @@ static int token(char **cp) {
 		if(tokbuf[0] == EOS)
 			return TokNull;
 
-		/* See if token is a comment to end of line character.  If so,
-		 * discard the rest of the line and return null for this token
-		 * request.  
-		 */
+		/* 	If token is a comment to end of line character, discard the rest of 
+			the line and return null for this token request. */
 
 		if(strcmp(tokbuf, "#") == 0 || strcmp(tokbuf, "#!") == 0) {
 			while(*scanp != EOS)
@@ -478,7 +476,7 @@ static int token(char **cp) {
 			return TokNull;
 		}
 
-		/* See if this token is a comment open delimiter.  If so, set to
+		/* If this token is a comment open delimiter, set to
 		   ignore all characters until the matching comment close
 		   delimiter. */
 
@@ -4197,19 +4195,41 @@ char *sp;
 	return 0;
 }
 
+/*
+	The string, you fling upon the heap.
+*/
+
+int pez_heap_string(char* str) {
+	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
+	Ho(l);
+	*((char *)hptr) = l;	 // Store in-line skip length
+	strcpy(((char *)hptr) + 1, str);
+	hptr += l;
+	return PEZ_SNORM;
+}
+
+/*
+	Copy a string to one of the temporary buffers and push it on the stack.
+*/
+
+void pez_stack_string(char* str) {
+	strncpy(strbuf[cstrbuf], str, pez_ltempstr - 1);
+	Push = (stackitem)strbuf[cstrbuf];
+	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
+}
+
+
 /*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
 
-int pez_eval(sp)
-char *sp;
-{
+int pez_eval(char *sp) {
 	int i;
 
 #undef Memerrs
 #define Memerrs evalstat
 	instream = sp;
-	evalstat = PEZ_SNORM;	/* Set normal evaluation status */
+	evalstat = PEZ_SNORM;	 // Set normal evaluation status 
 #ifdef BREAK
-	broken = False;		/* Reset asynchronous break */
+	broken = False;		 // Reset asynchronous break 
 #endif
 
 /* If automatic prologue processing is configured and we haven't yet
@@ -4364,8 +4384,8 @@ char *sp;
 		case TokInt:
 			if(state) {
 				Ho(2);
-				Hstore = s_lit;	/* Push (lit) */
-				Hstore = tokint;	/* Compile actual literal */
+				Hstore = s_lit;		// Push (lit) 
+				Hstore = tokint;	// Compile actual literal 
 			} else {
 				So(1);
 				Push = tokint;
@@ -4382,7 +4402,7 @@ char *sp;
 				} tru;
 
 				Ho(Realsize + 1);
-				Hstore = s_flit;	/* Push (flit) */
+				Hstore = s_flit;	// Push (flit) 
 
 				tru.r = tokreal;
 				fflush(stderr);
@@ -4434,19 +4454,4 @@ char *sp;
 	}
 	
 	return evalstat;
-}
-
-int pez_heap_string(char* str) {
-	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
-	Ho(l);
-	*((char *)hptr) = l;	 // Store in-line skip length
-	strcpy(((char *)hptr) + 1, str);
-	hptr += l;
-	return PEZ_SNORM;
-}
-
-void pez_stack_string(char* str) {
-	strncpy(strbuf[cstrbuf], str, pez_ltempstr - 1);
-	Push = (stackitem)strbuf[cstrbuf];
-	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
 }
