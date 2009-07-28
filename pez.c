@@ -288,7 +288,7 @@ char *c;
 */
 Boolean assemble_quoted_string(char **strbuf) {
 	Boolean okay = True;
-	int tl = 0;
+	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = tokbuf;
 	
@@ -325,9 +325,9 @@ Boolean assemble_quoted_string(char **strbuf) {
 				break;
 			}
 		}
-		if(tl < (sizeof tokbuf) - 1) {
+		if(toklen < (sizeof tokbuf) - 1) {
 			*tp++ = c;
-			tl++;
+			toklen++;
 		} else {
 			okay = False;
 		}
@@ -350,7 +350,7 @@ Boolean assemble_quoted_string(char **strbuf) {
 */
 Boolean assemble_delimited_string(char **strbuf) {
 	Boolean okay = True;
-	int tl = 0;
+	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = tokbuf;
 	char open_delim = *++sp;
@@ -378,9 +378,9 @@ Boolean assemble_delimited_string(char **strbuf) {
 			*tp++ = EOS;
 			break;
 		}
-		if(tl < (sizeof tokbuf) - 1) {
+		if(toklen < (sizeof tokbuf) - 1) {
 			*tp++ = c;
-			tl++;
+			toklen++;
 		} else {
 			okay = False;
 		}
@@ -407,86 +407,61 @@ Boolean assemble_delimited_string(char **strbuf) {
 		paired delimiters.
 			"I am string." \{ Hear me roar.} \/LA LA LA/ puts puts puts
 		- If not a string, scan on until whitespace or string end.
-		- Next, we have to decide what to do with the token.  If it's a string,
-		verify that it is well formed:  not too long, and properly delimited.
-		- The token might be a comment opener, either rest-of-line or
-		open-close flavor.
+		- Next, we have to decide what to do with the token.  It might be a
+		comment opener, either rest-of-line or open-close flavor.
 		- The token might be a number, as signified by a digit or minus sign
 		for its first char.  Try to sscanf it to a TokInt or a TokReal.
 		- If not otherwise identified, we have a word.
 */
 
 static int token(char **cp) {
-	char *sp = *cp;
+	char *scanp = *cp;
 
 	while(True) {
 		char *tp = tokbuf;
-		int tl = 0;
-		Boolean istring = False, runaway = False;
-		int kind = TokWord;
+		int toklen = 0;
 		
 		// handle rudely interrupted comments
 		if(pez_comment) {
-			while(*sp != ')') {
-				if(*sp == EOS) {
-					*cp = sp;
+			while(*scanp != ')') {
+				if(*scanp == EOS) {
+					*cp = scanp;
 					return TokNull;
 				}
-				sp++;
+				scanp++;
 			}
-			sp++;
+			scanp++;
 			pez_comment = Falsity;
 		}
 
-		while(isspace(*sp))	/* Say NO to leading blanks */
-			sp++;
+		while(isspace(*scanp))	/* Say NO to leading blanks */
+			scanp++;
 
-		if(*sp == '"') {
-			if(assemble_quoted_string(&sp)) {
-				*cp = --sp;
-				return TokString;
-			} else {
-				*cp = --sp;
-				return TokNull;
-			}
-
-		} else if(*sp == '\\') { // Arbitrary string delimitation
-			if(assemble_delimited_string(&sp)) {
-				*cp = --sp;
-				return TokString;
-			} else {
-				*cp = --sp;
-				return TokNull;
-			}
+		if(*scanp == '"') {
+			Boolean okay = assemble_quoted_string(&scanp);
+			*cp = --scanp;
+			return okay ? TokString : TokNull;
+		} else if(*scanp == '\\') { // Arbitrary string delimitation
+			Boolean okay = assemble_delimited_string(&scanp);
+			*cp = --scanp;
+			return okay ? TokString : TokNull;
 		} else {
 
-			/* Scan the next raw token */
-
+			// Scan the next raw token 
 			while(True) {
-				char c = *sp++;
+				char c = *scanp++;
 
 				if(c == EOS || isspace(c)) {
 					*tp++ = EOS;
 					break;
 				}
-				if(tl < (sizeof tokbuf) - 1) {
+				if(toklen < (sizeof tokbuf) - 1) {
 					*tp++ = c;
-					tl++;
+					toklen++;
 				}
 			}
 		}
-		*cp = --sp;	/* Store end of scan pointer */
-
-// 		if(istring) {
-// 			if(runaway) {
-// #ifdef MEMMESSAGE
-// 				printf("\nRunaway string: %s\n", tokbuf);
-// #endif
-// 				evalstat = PEZ_RUNSTRING;
-// 				return TokNull;
-// 			}
-// 			return TokString;
-// 		}
+		*cp = --scanp;
 
 		if(tokbuf[0] == EOS)
 			return TokNull;
@@ -497,9 +472,9 @@ static int token(char **cp) {
 		 */
 
 		if(strcmp(tokbuf, "#") == 0 || strcmp(tokbuf, "#!") == 0) {
-			while(*sp != EOS)
-				sp++;
-			*cp = sp;
+			while(*scanp != EOS)
+				scanp++;
+			*cp = scanp;
 			return TokNull;
 		}
 
@@ -508,17 +483,17 @@ static int token(char **cp) {
 		   delimiter. */
 
 		if(strcmp(tokbuf, "(") == 0) {
-			while(*sp != EOS) {
-				if(*sp == ')')
+			while(*scanp != EOS) {
+				if(*scanp == ')')
 					break;
-				sp++;
+				scanp++;
 			}
-			if(*sp == ')') {
-				sp++;
+			if(*scanp == ')') {
+				scanp++;
 				continue;
 			}
 			pez_comment = Truth;
-			*cp = sp;
+			*cp = scanp;
 			return TokNull;
 		}
 
