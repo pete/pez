@@ -707,6 +707,15 @@ variable k
 80 string tstr1
 
 : teststr
+    "String parsing" tests:
+        "a" \|a| strcmp 0 ok?
+        "a" \{a} strcmp 0 ok?
+        "Hi\\n" \{Hi\n} strcmp 0 ok?
+        "a" \(a) strcmp 0 ok?
+        "a" \{a} strcmp 0 ok?
+        "a" \[a] strcmp 0 ok?
+        "a" \<a> strcmp 0 ok?
+
     "STRCPY" tests:
         "This is a test string" tstr strcpy tstr "This is a test string" sok?
         "Hello" tstr strcpy tstr "Hello" sok?

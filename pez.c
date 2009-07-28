@@ -283,6 +283,105 @@ char *c;
 	}
 }
 
+/*
+	Given the input stream and an opening delimiter, try to assemble a string
+	in the token buffer.  These strings allow escaped characters.
+*/
+Boolean assemble_quoted_string(char **strbuf) {
+	Boolean status = True;
+	int tl = 0;
+	char *sp = *strbuf;
+	char *tp = tokbuf;
+	
+	sp++;
+	while(True) {
+		char c = *sp++;
+	
+		if(c == '"') {
+			sp++;
+			*tp++ = EOS;
+			break;
+		} else if(c == EOS) {
+			status = False;
+			*tp++ = EOS;
+			break;
+		}
+		if(c == '\\') {
+			c = *sp++;
+			if(c == EOS) {
+				status = False;
+				break;
+			}
+			// TODO:  lookup table.
+			switch (c) {
+			case 'b': c = '\b';
+				break;
+			case 'n': c = '\n';
+				break;
+			case 'r': c = '\r';
+				break;
+			case 't': c = '\t';
+				break;
+			default:
+				break;
+			}
+		}
+		if(tl < (sizeof tokbuf) - 1) {
+			*tp++ = c;
+			tl++;
+		} else {
+			status = False;
+		}
+	}
+	*strbuf = sp;
+	return status;
+}
+
+/*
+	Given the input stream and an opening delimiter, determine
+	the appropriate closing delimiter and try to assemble a string
+	in the token buffer.
+	These strings don't give no never mind about no escapes
+*/
+Boolean assemble_delimited_string(char **strbuf, char open_delim) {
+	char close_delim;
+	Boolean status = True;
+	int tl = 0;
+	char *sp = *strbuf;
+	char *tp = tokbuf;
+	
+	switch (open_delim) {
+		case '{' : close_delim = '}'; break;
+		case '(' : close_delim = ')'; break;
+		case '[' : close_delim = ']'; break;
+		case '<' : close_delim = '>'; break;
+		default : close_delim = open_delim; break;
+	}
+	
+	sp++;
+	while(True) {
+		char c = *sp++;
+	
+		if(c == close_delim) {
+			sp++;
+			*tp++ = EOS;
+			break;
+		} else if(c == EOS) {
+			status = False;
+			*tp++ = EOS;
+			break;
+		}
+		if(tl < (sizeof tokbuf) - 1) {
+			*tp++ = c;
+			tl++;
+		} else {
+			status = False;
+		}
+	}
+	*strbuf = sp;
+	return status;
+}
+
 /*  TOKEN  --  Scan a token and return its type.  */
 
 static int token(cp)
@@ -293,7 +392,7 @@ char **cp;
 	while(True) {
 		char *tp = tokbuf;
 		int tl = 0;
-		Boolean istring = False, rstring = False;
+		Boolean istring = False, runaway = False;
 
 		if(pez_comment) {
 			while(*sp != ')') {
@@ -310,54 +409,13 @@ char **cp;
 		while(isspace(*sp))	/* Skip leading blanks */
 			sp++;
 
-		if(*sp == '"') {	/* Is this a string ? */
-
-			/* Assemble string token. */
-
+		if(*sp == '"') {
+			runaway = !assemble_quoted_string(&sp);
+			istring = True;
+		} else if(*sp == '\\') { // beginning of string constructor
 			sp++;
-			while(True) {
-				char c = *sp++;
-
-				if(c == '"') {
-					sp++;
-					*tp++ = EOS;
-					break;
-				} else if(c == EOS) {
-					rstring = True;
-					*tp++ = EOS;
-					break;
-				}
-				if(c == '\\') {
-					c = *sp++;
-					if(c == EOS) {
-						rstring = True;
-						break;
-					}
-					// TODO:  lookup table.
-					switch (c) {
-					case 'b':
-						c = '\b';
-						break;
-					case 'n':
-						c = '\n';
-						break;
-					case 'r':
-						c = '\r';
-						break;
-					case 't':
-						c = '\t';
-						break;
-					default:
-						break;
-					}
-				}
-				if(tl < (sizeof tokbuf) - 1) {
-					*tp++ = c;
-					tl++;
-				} else {
-					rstring = True;
-				}
-			}
+			char open_delim = *sp;
+			runaway = !assemble_delimited_string(&sp, open_delim);		
 			istring = True;
 		} else {
 
@@ -379,7 +437,7 @@ char **cp;
 		*cp = --sp;	/* Store end of scan pointer */
 
 		if(istring) {
-			if(rstring) {
+			if(runaway) {
 #ifdef MEMMESSAGE
 				printf("\nRunaway string: %s\n", tokbuf);
 #endif
@@ -4155,7 +4213,7 @@ char *sp;
 		pez_init();
 	}
 #endif				/* PROLOGUE */
-
+		
 	while((evalstat == PEZ_SNORM) && (i = token(&instream)) != TokNull) {
 		dictword *di;
 
@@ -4363,6 +4421,7 @@ char *sp;
 			break;
 		}
 	}
+	
 	return evalstat;
 }
 
