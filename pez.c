@@ -4340,23 +4340,23 @@ char *sp;
 #endif				/* REAL */
 
 		case TokString:
-            if(state) {
-                if(stringlit) {
-                    stringlit = False;
-                } else {
-                    Ho(1);
-				    Hstore = s_strlit; // Address of the P_strlit instruction
-                }
-                pez_heap_string(tokbuf); 
-            } else {
-                if(stringlit) {
-                    stringlit = False;
-                    printf("%s", tokbuf);
-                } else {
-                    So(1);
-                    pez_stack_string(tokbuf);
-                }
-            }
+			if(state) {
+				if(stringlit) {
+					stringlit = False;
+				} else {
+					Ho(1);
+					Hstore = s_strlit; // Address of the P_strlit instruction
+				}
+				pez_heap_string(tokbuf);
+			} else {
+				if(stringlit) {
+					stringlit = False;
+					printf("%s", tokbuf);
+				} else {
+					So(1);
+					pez_stack_string(tokbuf);
+				}
+			}
 			break;
 		default:
 			printf("\nUnknown token type %d\n", i);
@@ -4367,15 +4367,12 @@ char *sp;
 }
 
 int pez_heap_string(char* str) {
-    int l =
-	    (strlen(str) + 1 + 
-	     sizeof(stackitem)) /
-	    sizeof(stackitem);
+	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
 	Ho(l);
-	*((char *)hptr) = l;	 // Store in-line skip length 
+	*((char *)hptr) = l;	 // Store in-line skip length
 	strcpy(((char *)hptr) + 1, str);
 	hptr += l;
-    return PEZ_SNORM;
+	return PEZ_SNORM;
 }
 
 void pez_stack_string(char* str) {
