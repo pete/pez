@@ -4388,7 +4388,7 @@ char *sp;
 }
 
 void pez_push_string(char* str) {
-	strncpy(strbuf[cstrbuf], str, pez_ntempstr);
+	strncpy(strbuf[cstrbuf], str, pez_ltempstr);
 	Push = (stackitem)strbuf[cstrbuf];
 	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
 }
