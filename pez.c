@@ -3818,11 +3818,12 @@ void pez_init()
 #endif
 		if(heap == NULL) {
 
-			/* The temporary string buffers are placed at the start of the
-			   heap, which permits us to pointer-check pointers into them
-			   as within the heap extents.  Hence, the size of the buffer
-			   we acquire for the heap is the sum of the heap and temporary
-			   string requests. */
+			/* The temporary string buffers are placed at the start
+			   of the heap, which permits us to pointer-check
+			   pointers into them as within the heap extents.
+			   Hence, the size of the buffer we acquire for the heap
+			   is the sum of the heap and temporary string requests.
+			 */
 
 			int i;
 			char *cp;
@@ -3836,20 +3837,21 @@ void pez_init()
 				   ((unsigned int)(pez_ntempstr *
 						    pez_ltempstr)));
 			heapbot = (stackitem *)cp;
-			strbuf = (char **)alloc(((unsigned int) pez_ntempstr) *
+			strbuf = (char **)alloc(((unsigned int)pez_ntempstr) *
 						 sizeof(char *));
 			for(i = 0; i < pez_ntempstr; i++) {
 				strbuf[i] = cp;
 				cp += ((unsigned int)pez_ltempstr);
 			}
 			cstrbuf = 0;
-			heap = (stackitem *)cp;	/* Allocatable heap starts after
-							   the temporary strings */
+			// Available heap memory starts after the temp strings:
+			heap = (stackitem *)cp;
 		}
 		/* The system state word is kept in the first word of the heap
 		   so that pointer checking doesn't bounce references to it.
-		   When creating the heap, we preallocate this word and initialise
-		   the state to the interpretive state. */
+		   When creating the heap, we preallocate this word and
+		   initialise the state to the interpretive state. 
+		 */
 		hptr = heap + 1;
 		state = Falsity;
 #ifdef MEMSTAT
