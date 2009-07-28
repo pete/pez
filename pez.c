@@ -52,7 +52,6 @@
 #define REAL			// Floating point numbers
 #define SHORTCUTA		// Shortcut integer arithmetic words
 #define SHORTCUTC		// Shortcut integer comparison
-// #define STRING			// String functions
 #define SYSTEM			// System command function
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
@@ -288,7 +287,7 @@ char *c;
 	in the token buffer.  These strings allow escaped characters.
 */
 Boolean assemble_quoted_string(char **strbuf) {
-	Boolean status = True;
+	Boolean okay = True;
 	int tl = 0;
 	char *sp = *strbuf;
 	char *tp = tokbuf;
@@ -302,14 +301,14 @@ Boolean assemble_quoted_string(char **strbuf) {
 			*tp++ = EOS;
 			break;
 		} else if(c == EOS) {
-			status = False;
+			okay = False;
 			*tp++ = EOS;
 			break;
 		}
 		if(c == '\\') {
 			c = *sp++;
 			if(c == EOS) {
-				status = False;
+				okay = False;
 				break;
 			}
 			// TODO:  lookup table.
@@ -330,11 +329,17 @@ Boolean assemble_quoted_string(char **strbuf) {
 			*tp++ = c;
 			tl++;
 		} else {
-			status = False;
+			okay = False;
 		}
 	}
 	*strbuf = sp;
-	return status;
+	if(!okay) {
+#ifdef MEMMESSAGE
+		printf("\nRunaway string: %s\n", tokbuf);
+#endif
+		evalstat = PEZ_RUNSTRING;
+	}
+	return okay;
 }
 
 /*
@@ -343,12 +348,14 @@ Boolean assemble_quoted_string(char **strbuf) {
 	in the token buffer.
 	These strings don't give no never mind about no escapes
 */
-Boolean assemble_delimited_string(char **strbuf, char open_delim) {
-	char close_delim;
-	Boolean status = True;
+Boolean assemble_delimited_string(char **strbuf) {
+	Boolean okay = True;
 	int tl = 0;
 	char *sp = *strbuf;
 	char *tp = tokbuf;
+	char open_delim = *++sp;
+	char close_delim;
+	
 	
 	switch (open_delim) {
 		case '{' : close_delim = '}'; break;
@@ -367,7 +374,7 @@ Boolean assemble_delimited_string(char **strbuf, char open_delim) {
 			*tp++ = EOS;
 			break;
 		} else if(c == EOS) {
-			status = False;
+			okay = False;
 			*tp++ = EOS;
 			break;
 		}
@@ -375,25 +382,50 @@ Boolean assemble_delimited_string(char **strbuf, char open_delim) {
 			*tp++ = c;
 			tl++;
 		} else {
-			status = False;
+			okay = False;
 		}
 	}
 	*strbuf = sp;
-	return status;
+	if(!okay) {
+#ifdef MEMMESSAGE
+		printf("\nRunaway string: %s\n", tokbuf);
+#endif
+		evalstat = PEZ_RUNSTRING;
+	}
+	return okay;
 }
 
-/*  TOKEN  --  Scan a token and return its type.  */
+/*
+	Scan a token from the input stream and return its type.
+	It works something like this:
+		- If the last input string left open an inline comment, try to close it.
+		Failing that, pass the buck by returning TokNull.
+		- We're not in a comment, so drive right on by any whitespace.
+		- See if a string is about to happen.  This is signified by either a
+		double quote or the backslash char.  A backslash causes the very next
+		char to be used as the string delimiter, with support for the usual
+		paired delimiters.
+			"I am string." \{ Hear me roar.} \/LA LA LA/ puts puts puts
+		- If not a string, scan on until whitespace or string end.
+		- Next, we have to decide what to do with the token.  If it's a string,
+		verify that it is well formed:  not too long, and properly delimited.
+		- The token might be a comment opener, either rest-of-line or
+		open-close flavor.
+		- The token might be a number, as signified by a digit or minus sign
+		for its first char.  Try to sscanf it to a TokInt or a TokReal.
+		- If not otherwise identified, we have a word.
+*/
 
-static int token(cp)
-char **cp;
-{
+static int token(char **cp) {
 	char *sp = *cp;
 
 	while(True) {
 		char *tp = tokbuf;
 		int tl = 0;
 		Boolean istring = False, runaway = False;
-
+		int kind = TokWord;
+		
+		// handle rudely interrupted comments
 		if(pez_comment) {
 			while(*sp != ')') {
 				if(*sp == EOS) {
@@ -406,17 +438,26 @@ char **cp;
 			pez_comment = Falsity;
 		}
 
-		while(isspace(*sp))	/* Skip leading blanks */
+		while(isspace(*sp))	/* Say NO to leading blanks */
 			sp++;
 
 		if(*sp == '"') {
-			runaway = !assemble_quoted_string(&sp);
-			istring = True;
-		} else if(*sp == '\\') { // beginning of string constructor
-			sp++;
-			char open_delim = *sp;
-			runaway = !assemble_delimited_string(&sp, open_delim);		
-			istring = True;
+			if(assemble_quoted_string(&sp)) {
+				*cp = --sp;
+				return TokString;
+			} else {
+				*cp = --sp;
+				return TokNull;
+			}
+
+		} else if(*sp == '\\') { // Arbitrary string delimitation
+			if(assemble_delimited_string(&sp)) {
+				*cp = --sp;
+				return TokString;
+			} else {
+				*cp = --sp;
+				return TokNull;
+			}
 		} else {
 
 			/* Scan the next raw token */
@@ -436,16 +477,16 @@ char **cp;
 		}
 		*cp = --sp;	/* Store end of scan pointer */
 
-		if(istring) {
-			if(runaway) {
-#ifdef MEMMESSAGE
-				printf("\nRunaway string: %s\n", tokbuf);
-#endif
-				evalstat = PEZ_RUNSTRING;
-				return TokNull;
-			}
-			return TokString;
-		}
+// 		if(istring) {
+// 			if(runaway) {
+// #ifdef MEMMESSAGE
+// 				printf("\nRunaway string: %s\n", tokbuf);
+// #endif
+// 				evalstat = PEZ_RUNSTRING;
+// 				return TokNull;
+// 			}
+// 			return TokString;
+// 		}
 
 		if(tokbuf[0] == EOS)
 			return TokNull;
