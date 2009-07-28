@@ -52,7 +52,7 @@
 #define REAL			// Floating point numbers
 #define SHORTCUTA		// Shortcut integer arithmetic words
 #define SHORTCUTC		// Shortcut integer comparison
-#define STRING			// String functions
+// #define STRING			// String functions
 #define SYSTEM			// System command function
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
@@ -1148,8 +1148,6 @@ prim P_array()
 
 /*  String primitives  */
 
-#ifdef STRING
-
 prim P_strlit()
 {				/* Push address of string literal */
 	So(1);
@@ -1295,7 +1293,6 @@ prim P_strreal()
 	}
 }
 #endif				/* REAL */
-#endif				/* STRING */
 
 /*  Floating point primitives  */
 
@@ -3381,7 +3378,6 @@ static struct primfcn primt[] = {
 	{"0ARRAY", P_array},
 #endif
 
-#ifdef STRING
 	{"0(STRLIT)", P_strlit},
 	{"0STRING", P_string},
 	{"0STRCPY", P_strcpy},
@@ -3399,7 +3395,6 @@ static struct primfcn primt[] = {
 #endif
 	{"0STRINT", P_strint},
 	{"0STRREAL", P_strreal},
-#endif				/* STRING */
 
 #ifdef REAL
 	{"0(FLIT)", P_flit},
