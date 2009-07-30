@@ -1628,11 +1628,14 @@ prim P_dots()
 	}
 }
 
+/*
+	Print literal string that follows
+*/
 prim P_dotquote()
-{				/* Print literal string that follows */
+{
 	Compiling;
-	stringlit = True;	/* Set string literal expected */
-	Compconst(s_dotparen);	/* Compile .( word */
+	stringlit = True;		// Set string literal expected 
+	Compconst(s_dotparen);	// Compile .( word 
 }
 
 /*
@@ -2273,8 +2276,11 @@ prim P_dolit()
 
 /*  Control flow primitives  */
 
+/*
+	Invoke compiled word
+*/
 prim P_nest()
-{				/* Invoke compiled word */
+{
 	if(tail_call_pending) {
 		tail_call_pending = False;
 	} else {
@@ -2674,10 +2680,13 @@ prim P_does()
 	}
 }
 
+/*
+	Begin compiling a word
+*/
 prim P_colon()
-{				/* Begin compilation */
-	state = Truth;		/* Set compilation underway */
-	P_create();		/* Create conventional word */
+{
+	state = Truth;	// Set compilation underway 
+	P_create();		// Create conventional word 
 }
 
 prim P_semicolon()
@@ -4319,6 +4328,7 @@ int pez_eval(char *sp) {
 #endif
 					evalstat = PEZ_UNDEFINED;
 				}
+				// ending the if(forgetpend) block
 			} else if(tickpend) {
 				tickpend = False;
 				ucase(tokbuf);
@@ -4340,7 +4350,7 @@ int pez_eval(char *sp) {
 				if(pez_redef && (lookup(tokbuf) != NULL))
 					printf("\n%s isn't unique.", tokbuf);
 				enter(tokbuf);
-			} else {
+			} else { // Here's where evaluation actually happens
 				di = lookup(tokbuf);
 				if(di != NULL) {
 					/* Test the state.  If we're
