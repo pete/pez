@@ -1,0 +1,31 @@
+State			Event			Action				Nextstate
+==================================================================
+INTERPRETING	IntToken		stack_int			INTERPRETING
+INTERPRETING	StringLit							PRINT_PEND
+PRINT_PEND		StringToken		printf				INTERPRETING
+INTERPRETING	StringToken		stack_string		INTERPRETING	
+INTERPRETING	RealToken		stack_real			INTERPRETING
+INTERPRETING	Forget								FORGET_PEND
+FORGET_PEND		WordToken		forget_word			INTERPRETING
+INTERPRETING	Tick								TICK_PEND
+TICK_PEND		WordToken		stack_word_addr		INTERPRETING
+# Here's where evaluation actually happens
+INTERPRETING	WordToken		execute_word		INTERPRETING
+                                             	
+                                                	
+COMPILING		IntToken		heap_int			COMPILING
+COMPILING		StringToken		lit_heap_str		COMPILING
+COMPILING		StringLit							STRING_PEND
+STRING_PEND		StringToken		heap_str			COMPILING
+COMPILING		RealToken		heap_real			COMPILING
+COMPILING		ImmedToken		execute_word		COMPILING
+	
+	                                    	
+INTERPRETING	Colon			create_word			DEF_PEND
+COMPILING		Semicolon		finalize			INTERPRETING
+DEF_PEND		WordToken		enter_word			COMPILING
+COMPILING		LBracket							TEMP_INTERP
+TEMP_INTERP		RBracket							COMPILING
+COMPILING		Literal			pop2heap			COMPILING
+COMPILING		Does>			does				COMPILING 
+
