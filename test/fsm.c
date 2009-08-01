@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-typedef void (*eval_action)();   
+typedef void (*fsm_action)();   
 
 typedef enum {
     REST,
@@ -8,7 +8,7 @@ typedef enum {
     COMP,    
     DEF,
     LastState
-} eval_state;    
+} eval_state;  
     
 typedef enum { 
 	WordToken,    
@@ -20,13 +20,13 @@ typedef enum {
 } eval_event;
 
 typedef struct {    
-	eval_action action;         // function-pointer to the action
-	eval_state next_state;             // Enumerator for the next state    
+	fsm_action action;         // function-pointer to the action
+	int next_state;             // Enumerator for the next state    
 } eval_transition;
  
     
 // General functions    
-void fire_event(eval_event e);    
+inline void fire_event(int e);
     
 //Actions    
 void stack_int(void);    
@@ -36,37 +36,36 @@ void init_wd(void);
 void enter_wd(void);    
 void compile(void);    
 void no_op(void); 
-void bad_e(void); 
 void finalize(void); 
+void bad_e(void); 
 
-
-#define illegal {bad_e, 0}
+#define illegal_event {bad_e, 0}
 
 eval_transition eval_table[LastState+1][LastEvent+1] = {    
 /*REST*/	{
-	/*WordToken*/ 	illegal,
-	/*IntToken*/ 	illegal,
-	/*Colon*/ 		illegal,
-	/*Semicolon*/ 	illegal,
+	/*WordToken*/ 	illegal_event,
+	/*IntToken*/ 	illegal_event,
+	/*Colon*/ 		illegal_event,
+	/*Semicolon*/ 	illegal_event,
 	/*Input*/		{no_op, INTERP}
 			},
 /*INTERP*/	{
 	/*WordToken*/ 	{execword, INTERP},
 	/*IntToken*/ 	{stack_int, INTERP},
 	/*Colon*/ 		{init_wd, DEF},
-	/*Semicolon*/ 	illegal
+	/*Semicolon*/ 	illegal_event
 			},
 /*COMP*/	{
 	/*WordToken*/ 	{compile, COMP},
 	/*IntToken*/ 	{heap_int, COMP},
-	/*Colon*/ 		illegal,
+	/*Colon*/ 		illegal_event,
 	/*Semicolon*/ 	{finalize, INTERP}
 			},
 /*DEF*/		{
 	/*WordToken*/ 	{enter_wd,COMP},
-	/*IntToken*/ 	illegal,
-	/*Colon*/ 		illegal,
-	/*Semicolon*/ 	illegal
+	/*IntToken*/ 	illegal_event,
+	/*Colon*/ 		illegal_event,
+	/*Semicolon*/ 	illegal_event	
 			}
 };
 
@@ -86,7 +85,7 @@ int main()
 	return (0);
 }
 
-void fire_event(eval_event e)
+void fire_event(int e)
 {
 	eval_transition transition = eval_table[currentState][e];
 	currentState = transition.next_state;
