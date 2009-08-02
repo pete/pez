@@ -1,0 +1,159 @@
+#! /usr/bin/env pez
+
+# A clone of the echo command in Unix.  Recognizes -n and -e, options must come
+# before the arguments.
+
+# Written as a brief demonstration and a tutorial.  Way verbose commenting in
+# order to explain the basics of the language (66 lines of actual code, 157
+# lines including comments), and the algorithms used are often
+# chosen to show how the language works rather than to do things optimally.
+
+# Variables are sparse in a stack-based language, but are declared like this:
+variable skip-newline
+variable use-escapes
+# Calling one of them causes the *address* of the variable to be pushed onto the
+# stack, so that the load (@) and store (!) words can be used.  Variables are
+# implicitly initialized to zero.
+
+variable printer
+# The word ' is used to quote a word, so that its address is pushed onto the
+# stack rather than being executed immediately.  This lets us treat words as
+# first-class in Pez.
+' puts printer ! # By default, print newlines.
+
+variable filter
+' drop filter !
+
+# Prints without newlines.  puts, like in C, Ruby, etc., prints a string and a
+# newline; this version prints a string followed by a space, to mimic echo's
+# behavior when passed -n.
+: no-newline   type " " type ;
+
+# We want to build a table to map escaped characters to the code they represent,
+# so we use 'constant'.  'constant' operates like 'variable', but expects a
+# value on the the stack to use as the value for the constant.  We're putting
+# this on the heap, so we use 'here', which pushes the address of the first
+# empty slot on the heap, and we leave that where it is for a moment while we
+# allocate 256 bytes.  So the beginning of that chunk is on the stack when
+# the constant is created.  Words' definitions are also placed on the heap, so
+# when we create the word 'escapes', we don't want the definition to end up in
+# that chunk.  You do have to be careful to not mix manual heap allocation and
+# code definitions!
+here 256 allot constant escapes
+# So now we have a 256-byte chunk of heap memory that begins at 'escapes'.  This
+# could also be done like this:
+# 	256 allot here 256 - constant escapes
+# The size of a byte is not likely to change, of course, so repeating the 256 is
+# not so horrendous, although the second version is a bit more wordy, less
+# readable, and involves calculating ("here 256 -") something that we already
+# know.
+
+# backslash? returns true if the string starts with a backslash.  c@ is like @,
+# but only reads one byte.  The equality test, unlike most languages to come
+# after C, is merely "=".  Forth (and by extension, Pez) can get away with this
+# because there is no assignment operator, just stack effects and occasionally
+# load/store.
+: backslash? ( str -- bool ) c@ "\\" c@ = ;
+
+# Parses escape sequences in a string, and stores them in place.  Sequences are
+# per the man page for echo, with only one exception:  we don't handle the
+# special case of escaping bytes in octal.  (Left as an exercise for the
+# reader.)
+: escaper ( str -- )
+	dup ( source target )
+	begin
+	over c@ 0<> while # We stop when we hit \0.
+		over
+		dup backslash? if
+			1+ c@ escapes +
+			rot 1+ -rot
+		then
+		c@ over c!
+		# Increment both pointers:
+		swap 1+ swap 1+
+	repeat
+	# Finally, we add a null byte to the end of the target and clean up
+	# the stack:
+	0 swap c! drop ;
+
+# Returns true if the string starts with a hyphen.
+: option? ( str -- bool ) c@ "-" c@ = ;
+	
+# If the string and the option passed are the same, sets the specified variable
+# to true.
+: option ( candidate var str -- )
+	rot strcmp 0= if -1 swap ! else drop then ;
+
+# Parses the options supplied, and leaves the beginning of the arguments on the
+# stack.
+: parse ( opts -- args )
+	# While loops in Pez have the following form:
+	# 	begin <condition> while <body> repeat
+	# For an example of for loops, have a look at
+	# doc/examples/99bottles.pez.
+	begin dup @ while # argv, like in C, is terminated with a null pointer.
+		dup @	# Get the string's address
+		dup option? 0= if drop exit then # Done with the option part
+		# 'exit' is the Forth equivalent of 'return'.  It may actually
+		# change to 'return' in Pez later.
+
+		# Parse the only two options that echo supports:
+		dup skip-newline "-n" option
+		dup use-escapes  "-e" option
+
+		# Pointers and items on the stack all take up cellsize bytes,
+		# so incrementing the pointer by cellsize jumps to the next
+		# item in argv:
+		drop cellsize +
+	repeat ;
+
+# Populates a single field in the escapes table.
+: map-escape ( raw-str escaped-str -- )
+	c@ swap c@ swap # Pull the first character out of each string.
+	escapes + c!	# The offset into the table is the escape char.
+	;
+
+# This populates the escapes hash; it's only done if -e is passed.
+: populate-escapes
+	# By default, escaping a value is a noop, so we initially populate the
+	# table in such a way that a character's escape is itself:
+	256 0 do i i escapes + c! loop
+	# Now we fill in the special ones:
+	"\n" "n" map-escape
+	"\a" "a" map-escape
+	"\b" "b" map-escape
+	"\f" "f" map-escape
+	"\r" "r" map-escape
+	"\t" "t" map-escape
+	"\v" "v" map-escape
+	"\0" "0" map-escape # The one place where we break compatibility.
+	;
+
+
+# Now that we have the options parsed, we handle the setup.  ['] is the
+# equivalent of ', but for compiled functions, in Forth parlance, ' is an
+# interpreted word, while ['] is an "immediate" word, meaning that the word is
+# called immediately *during* the compile step.  This is to say that, inside a
+# definition, normal words are added to the definition as they are encountered,
+# but immediate words are run as they are encountered.
+: setup
+	# First we check if the skip-newline option was set.  If so, we change
+	# the value of printer to the address of no-newline.
+	skip-newline @ if ['] no-newline printer !  then
+	# Same thing with escapes.
+	use-escapes @ if populate-escapes ['] escaper filter ! then ;
+
+: print-all ( args -- )
+	begin dup @ while
+		dup @
+		# execute calls a function by address.  Remember, we've stuffed
+		# the address of functions into filter and printer, so we can
+		# call them with execute.
+		dup filter @ execute
+		printer @ execute
+		cellsize +
+	repeat ;
+
+argv parse
+setup
+print-all
