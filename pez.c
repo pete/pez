@@ -1169,6 +1169,7 @@ prim P_strlit()
 
 	trace {
 		printf("\"%s\" ", (((char *)ip) + 1));
+		fflush(stdout);
 	}
 
 	Skipstring;		/* Advance IP past it */
@@ -1322,6 +1323,7 @@ prim P_flit()
 
 		memcpy((char *)&tr, (char *)ip, sizeof(pez_real));
 		printf("%g ", tr);
+		fflush(stdout);
 	}
 
 	for(i = 0; i < Realsize; i++) {
@@ -2269,6 +2271,7 @@ prim P_dolit()
 	So(1);
 	trace {
 		printf("%ld ", (long)*ip);
+		fflush(stdout);
 	}
 	Push = (stackitem) * ip++;	/* Push the next datum from the
 					   instruction stream. */
@@ -3811,6 +3814,7 @@ dictword *wp;
 	curword = wp;
 	trace {
 		printf("\nTrace: %s ", curword->wname + 1);
+		fflush(stdout);
 	}
 	(*curword->wcode)();	/* Execute the first word */
 	while(ip != NULL) {
@@ -3825,6 +3829,7 @@ dictword *wp;
 		curword = *ip++;
 		trace {
 			printf("\nTrace: %s ", curword->wname + 1);
+			fflush(stdout);
 		}
 		(*curword->wcode)();	/* Execute the next word */
 	}
