@@ -414,7 +414,7 @@ Boolean assemble_delimited_string(char **strbuf) {
 		- If not otherwise identified, we have a word.
 */
 
-static int token(char **cp) {
+static int lex(char **cp) {
 	char *scanp = *cp;
 
 	while(True) {
@@ -2707,16 +2707,16 @@ prim P_semicolon()
 
 prim P_tick()
 {				/* Take address of next word */
-	int i;
+	int token;
 
 	/* Try to get next symbol from the input stream.  If
 	   we can't, and we're executing a compiled word,
 	   report an error.  Since we can't call back to the
 	   calling program for more input, we're stuck. */
 
-	i = token(&instream);	/* Scan for next token */
-	if(i != TokNull) {
-		if(i == TokWord) {
+	token = lex(&instream);	/* Scan for next token */
+	if(token != TokNull) {
+		if(token == TokWord) {
 			dictword *di;
 
 			ucase(tokbuf);
@@ -4236,7 +4236,7 @@ void pez_stack_string(char* str) {
 /*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
 
 int pez_eval(char *sp) {
-	int i;
+	int token;
 
 #undef Memerrs
 #define Memerrs evalstat
@@ -4259,10 +4259,10 @@ int pez_eval(char *sp) {
 	}
 #endif				/* PROLOGUE */
 		
-	while((evalstat == PEZ_SNORM) && (i = token(&instream)) != TokNull) {
+	while((evalstat == PEZ_SNORM) && (token = lex(&instream)) != TokNull) {
 		dictword *di;
 
-		switch (i) {
+		switch (token) {
 		case TokWord:
 			if(forgetpend) {
 				forgetpend = False;
@@ -4478,7 +4478,7 @@ int pez_eval(char *sp) {
 			}
 			break;
 		default:
-			printf("\nUnknown token type %d\n", i);
+			printf("\nUnknown token type %d\n", token);
 			break;
 		}
 	}
