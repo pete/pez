@@ -64,6 +64,8 @@
 #define WALKBACK		// Walkback trace
 #define WORDSUSED		// Logging of words used and unused
 
+#define TOK_BUF_SZ 128
+
 #endif				// !INDIVIDUALLY
 
 #include "pezdef.h"
@@ -286,11 +288,11 @@ char *c;
 	Given the input stream and an opening delimiter, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
 */
-Boolean assemble_quoted_string(char **strbuf) {
+Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 	Boolean okay = True;
 	int toklen = 0;
 	char *sp = *strbuf;
-	char *tp = tokbuf;
+	char *tp = token_buffer;
 	
 	sp++;
 	while(True) {
@@ -325,7 +327,7 @@ Boolean assemble_quoted_string(char **strbuf) {
 				break;
 			}
 		}
-		if(toklen < (sizeof tokbuf) - 1) {
+		if(toklen < TOK_BUF_SZ - 1) {
 			*tp++ = c;
 			toklen++;
 		} else {
@@ -335,7 +337,7 @@ Boolean assemble_quoted_string(char **strbuf) {
 	*strbuf = sp;
 	if(!okay) {
 #ifdef MEMMESSAGE
-		printf("\nRunaway string: %s\n", tokbuf);
+		printf("\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
@@ -348,11 +350,11 @@ Boolean assemble_quoted_string(char **strbuf) {
 	in the token buffer.
 	These strings don't give no never mind about no escapes
 */
-Boolean assemble_delimited_string(char **strbuf) {
+Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
 	Boolean okay = True;
 	int toklen = 0;
 	char *sp = *strbuf;
-	char *tp = tokbuf;
+	char *tp = token_buffer;
 	char open_delim = *++sp;
 	char close_delim;
 	
@@ -378,7 +380,7 @@ Boolean assemble_delimited_string(char **strbuf) {
 			*tp++ = EOS;
 			break;
 		}
-		if(toklen < (sizeof tokbuf) - 1) {
+		if(toklen < TOK_BUF_SZ - 1) {
 			*tp++ = c;
 			toklen++;
 		} else {
@@ -388,7 +390,7 @@ Boolean assemble_delimited_string(char **strbuf) {
 	*strbuf = sp;
 	if(!okay) {
 #ifdef MEMMESSAGE
-		printf("\nRunaway string: %s\n", tokbuf);
+		printf("\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
@@ -414,11 +416,11 @@ Boolean assemble_delimited_string(char **strbuf) {
 		- If not otherwise identified, we have a word.
 */
 
-static int lex(char **cp) {
+static int lex(char **cp, char token_buffer[]) {
 	char *scanp = *cp;
 
 	while(True) {
-		char *tp = tokbuf;
+		char *tp = token_buffer;
 		int toklen = 0;
 		
 		// handle rudely interrupted comments
@@ -438,11 +440,11 @@ static int lex(char **cp) {
 			scanp++;
 
 		if(*scanp == '"') {
-			Boolean okay = assemble_quoted_string(&scanp);
+			Boolean okay = assemble_quoted_string(&scanp, token_buffer);
 			*cp = --scanp;
 			return okay ? TokString : TokNull;
 		} else if(*scanp == '\\') { // Arbitrary string delimitation
-			Boolean okay = assemble_delimited_string(&scanp);
+			Boolean okay = assemble_delimited_string(&scanp, token_buffer);
 			*cp = --scanp;
 			return okay ? TokString : TokNull;
 		} else {
@@ -455,7 +457,7 @@ static int lex(char **cp) {
 					*tp++ = EOS;
 					break;
 				}
-				if(toklen < (sizeof tokbuf) - 1) {
+				if(toklen < TOK_BUF_SZ - 1) {
 					*tp++ = c;
 					toklen++;
 				}
@@ -463,13 +465,13 @@ static int lex(char **cp) {
 		}
 		*cp = --scanp;
 
-		if(tokbuf[0] == EOS)
+		if(token_buffer[0] == EOS)
 			return TokNull;
 
 		/* 	If token is a comment to end of line character, discard the rest of 
 			the line and return null for this token request. */
 
-		if(strcmp(tokbuf, "#") == 0 || strcmp(tokbuf, "#!") == 0) {
+		if(strcmp(token_buffer, "#") == 0 || strcmp(token_buffer, "#!") == 0) {
 			while(*scanp != EOS)
 				scanp++;
 			*cp = scanp;
@@ -480,7 +482,7 @@ static int lex(char **cp) {
 		   ignore all characters until the matching comment close
 		   delimiter. */
 
-		if(strcmp(tokbuf, "(") == 0) {
+		if(strcmp(token_buffer, "(") == 0) {
 			while(*scanp != EOS) {
 				if(*scanp == ')')
 					break;
@@ -497,30 +499,30 @@ static int lex(char **cp) {
 
 		/* See if the token is a number. */
 
-		if(isdigit(tokbuf[0]) || tokbuf[0] == '-') {
+		if(isdigit(token_buffer[0]) || token_buffer[0] == '-') {
 			char tc;
 			char *tcp;
 
 #ifdef OS2
 			/* Compensate for error in OS/2 sscanf() library function */
-			if((tokbuf[0] == '-') &&
-			   !(isdigit(tokbuf[1]) ||
-				 (((tokbuf[1] == 'x') || (tokbuf[1] == 'X')) &&
-				  isxdigit(tokbuf[2])))) {
+			if((token_buffer[0] == '-') &&
+			   !(isdigit(token_buffer[1]) ||
+				 (((token_buffer[1] == 'x') || (token_buffer[1] == 'X')) &&
+				  isxdigit(token_buffer[2])))) {
 				return TokWord;
 			}
 #endif				/* OS2 */
 #ifdef USE_SSCANF
-			if(sscanf(tokbuf, "%li%c", &tokint, &tc) == 1)
+			if(sscanf(token_buffer, "%li%c", &tokint, &tc) == 1)
 				return TokInt;
 #else
-			tokint = strtoul(tokbuf, &tcp, 0);
+			tokint = strtoul(token_buffer, &tcp, 0);
 			if(*tcp == 0) {
 				return TokInt;
 			}
 #endif
 #ifdef REAL
-			if(sscanf(tokbuf, "%lf%c", &tokreal, &tc) == 1) {
+			if(sscanf(token_buffer, "%lf%c", &tokreal, &tc) == 1) {
 				return TokReal;
 			}
 #endif
@@ -2708,23 +2710,24 @@ prim P_semicolon()
 prim P_tick()
 {				/* Take address of next word */
 	int token;
+	char token_buffer[TOK_BUF_SZ];
 
 	/* Try to get next symbol from the input stream.  If
 	   we can't, and we're executing a compiled word,
 	   report an error.  Since we can't call back to the
 	   calling program for more input, we're stuck. */
 
-	token = lex(&instream);	/* Scan for next token */
+	token = lex(&instream, token_buffer);	/* Scan for next token */
 	if(token != TokNull) {
 		if(token == TokWord) {
 			dictword *di;
 
-			ucase(tokbuf);
-			if((di = lookup(tokbuf)) != NULL) {
+			ucase(token_buffer);
+			if((di = lookup(token_buffer)) != NULL) {
 				So(1);
 				Push = (stackitem)di;	/* Push word compile address */
 			} else {
-				printf(" '%s' undefined ", tokbuf);
+				printf(" '%s' undefined ", token_buffer);
 			}
 		} else {
 			printf("\nWord not specified when expected.\n");
@@ -4237,6 +4240,7 @@ void pez_stack_string(char* str) {
 
 int pez_eval(char *sp) {
 	int token;
+	char token_buffer[TOK_BUF_SZ];
 
 #undef Memerrs
 #define Memerrs evalstat
@@ -4259,15 +4263,16 @@ int pez_eval(char *sp) {
 	}
 #endif				/* PROLOGUE */
 		
-	while((evalstat == PEZ_SNORM) && (token = lex(&instream)) != TokNull) {
+	while((evalstat == PEZ_SNORM) && 
+		(token = lex(&instream, token_buffer)) != TokNull) {
 		dictword *di;
 
 		switch (token) {
 		case TokWord:
 			if(forgetpend) {
 				forgetpend = False;
-				ucase(tokbuf);
-				if((di = lookup(tokbuf)) != NULL) {
+				ucase(token_buffer);
+				if((di = lookup(token_buffer)) != NULL) {
 					dictword *dw = dict;
 
 					/* Pass 1.  Rip through the dictionary
@@ -4285,7 +4290,7 @@ int pez_eval(char *sp) {
 								PEZ_FORGETPROT;
 							di = NULL;
 						}
-						if(strcmp(dw->wname + 1, tokbuf)
+						if(strcmp(dw->wname + 1, token_buffer)
 						   == 0)
 							break;
 						dw = dw->wnext;
@@ -4329,20 +4334,20 @@ int pez_eval(char *sp) {
 					}
 				} else {
 #ifdef MEMMESSAGE
-					printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
 				}
 				// ending the if(forgetpend) block
 			} else if(tickpend) {
 				tickpend = False;
-				ucase(tokbuf);
-				if((di = lookup(tokbuf)) != NULL) {
+				ucase(token_buffer);
+				if((di = lookup(token_buffer)) != NULL) {
 					So(1);
 					Push = (stackitem)di;	/* Push word compile address */
 				} else {
 #ifdef MEMMESSAGE
-					printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
 				}
@@ -4351,12 +4356,12 @@ int pez_eval(char *sp) {
 				   leave the address of the new word item created for
 				   it on the return stack. */
 				defpend = False;
-				ucase(tokbuf);
-				if(pez_redef && (lookup(tokbuf) != NULL))
-					printf("\n%s isn't unique.", tokbuf);
-				enter(tokbuf);
+				ucase(token_buffer);
+				if(pez_redef && (lookup(token_buffer) != NULL))
+					printf("\n%s isn't unique.", token_buffer);
+				enter(token_buffer);
 			} else { // Here's where evaluation actually happens
-				di = lookup(tokbuf);
+				di = lookup(token_buffer);
 				if(di != NULL) {
 					/* Test the state.  If we're
 					 * interpreting, execute the word in all
@@ -4388,7 +4393,7 @@ int pez_eval(char *sp) {
 					}
 				} else {
 #ifdef MEMMESSAGE
-					printf(" '%s' undefined ", tokbuf);
+					printf(" '%s' undefined ", token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
 					state = Falsity;
@@ -4466,14 +4471,14 @@ int pez_eval(char *sp) {
 					Ho(1);
 					Hstore = s_strlit;
 				}
-				pez_heap_string(tokbuf);
+				pez_heap_string(token_buffer);
 			} else {
 				if(stringlit) {
 					stringlit = False;
-					printf("%s", tokbuf);
+					printf("%s", token_buffer);
 				} else {
 					So(1);
-					pez_stack_string(tokbuf);
+					pez_stack_string(token_buffer);
 				}
 			}
 			break;
