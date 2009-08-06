@@ -200,7 +200,6 @@ static char *fopenmodes[] = {
 
 #endif				/* FILEIO */
 
-static char tokbuf[128];	/* Token buffer */
 static char *instream = NULL;	/* Current input stream line */
 static long tokint;		/* Scanned integer */
 #ifdef REAL
@@ -272,9 +271,7 @@ unsigned int size;
 
 /*  UCASE  --  Force letters in string to upper case.  */
 
-static void ucase(c)
-char *c;
-{
+static void ucase(char *c) {
 	char ch;
 
 	while((ch = *c) != EOS) {
@@ -533,9 +530,7 @@ static int lex(char **cp, char token_buffer[]) {
 
 /*  LOOKUP  --	Look up token in the dictionary.  */
 
-static dictword *lookup(tkname)
-char *tkname;
-{
+static dictword *lookup(char *tkname) {
 	dictword *dw = dict;
 
 	ucase(tkname);		/* Force name to upper case */
@@ -2722,7 +2717,6 @@ prim P_tick()
 		if(token == TokWord) {
 			dictword *di;
 
-			ucase(token_buffer);
 			if((di = lookup(token_buffer)) != NULL) {
 				So(1);
 				Push = (stackitem)di;	/* Push word compile address */
@@ -2790,12 +2784,13 @@ prim P_state()
 prim P_find()
 {				/* Look up word in dictionary */
 	dictword *dw;
+	char buf[128];
 
 	Sl(1);
 	So(1);
 	Hpc(S0);
-	strcpy(tokbuf, (char *)S0);	/* Use built-in token buffer... */
-	dw = lookup(tokbuf);	/* So ucase() in lookup() doesn't wipe */
+	strcpy(buf, (char *)S0);	/* Use built-in token buffer... */
+	dw = lookup(buf);	/* So ucase() in lookup() doesn't wipe */
 	/* the token on the stack */
 	if(dw != NULL) {
 		S0 = (stackitem)dw;
@@ -3990,9 +3985,9 @@ void pez_init()
 dictword *pez_lookup(name)
 char *name;
 {
-	strcpy(tokbuf, name);	/* Use built-in token buffer... */
-	ucase(tokbuf);		/* so ucase() doesn't wreck arg string */
-	return lookup(tokbuf);	/* Now use normal lookup() on it */
+	char buf[128];
+	strcpy(buf, name);	/* Use built-in token buffer... */
+	return lookup(buf);	/* Now use normal lookup() on it */
 }
 
 /*  PEZ_BODY  --  Returns the address of the body of a word, given
@@ -4049,6 +4044,7 @@ char *name;
 int size;
 {
 	dictword *di;
+	char buf[128];
 	int isize = (size + (sizeof(stackitem) - 1)) / sizeof(stackitem);
 
 #undef Memerrs
@@ -4066,9 +4062,8 @@ int size;
 		Hstore = 0;	/* Allocate heap area and clear it */
 		isize--;
 	}
-	strcpy(tokbuf, name);	/* Use built-in token buffer... */
-	ucase(tokbuf);		/* so ucase() doesn't wreck arg string */
-	enter(tokbuf);		/* Make dictionary entry for it */
+	strcpy(buf, name);	/* Use built-in token buffer... */
+	enter(buf);		/* Make dictionary entry for it */
 	di = createword;	/* Save word address */
 	createword = NULL;	/* Mark no word underway */
 	return di;		/* Return new word */
@@ -4271,7 +4266,6 @@ int pez_eval(char *sp) {
 		case TokWord:
 			if(forgetpend) {
 				forgetpend = False;
-				ucase(token_buffer);
 				if((di = lookup(token_buffer)) != NULL) {
 					dictword *dw = dict;
 
@@ -4341,7 +4335,6 @@ int pez_eval(char *sp) {
 				// ending the if(forgetpend) block
 			} else if(tickpend) {
 				tickpend = False;
-				ucase(token_buffer);
 				if((di = lookup(token_buffer)) != NULL) {
 					So(1);
 					Push = (stackitem)di;	/* Push word compile address */
@@ -4356,7 +4349,6 @@ int pez_eval(char *sp) {
 				   leave the address of the new word item created for
 				   it on the return stack. */
 				defpend = False;
-				ucase(token_buffer);
 				if(pez_redef && (lookup(token_buffer) != NULL))
 					printf("\n%s isn't unique.", token_buffer);
 				enter(token_buffer);
