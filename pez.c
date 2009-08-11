@@ -286,7 +286,7 @@ static void ucase(char *c) {
 	in the token buffer.  These strings allow escaped characters.
 */
 Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
-	Boolean okay = True;
+	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = token_buffer;
@@ -300,14 +300,14 @@ Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 			*tp++ = EOS;
 			break;
 		} else if(c == EOS) {
-			okay = False;
+			valid_string = False;
 			*tp++ = EOS;
 			break;
 		}
 		if(c == '\\') {
 			c = *sp++;
 			if(c == EOS) {
-				okay = False;
+				valid_string = False;
 				break;
 			}
 			// TODO:  lookup table.
@@ -328,17 +328,17 @@ Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 			*tp++ = c;
 			toklen++;
 		} else {
-			okay = False;
+			valid_string = False;
 		}
 	}
 	*strbuf = sp;
-	if(!okay) {
+	if(!valid_string) {
 #ifdef MEMMESSAGE
 		printf("\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
-	return okay;
+	return valid_string;
 }
 
 /*
@@ -348,7 +348,7 @@ Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 	These strings don't give no never mind about no escapes
 */
 Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
-	Boolean okay = True;
+	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = token_buffer;
@@ -373,7 +373,7 @@ Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
 			*tp++ = EOS;
 			break;
 		} else if(c == EOS) {
-			okay = False;
+			valid_string = False;
 			*tp++ = EOS;
 			break;
 		}
@@ -381,17 +381,17 @@ Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
 			*tp++ = c;
 			toklen++;
 		} else {
-			okay = False;
+			valid_string = False;
 		}
 	}
 	*strbuf = sp;
-	if(!okay) {
+	if(!valid_string) {
 #ifdef MEMMESSAGE
 		printf("\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
-	return okay;
+	return valid_string;
 }
 
 /*
@@ -437,13 +437,13 @@ static int lex(char **cp, char token_buffer[]) {
 			scanp++;
 
 		if(*scanp == '"') {
-			Boolean okay = assemble_quoted_string(&scanp, token_buffer);
+			Boolean valid_string = assemble_quoted_string(&scanp, token_buffer);
 			*cp = --scanp;
-			return okay ? TokString : TokNull;
+			return valid_string ? TokString : TokNull;
 		} else if(*scanp == '\\') { // Arbitrary string delimitation
-			Boolean okay = assemble_delimited_string(&scanp, token_buffer);
+			Boolean valid_string = assemble_delimited_string(&scanp, token_buffer);
 			*cp = --scanp;
-			return okay ? TokString : TokNull;
+			return valid_string ? TokString : TokNull;
 		} else {
 
 			// Scan the next raw token 
