@@ -4225,9 +4225,44 @@ int pez_heap_string(char* str) {
 */
 
 void pez_stack_string(char* str) {
+	So(1);
 	strncpy(strbuf[cstrbuf], str, pez_ltempstr - 1);
 	Push = (stackitem)strbuf[cstrbuf];
 	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
+}
+
+void pez_heap_real(pez_real num) {
+	int i;
+	union {
+		pez_real r;
+		stackitem s[Realsize];
+	} tru;
+
+	Ho(Realsize + 1);
+	Hstore = s_flit;	// Push (flit) 
+
+	tru.r = num;
+	fflush(stderr);
+
+	for(i = 0; i < Realsize; i++) {
+		Hstore = tru.s[i];
+	}
+}
+
+void pez_stack_real(pez_real num) {
+	int i;
+	union {
+		pez_real r;
+		stackitem s[Realsize];
+	} tru;
+
+	fflush(stderr);
+
+	So(Realsize);
+	tru.r = num;
+	for(i = 0; i < Realsize; i++) {
+		Push = tru.s[i];
+	}
 }
 
 
@@ -4406,37 +4441,11 @@ int pez_eval(char *sp) {
 
 #ifdef REAL
 		case TokReal:
-			if(state) {
-				int i;
-				union {
-					pez_real r;
-					stackitem s[Realsize];
-				} tru;
-
-				Ho(Realsize + 1);
-				Hstore = s_flit;	// Push (flit) 
-
-				tru.r = tokreal;
-				fflush(stderr);
-
-				for(i = 0; i < Realsize; i++) {
-					Hstore = tru.s[i];
-				}
-			} else {
-				int i;
-				union {
-					pez_real r;
-					stackitem s[Realsize];
-				} tru;
-
-				fflush(stderr);
-
-				So(Realsize);
-				tru.r = tokreal;
-				for(i = 0; i < Realsize; i++) {
-					Push = tru.s[i];
-				}
-			}
+			if(state)
+				pez_heap_real(tokreal);
+			else
+				pez_stack_real(tokreal);
+			
 			break;
 #endif				/* REAL */
 		
@@ -4469,7 +4478,6 @@ int pez_eval(char *sp) {
 					stringlit = False;
 					printf("%s", token_buffer);
 				} else {
-					So(1);
 					pez_stack_string(token_buffer);
 				}
 			}
