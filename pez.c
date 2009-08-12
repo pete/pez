@@ -4286,7 +4286,7 @@ void pez_stack_int(pez_int val) {
 	Push = val;
 }
 
-void pez_heap_real(pez_real num) {
+void pez_heap_real(pez_real val) {
 	int i;
 	union {
 		pez_real r;
@@ -4296,7 +4296,7 @@ void pez_heap_real(pez_real num) {
 	Ho(Realsize + 1);
 	Hstore = s_flit;	// Push (flit) 
 
-	tru.r = num;
+	tru.r = val;
 	fflush(stderr);
 
 	for(i = 0; i < Realsize; i++) {
@@ -4304,7 +4304,7 @@ void pez_heap_real(pez_real num) {
 	}
 }
 
-void pez_stack_real(pez_real num) {
+void pez_stack_real(pez_real val) {
 	int i;
 	union {
 		pez_real r;
@@ -4314,18 +4314,18 @@ void pez_stack_real(pez_real num) {
 	fflush(stderr);
 
 	So(Realsize);
-	tru.r = num;
+	tru.r = val;
 	for(i = 0; i < Realsize; i++) {
 		Push = tru.s[i];
 	}
 }
 
 void pez_heap_word(dictword *di) {
-	Ho(1);	/* Reserve heap space */
-	Hstore = (stackitem)di;	/* Compile word address */
+	Hsingle((stackitem)di);	/* Compile word address */
 }
 
-void pez_stack_word(dictword *di, char token_buffer[]) {
+void pez_stack_word(char token_buffer[]) {
+	dictword *di;
 	tickpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
 		So(1);
@@ -4340,37 +4340,31 @@ void pez_stack_word(dictword *di, char token_buffer[]) {
 }
 
 // FIXME: yes, this is not a good function name.
-void pez_forget_during_eval(dictword *di, char token_buffer[]) {
+void pez_forget_during_eval(char token_buffer[]) {
+	dictword *di;
 	forgetpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
 		dictword *dw = dict;
 
-		/* Pass 1.  Rip through the dictionary
-		   to make sure this word is not past the
-		   marker that guards against forgetting
-		   too much.  */
+		/* Pass 1.  Rip through the dictionary to make sure this word is not
+		past the marker that guards against forgetting too much.  */
 
 		while(dw != NULL) {
 			if(dw == dictprot) {
 #ifdef MEMMESSAGE
-				printf
-					("\nForget protected.\n");
+				printf("\nForget protected.\n");
 #endif
-				evalstat =
-					PEZ_FORGETPROT;
+				evalstat = PEZ_FORGETPROT;
 				di = NULL;
 			}
-			if(strcmp(dw->wname + 1, token_buffer)
-			   == 0)
+			if(strcmp(dw->wname + 1, token_buffer) == 0)
 				break;
 			dw = dw->wnext;
 		}
 
-		/* Pass 2.  Walk back through the dictionary
-		   items until we encounter the target
-		   of the FORGET.  Release each item's
-		   name buffer and dechain it from the
-		   dictionary list. */
+		/* Pass 2.  Walk back through the dictionary items until we encounter
+		the target of the FORGET.  Release each item's name buffer and dechain
+		it from the dictionary list. */
 
 		if(di != NULL) {
 			do {
@@ -4379,25 +4373,17 @@ void pez_forget_during_eval(dictword *di, char token_buffer[]) {
 					free(dw->wname);
 				dict = dw->wnext;
 			} while(dw != di);
-			/* Finally, back the heap
-			 * allocation pointer up to the
-			 * start of the last item
-			 * forgotten. */
+			/* Finally, back the heap allocation pointer up to the
+			  start of the last item forgotten. */
 			hptr = (stackitem *)di;
-			/* Uhhhh, just one more thing.
-			 * If this word was defined with
-			 * DOES>, there's a link to the
-			 * method address hidden before
-			 * its wnext field.  See if it's
-			 * a DOES> by testing the wcode
-			 * field for P_dodoes and, if
-			 * so, back up the heap one more
-			 * item. */
-			if(di->wcode ==
-			   (codeptr)P_dodoes) {
+			/* Uhhhh, just one more thing. If this word was defined with
+			  DOES>, there's a link to the method address hidden before
+			  its wnext field.  See if it's a DOES> by testing the wcode
+			  field for P_dodoes and, if so, back up the heap one more
+			  item. */
+			if(di->wcode == (codeptr)P_dodoes) {
 #ifdef FORGETDEBUG
-				printf
-					(" Forgetting DOES> word. ");
+				printf(" Forgetting DOES> word. ");
 #endif
 				hptr--;
 			}
@@ -4446,9 +4432,9 @@ int pez_eval(char *sp) {
 		switch (token) {
 		case TokWord:
 			if(forgetpend) {
-				pez_forget_during_eval(di, token_buffer);
+				pez_forget_during_eval(token_buffer);
 			} else if(tickpend) {
-				pez_stack_word(di, token_buffer);
+				pez_stack_word(token_buffer);
 			} else if(defpend) {
 				/* Define a new word and stick it in the dictionary */
 				defpend = False;
