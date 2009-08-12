@@ -2607,13 +2607,16 @@ prim P_rbrack()
 	state = Truth;
 }
 
+/*
+	Execute indirect call on method
+*/
 Exported void P_dodoes()
-{				/* Execute indirect call on method */
+{
 	Rso(1);
 	So(1);
-	Rpush = ip;		/* Push instruction pointer */
+	Rpush = ip;		// Push instruction pointer 
 #ifdef WALKBACK
-	*wbptr++ = curword;	/* Place word on walkback stack */
+	*wbptr++ = curword;	// Place word on walkback stack 
 #endif
 	/* The compiler having craftily squirreled away the DOES> clause
 	   address before the word definition on the heap, we back up to
@@ -2626,8 +2629,11 @@ Exported void P_dodoes()
 	Push = (stackitem)(((stackitem *)curword) + Dictwordl);
 }
 
+/*
+	Specify method for word
+*/
 prim P_does()
-{				/* Specify method for word */
+{
 
 	/* O.K., we were compiling our way through this definition and we've
 	   encountered the Dreaded and Dastardly Does.  Here's what we do
@@ -3806,9 +3812,7 @@ static void divzero()
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 
-static void exword(wp)
-dictword *wp;
-{
+static void exword(dictword *wp) {
 	curword = wp;
 	trace {
 		printf("\nTrace: %s ", curword->wname + 1);
@@ -3843,8 +3847,7 @@ dictword *wp;
 		  ensure that the length allocated agrees with the lengths
 		  given by the pez_... cells.  */
 
-void pez_init()
-{
+void pez_init() {
 	if(dict == NULL) {
 		pez_primdef(primt);	/* Define primitive words */
 		dictprot = dict;	/* Set protected mark in dictionary */
