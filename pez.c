@@ -4320,6 +4320,97 @@ void pez_stack_real(pez_real num) {
 	}
 }
 
+void pez_heap_word(dictword *di) {
+	Ho(1);	/* Reserve heap space */
+	Hstore = (stackitem)di;	/* Compile word address */
+}
+
+void pez_stack_word(dictword *di, char token_buffer[]) {
+	tickpend = False;
+	if((di = lookup(token_buffer)) != NULL) {
+		So(1);
+		Push = (stackitem)di;	/* Push word compile address */
+	} else {
+#ifdef MEMMESSAGE
+		printf(" '%s' undefined ", token_buffer);
+#endif
+		evalstat = PEZ_UNDEFINED;
+	}
+
+}
+
+// FIXME: yes, this is not a good function name.
+void pez_forget_during_eval(dictword *di, char token_buffer[]) {
+	forgetpend = False;
+	if((di = lookup(token_buffer)) != NULL) {
+		dictword *dw = dict;
+
+		/* Pass 1.  Rip through the dictionary
+		   to make sure this word is not past the
+		   marker that guards against forgetting
+		   too much.  */
+
+		while(dw != NULL) {
+			if(dw == dictprot) {
+#ifdef MEMMESSAGE
+				printf
+					("\nForget protected.\n");
+#endif
+				evalstat =
+					PEZ_FORGETPROT;
+				di = NULL;
+			}
+			if(strcmp(dw->wname + 1, token_buffer)
+			   == 0)
+				break;
+			dw = dw->wnext;
+		}
+
+		/* Pass 2.  Walk back through the dictionary
+		   items until we encounter the target
+		   of the FORGET.  Release each item's
+		   name buffer and dechain it from the
+		   dictionary list. */
+
+		if(di != NULL) {
+			do {
+				dw = dict;
+				if(dw->wname != NULL)
+					free(dw->wname);
+				dict = dw->wnext;
+			} while(dw != di);
+			/* Finally, back the heap
+			 * allocation pointer up to the
+			 * start of the last item
+			 * forgotten. */
+			hptr = (stackitem *)di;
+			/* Uhhhh, just one more thing.
+			 * If this word was defined with
+			 * DOES>, there's a link to the
+			 * method address hidden before
+			 * its wnext field.  See if it's
+			 * a DOES> by testing the wcode
+			 * field for P_dodoes and, if
+			 * so, back up the heap one more
+			 * item. */
+			if(di->wcode ==
+			   (codeptr)P_dodoes) {
+#ifdef FORGETDEBUG
+				printf
+					(" Forgetting DOES> word. ");
+#endif
+				hptr--;
+			}
+		}
+	} else {
+#ifdef MEMMESSAGE
+		printf(" '%s' undefined ", token_buffer);
+#endif
+		evalstat = PEZ_UNDEFINED;
+	}
+
+}
+
 
 /*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
 
@@ -4355,92 +4446,12 @@ int pez_eval(char *sp) {
 		switch (token) {
 		case TokWord:
 			if(forgetpend) {
-				forgetpend = False;
-				if((di = lookup(token_buffer)) != NULL) {
-					dictword *dw = dict;
-
-					/* Pass 1.  Rip through the dictionary
-					   to make sure this word is not past the
-					   marker that guards against forgetting
-					   too much.  */
-
-					while(dw != NULL) {
-						if(dw == dictprot) {
-#ifdef MEMMESSAGE
-							printf
-								("\nForget protected.\n");
-#endif
-							evalstat =
-								PEZ_FORGETPROT;
-							di = NULL;
-						}
-						if(strcmp(dw->wname + 1, token_buffer)
-						   == 0)
-							break;
-						dw = dw->wnext;
-					}
-
-					/* Pass 2.  Walk back through the dictionary
-					   items until we encounter the target
-					   of the FORGET.  Release each item's
-					   name buffer and dechain it from the
-					   dictionary list. */
-
-					if(di != NULL) {
-						do {
-							dw = dict;
-							if(dw->wname != NULL)
-								free(dw->wname);
-							dict = dw->wnext;
-						} while(dw != di);
-						/* Finally, back the heap
-						 * allocation pointer up to the
-						 * start of the last item
-						 * forgotten. */
-						hptr = (stackitem *)di;
-						/* Uhhhh, just one more thing.
-						 * If this word was defined with
-						 * DOES>, there's a link to the
-						 * method address hidden before
-						 * its wnext field.  See if it's
-						 * a DOES> by testing the wcode
-						 * field for P_dodoes and, if
-						 * so, back up the heap one more
-						 * item. */
-						if(di->wcode ==
-						   (codeptr)P_dodoes) {
-#ifdef FORGETDEBUG
-							printf
-								(" Forgetting DOES> word. ");
-#endif
-							hptr--;
-						}
-					}
-				} else {
-#ifdef MEMMESSAGE
-					printf(" '%s' undefined ", token_buffer);
-#endif
-					evalstat = PEZ_UNDEFINED;
-				}
-				// ending the if(forgetpend) block
+				pez_forget_during_eval(di, token_buffer);
 			} else if(tickpend) {
-				tickpend = False;
-				if((di = lookup(token_buffer)) != NULL) {
-					So(1);
-					Push = (stackitem)di;	/* Push word compile address */
-				} else {
-#ifdef MEMMESSAGE
-					printf(" '%s' undefined ", token_buffer);
-#endif
-					evalstat = PEZ_UNDEFINED;
-				}
+				pez_stack_word(di, token_buffer);
 			} else if(defpend) {
-				/* If a definition is pending, define the token and
-				   leave the address of the new word item created for
-				   it on the return stack. */
+				/* Define a new word and stick it in the dictionary */
 				defpend = False;
-				if(pez_redef && (lookup(token_buffer) != NULL))
-					printf("\n%s isn't unique.", token_buffer);
 				enter(token_buffer);
 			} else { // Here's where evaluation actually happens
 				di = lookup(token_buffer);
@@ -4451,22 +4462,18 @@ int pez_eval(char *sp) {
 					 * the word unless it is a compiler word
 					 * flagged for immediate execution in the
 					 * dictionary entry. */
-					if(state &&
-					   (cbrackpend || ctickpend ||
-						!(di->wname[0] & IMMEDIATE))) {
+									
+					if(state && (cbrackpend || ctickpend || !Immediate(di))) {
 						if(ctickpend) {
-							/* If a compile-time
-							 * tick preceded this
-							 * word, compile a (lit)
-							 * word to cause its
-							 * address to be pushed
-							 * at execution time. */
+							/* If a compile-time tick preceded this word,
+							compile a (lit) word to cause its address to be
+							pushed at execution time. */
+							ctickpend = False;
 							Ho(1);
 							Hstore = s_lit;
-							ctickpend = False;
 						}
 						cbrackpend = False;
-						Ho(1);	/* Reserve stack space */
+						Ho(1);	/* Reserve heap space */
 						Hstore = (stackitem)di;	/* Compile word address */
 					} else {
 						exword(di);	/* Execute word */
@@ -4502,8 +4509,8 @@ int pez_eval(char *sp) {
 			
 			When compiling we need the string inserted inline in the word
 			definition.  If a stringlit is pending, the previous word sets up
-			for an inline string.  Otherwise, we have to put a
-			string-handling instruction on the heap before writing the string. */
+			for an inline string.  Otherwise, we have to put a string-handling
+			instruction on the heap before writing the string. */
 			
 			if(state) {
 				if(!stringlit)

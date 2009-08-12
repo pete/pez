@@ -312,4 +312,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define FileD(x)  ((FILE *)*(((stackitem *)(x)) + 1))
 #define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
 
+// Miscellaneous conveniences
+#define Immediate(word) (di->wname[0] & IMMEDIATE)
+
 #endif
