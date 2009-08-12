@@ -4126,9 +4126,7 @@ void pez_break()
 
 /*  PEZ_LOAD  --  Load a file into the system.	*/
 
-int pez_load(fp)
-FILE *fp;
-{
+int pez_load(FILE * fp) {
 	int es = PEZ_SNORM;
 	char s[134];
 	pez_statemark mk;
