@@ -4232,6 +4232,17 @@ void pez_stack_string(char* str) {
 	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
 }
 
+void pez_heap_int(pez_int val) {
+	Ho(2);
+	Hstore = s_lit;		// Push (lit) 
+	Hstore = val;	// Compile actual literal
+}
+
+void pez_stack_int(pez_int val) {
+	So(1);
+	Push = val;
+}
+
 void pez_heap_real(pez_real num) {
 	int i;
 	union {
@@ -4395,9 +4406,7 @@ int pez_eval(char *sp) {
 					 * interpreting, execute the word in all
 					 * cases.  If we're compiling, compile
 					 * the word unless it is a compiler word
-					 * flagged for immediate execution by
-					 * the presence of a space as the first
-					 * character of its name in the
+					 * flagged for immediate execution in the
 					 * dictionary entry. */
 					if(state &&
 					   (cbrackpend || ctickpend ||
@@ -4430,41 +4439,28 @@ int pez_eval(char *sp) {
 			break;
 
 		case TokInt:
-			if(state) {
-				Ho(2);
-				Hstore = s_lit;		// Push (lit) 
-				Hstore = tokint;	// Compile actual literal 
-			} else {
-				So(1);
-				Push = tokint;
-			}
+			state ? pez_heap_int(tokint) : pez_stack_int(tokint);
 			break;
 
 #ifdef REAL
 		case TokReal:
-			if(state)
-				pez_heap_real(tokreal);
-			else
-				pez_stack_real(tokreal);
-			
+			state ? pez_heap_real(tokreal) : pez_stack_real(tokreal);
 			break;
 #endif				/* REAL */
 		
 		case TokString:
 		
-			/* When interpreting (i.e. not compiling a word), we need strings to
-			go on the stack unless we're about to print them out immediately.
-			Words may operate as prefixes meaning "print the string that shall
-			appear next in the stream", by setting stringlit to be true.  In
-			this case, we just print out the string and kiss it goodbye.
-			Otherwise, store the string in one of the temporary buffers and push
-			the address thereof on the stack.
+			/* When interpreting (i.e. not compiling a word), strings go on the
+			stack unless they're going to be printed out immediately.
+			Primitive words may operate as prefixes meaning "print the string
+			that shall appear next in the stream", by setting stringlit to be
+			true. Otherwise, store the string in a temporary buffer and push its
+			address on the stack.
 			
-			If we're compiling a word, we need the string inserted inline
-			in the word definition, whether or not stringlit is true.  If we are
-			in stringlit mode, the previous word has set us up to handle an
-			inline string.  Otherwise, we have to put a string-handling
-			instruction on the heap before writing the string. */
+			When compiling we need the string inserted inline in the word
+			definition.  If a stringlit is pending, the previous word sets up
+			for an inline string.  Otherwise, we have to put a
+			string-handling instruction on the heap before writing the string. */
 			
 			if(state) {
 				if(stringlit) {
