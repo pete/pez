@@ -186,15 +186,15 @@ static char *fopenmodes[] = {
 	"", "r", "", "r+",
 	"", "rb", "", "r+b",
 	"", "", "w", "w+",
-	"", "", "wb", "w+b"
+	"", "", "wb", "w+b",
 #endif
 #ifndef FMspecial
-		/* Default fopen() mode table for SVID-compatible systems not
-		   overridden by a special table above. */
-		"", "r", "", "r+",
+	/* Default fopen() mode table for SVID-compatible systems not
+	   overridden by a special table above. */
+	"", "r", "", "r+",
 	"", "r", "", "r+",
 	"", "", "w", "w+",
-	"", "", "w", "w+"
+	"", "", "w", "w+",
 #endif
 };
 
