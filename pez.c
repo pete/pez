@@ -4436,31 +4436,22 @@ int pez_eval(char *sp) {
 			} else if(tickpend) {
 				pez_stack_word(token_buffer);
 			} else if(defpend) {
-				/* Define a new word and stick it in the dictionary */
 				defpend = False;
-				enter(token_buffer);
+				enter(token_buffer); // Define word and enter in the dict.
 			} else { // Here's where evaluation actually happens
 				di = lookup(token_buffer);
 				if(di != NULL) {
-					/* Test the state.  If we're
-					 * interpreting, execute the word in all
-					 * cases.  If we're compiling, compile
-					 * the word unless it is a compiler word
-					 * flagged for immediate execution in the
-					 * dictionary entry. */
-									
+					/* When interpreting, execute the word in all cases.
+					Otherwise compile the word unless it is a compiler word
+					flagged for immediate execution by its dictionary entry. */
 					if(state && (cbrackpend || ctickpend || !Immediate(di))) {
 						if(ctickpend) {
-							/* If a compile-time tick preceded this word,
-							compile a (lit) word to cause its address to be
-							pushed at execution time. */
-							ctickpend = False;
-							Ho(1);
-							Hstore = s_lit;
+							/* Compile (lit) so this word's address gets pushed
+							to be pushed on the stack at execution time. */
+							Hsingle(s_lit);
 						}
-						cbrackpend = False;
-						Ho(1);	/* Reserve heap space */
-						Hstore = (stackitem)di;	/* Compile word address */
+						cbrackpend = ctickpend = False;
+						pez_heap_word(di);
 					} else {
 						exword(di);	/* Execute word */
 					}
@@ -4482,36 +4473,24 @@ int pez_eval(char *sp) {
 		case TokReal:
 			state ? pez_heap_real(tokreal) : pez_stack_real(tokreal);
 			break;
-#endif				/* REAL */
+#endif
 		
 		case TokString:
-		
-			/* When interpreting (i.e. not compiling a word), strings go on the
-			stack unless they're going to be printed out immediately.
-			Primitive words may operate as prefixes meaning "print the string
-			that shall appear next in the stream", by setting stringlit to be
-			true. Otherwise, store the string in a temporary buffer and push its
-			address on the stack.
-			
-			When compiling we need the string inserted inline in the word
-			definition.  If a stringlit is pending, the previous word sets up
-			for an inline string.  Otherwise, we have to put a string-handling
-			instruction on the heap before writing the string. */
-			
-			if(state) {
+			if(state) {	// When compiling, strings go on the heap
 				if(!stringlit)
-					Hsingle(s_strlit);
-				
+					Hsingle(s_strlit);	// Preceded by an instruction
+										// when literal handling is needed
 				stringlit = False;
 				pez_heap_string(token_buffer);
-			} else {
+			} else {	// When interpreting, strings go on the stack
 				if(!stringlit)
 					pez_stack_string(token_buffer);
-				else
+				else	// Or get printed out immediately when they're literals.
 					printf("%s", token_buffer); stringlit = False;
 				
 			}
 			break;
+			
 		default:
 			printf("\nUnknown token type %d\n", token);
 			break;
