@@ -4463,20 +4463,17 @@ int pez_eval(char *sp) {
 			string-handling instruction on the heap before writing the string. */
 			
 			if(state) {
-				if(stringlit) {
-					stringlit = False;
-				} else {
-					Ho(1);
-					Hstore = s_strlit;
-				}
+				if(!stringlit)
+					Hsingle(s_strlit);
+				
+				stringlit = False;
 				pez_heap_string(token_buffer);
 			} else {
-				if(stringlit) {
-					stringlit = False;
-					printf("%s", token_buffer);
-				} else {
+				if(!stringlit)
 					pez_stack_string(token_buffer);
-				}
+				else
+					printf("%s", token_buffer); stringlit = False;
+				
 			}
 			break;
 		default:

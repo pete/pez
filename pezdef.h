@@ -264,7 +264,8 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Hpc(n)
 #endif
 
-#define Hstore *hptr++		      /* Store item on heap */
+#define Hstore *hptr++		     	// Store item on heap 
+#define Hsingle(val) Ho(1); *hptr++	= val	// Item on heap with ovrflw check
 #define state  (*heap)		      /* Execution state is first heap word */
 
 #define prim static void	      /* Attributes of primitive functions */
