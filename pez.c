@@ -634,13 +634,11 @@ void pez_memstat()
 
 /*  Primitive implementing functions.  */
 
-/*  ENTER  --  Enter word in dictionary.  Given token for word's
-		   name and initial values for its attributes, returns
-		   the newly-allocated dictionary item. */
+/*  ENTER  --  Enter word in dictionary.  */
 
-static void enter(tkname)
-char *tkname;
-{
+static void enter(char *tkname) {
+	if(pez_redef && (lookup(tkname) != NULL))
+		printf("\n%s isn't unique.\n", tkname);
 	/* Allocate name buffer */
 	createword->wname = alloc(((unsigned int)strlen(tkname) + 2));
 	createword->wname[0] = 0;	/* Clear flags */
@@ -917,29 +915,41 @@ prim P_0lss()
 
 /*  Storage allocation (heap) primitives  */
 
+/*
+	Push current heap address
+*/
 prim P_here()
-{				/* Push current heap address */
+{
 	So(1);
 	Push = (stackitem)hptr;
 }
 
+/*
+	Store value into address
+*/
 prim P_bang()
-{				/* Store value into address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((stackitem *)S0) = S1;
 	Pop2;
 }
 
+/*
+	Fetch value from address
+*/
 prim P_at()
-{				/* Fetch value from address */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = *((stackitem *)S0);
 }
 
+/*
+	Add value at specified address
+*/
 prim P_plusbang()
-{				/* Add value at specified address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((stackitem *)S0) += S1;
@@ -958,8 +968,11 @@ prim P_1plusbang()
 	Pop;
 }
 
+/*
+	Allocate heap bytes
+*/
 prim P_allot()
-{				/* Allocate heap bytes */
+{
 	stackitem n;
 
 	Sl(1);
@@ -969,31 +982,43 @@ prim P_allot()
 	hptr += n;
 }
 
+/*
+	Store TOS on heap
+*/
 prim P_comma()
-{				/* Store one item on heap */
+{
 	Sl(1);
 	Ho(1);
 	Hstore = S0;
 	Pop;
 }
 
+/*
+	Store byte value into address
+*/
 prim P_cbang()
-{				/* Store byte value into address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((unsigned char *)S0) = S1;
 	Pop2;
 }
 
+/*
+	Fetch byte value from address
+*/
 prim P_cat()
-{				/* Fetch byte value from address */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = *((unsigned char *)S0);
 }
 
+/*
+	Store one byte on heap
+*/
 prim P_ccomma()
-{				/* Store one byte on heap */
+{
 	unsigned char *chp;
 
 	Sl(1);
@@ -1004,8 +1029,11 @@ prim P_ccomma()
 	Pop;
 }
 
+/*
+	Align heap pointer after storing *//* a series of bytes.
+*/
 prim P_cequal()
-{				/* Align heap pointer after storing *//* a series of bytes. */
+{
 	stackitem n = (((stackitem)hptr) - ((stackitem)heap)) %
 		(sizeof(stackitem));
 
@@ -1024,9 +1052,11 @@ prim P_var()
 	So(1);
 	Push = (stackitem)(((stackitem *)curword) + Dictwordl);
 }
-
+/* 
+	Create a new word
+*/
 Exported void P_create()
-{				/* Create new word */
+{
 	defpend = True;		/* Set definition pending */
 	Ho(Dictwordl);
 	createword = (dictword *)hptr;	/* Develop address of word */
@@ -1035,26 +1065,38 @@ Exported void P_create()
 	hptr += Dictwordl;	/* Allocate heap space for word */
 }
 
+/*
+	Forget word
+*/
 prim P_forget()
-{				/* Forget word */
+{
 	forgetpend = True;	/* Mark forget pending */
 }
 
+/*
+	Declare variable
+*/
 prim P_variable()
-{				/* Declare variable */
+{
 	P_create();		/* Create dictionary item */
 	Ho(1);
 	Hstore = 0;		/* Initial value = 0 */
 }
 
+/*
+	Push value in body
+*/
 prim P_con()
-{				/* Push value in body */
+{
 	So(1);
 	Push = *(((stackitem *)curword) + Dictwordl);
 }
 
+/*
+	Declare constant
+*/
 prim P_constant()
-{				/* Declare constant */
+{
 	Sl(1);
 	P_create();		/* Create dictionary item */
 	createword->wcode = P_con;	/* Set code to constant push */
@@ -1078,8 +1120,12 @@ prim P_floatsize()
 /*  Array primitives  */
 
 #ifdef ARRAY
+
+/*
+	Array subscript calculation *//* sub1 sub2 ... subn -- addr
+*/
 prim P_arraysub()
-{				/* Array subscript calculation *//* sub1 sub2 ... subn -- addr */
+{
 	int i, offset, esize, nsubs;
 	stackitem *array;
 	stackitem *isp;
