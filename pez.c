@@ -4355,8 +4355,7 @@ int pez_eval(char *sp) {
 						if(di->wcode ==
 						   (codeptr)P_dodoes) {
 #ifdef FORGETDEBUG
-							printf
-								(" Forgetting DOES> word. ");
+							printf(" Forgetting DOES> word. ");
 #endif
 							hptr--;
 						}
@@ -4450,21 +4449,24 @@ int pez_eval(char *sp) {
 #endif				/* REAL */
 		
 		case TokString:
-		
-			/* When interpreting (i.e. not compiling a word), we need strings to
-			go on the stack unless we're about to print them out immediately.
-			Words may operate as prefixes meaning "print the string that shall
-			appear next in the stream", by setting stringlit to be true.  In
-			this case, we just print out the string and kiss it goodbye.
-			Otherwise, store the string in one of the temporary buffers and push
-			the address thereof on the stack.
-			
-			If we're compiling a word, we need the string inserted inline
-			in the word definition, whether or not stringlit is true.  If we are
-			in stringlit mode, the previous word has set us up to handle an
-			inline string.  Otherwise, we have to put a string-handling
-			instruction on the heap before writing the string. */
-			
+			/* 
+			   When interpreting (i.e. not compiling a word), we
+			   need strings to go on the stack unless we're about to
+			   print them out immediately.  Words may operate as
+			   prefixes meaning "print the string that shall appear
+			   next in the stream", by setting stringlit to be true.
+			   In this case, we just print out the string and kiss
+			   it goodbye.  Otherwise, store the string in one of
+			   the temporary buffers and push the address thereof on
+			   the stack.  
+			   
+			   If we're compiling a word, we need the string
+			   inserted inline in the word definition, whether or
+			   not stringlit is true.  If we are in stringlit mode,
+			   the previous word has set us up to handle an inline
+			   string.  Otherwise, we have to put a string-handling
+			   instruction on the heap before writing the string. 
+			 */
 			if(state) {
 				if(stringlit) {
 					stringlit = False;
