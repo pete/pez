@@ -4034,8 +4034,8 @@ void pez_init() {
 dictword *pez_lookup(name)
 char *name;
 {
-	char buf[128];
-	strcpy(buf, name);	/* Use built-in token buffer... */
+	char buf[TOK_BUF_SZ];
+	strcpy(buf, name);
 	return lookup(buf);	/* Now use normal lookup() on it */
 }
 
@@ -4088,12 +4088,9 @@ dictword *dw;
 			the dictionary item for the new word, or NULL if
 			the heap overflows. */
 
-dictword *pez_vardef(name, size)
-char *name;
-int size;
-{
+dictword *pez_vardef(char *name, int size) {
 	dictword *di;
-	char buf[128];
+	char buf[TOK_BUF_SZ];
 	int isize = (size + (sizeof(stackitem) - 1)) / sizeof(stackitem);
 
 #undef Memerrs
