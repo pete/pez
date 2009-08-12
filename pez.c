@@ -3818,7 +3818,7 @@ static void exword(dictword *wp) {
 		printf("\nTrace: %s ", curword->wname + 1);
 		fflush(stdout);
 	}
-	(*curword->wcode)();	/* Execute the first word */
+	curword->wcode();	 // Execute the first word 
 	while(ip != NULL) {
 #ifdef BREAK
 		Keybreak();	/* Poll for asynchronous interrupt */
@@ -3833,7 +3833,7 @@ static void exword(dictword *wp) {
 			printf("\nTrace: %s ", curword->wname + 1);
 			fflush(stdout);
 		}
-		(*curword->wcode)();	/* Execute the next word */
+		curword->wcode();	/* Execute the next word */
 	}
 	curword = NULL;
 }
