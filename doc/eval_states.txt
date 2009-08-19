@@ -26,8 +26,8 @@ CBRACK_PEND		WordToken		compile_heap		COMPILING
 COMPILING		WordToken		compile_heap		COMPILING
 	                                    	
 INTERPRETING	Colon			create_word			DEF_PEND
-COMPILING		Semicolon		finalize			INTERPRETING
 DEF_PEND		WordToken		enter_word			COMPILING
+COMPILING		Semicolon		finalize			INTERPRETING
 COMPILING		LBracket							TEMP_INTERP
 TEMP_INTERP		RBracket							COMPILING
 COMPILING		Literal			pop2heap			COMPILING

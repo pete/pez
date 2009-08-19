@@ -634,13 +634,11 @@ void pez_memstat()
 
 /*  Primitive implementing functions.  */
 
-/*  ENTER  --  Enter word in dictionary.  Given token for word's
-		   name and initial values for its attributes, returns
-		   the newly-allocated dictionary item. */
+/*  ENTER  --  Enter word in dictionary.  */
 
-static void enter(tkname)
-char *tkname;
-{
+static void enter(char *tkname) {
+	if(pez_redef && (lookup(tkname) != NULL))
+		printf("\n%s isn't unique.\n", tkname);
 	/* Allocate name buffer */
 	createword->wname = alloc(((unsigned int)strlen(tkname) + 2));
 	createword->wname[0] = 0;	/* Clear flags */
@@ -917,29 +915,41 @@ prim P_0lss()
 
 /*  Storage allocation (heap) primitives  */
 
+/*
+	Push current heap address
+*/
 prim P_here()
-{				/* Push current heap address */
+{
 	So(1);
 	Push = (stackitem)hptr;
 }
 
+/*
+	Store value into address
+*/
 prim P_bang()
-{				/* Store value into address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((stackitem *)S0) = S1;
 	Pop2;
 }
 
+/*
+	Fetch value from address
+*/
 prim P_at()
-{				/* Fetch value from address */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = *((stackitem *)S0);
 }
 
+/*
+	Add value at specified address
+*/
 prim P_plusbang()
-{				/* Add value at specified address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((stackitem *)S0) += S1;
@@ -958,8 +968,11 @@ prim P_1plusbang()
 	Pop;
 }
 
+/*
+	Allocate heap bytes
+*/
 prim P_allot()
-{				/* Allocate heap bytes */
+{
 	stackitem n;
 
 	Sl(1);
@@ -969,31 +982,43 @@ prim P_allot()
 	hptr += n;
 }
 
+/*
+	Store TOS on heap
+*/
 prim P_comma()
-{				/* Store one item on heap */
+{
 	Sl(1);
 	Ho(1);
 	Hstore = S0;
 	Pop;
 }
 
+/*
+	Store byte value into address
+*/
 prim P_cbang()
-{				/* Store byte value into address */
+{
 	Sl(2);
 	Hpc(S0);
 	*((unsigned char *)S0) = S1;
 	Pop2;
 }
 
+/*
+	Fetch byte value from address
+*/
 prim P_cat()
-{				/* Fetch byte value from address */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = *((unsigned char *)S0);
 }
 
+/*
+	Store one byte on heap
+*/
 prim P_ccomma()
-{				/* Store one byte on heap */
+{
 	unsigned char *chp;
 
 	Sl(1);
@@ -1004,8 +1029,11 @@ prim P_ccomma()
 	Pop;
 }
 
+/*
+	Align heap pointer after storing *//* a series of bytes.
+*/
 prim P_cequal()
-{				/* Align heap pointer after storing *//* a series of bytes. */
+{
 	stackitem n = (((stackitem)hptr) - ((stackitem)heap)) %
 		(sizeof(stackitem));
 
@@ -1024,9 +1052,11 @@ prim P_var()
 	So(1);
 	Push = (stackitem)(((stackitem *)curword) + Dictwordl);
 }
-
+/* 
+	Create a new word
+*/
 Exported void P_create()
-{				/* Create new word */
+{
 	defpend = True;		/* Set definition pending */
 	Ho(Dictwordl);
 	createword = (dictword *)hptr;	/* Develop address of word */
@@ -1035,26 +1065,38 @@ Exported void P_create()
 	hptr += Dictwordl;	/* Allocate heap space for word */
 }
 
+/*
+	Forget word
+*/
 prim P_forget()
-{				/* Forget word */
+{
 	forgetpend = True;	/* Mark forget pending */
 }
 
+/*
+	Declare variable
+*/
 prim P_variable()
-{				/* Declare variable */
+{
 	P_create();		/* Create dictionary item */
 	Ho(1);
 	Hstore = 0;		/* Initial value = 0 */
 }
 
+/*
+	Push value in body
+*/
 prim P_con()
-{				/* Push value in body */
+{
 	So(1);
 	Push = *(((stackitem *)curword) + Dictwordl);
 }
 
+/*
+	Declare constant
+*/
 prim P_constant()
-{				/* Declare constant */
+{
 	Sl(1);
 	P_create();		/* Create dictionary item */
 	createword->wcode = P_con;	/* Set code to constant push */
@@ -1078,8 +1120,12 @@ prim P_floatsize()
 /*  Array primitives  */
 
 #ifdef ARRAY
+
+/*
+	Array subscript calculation *//* sub1 sub2 ... subn -- addr
+*/
 prim P_arraysub()
-{				/* Array subscript calculation *//* sub1 sub2 ... subn -- addr */
+{
 	int i, offset, esize, nsubs;
 	stackitem *array;
 	stackitem *isp;
@@ -2607,13 +2653,16 @@ prim P_rbrack()
 	state = Truth;
 }
 
+/*
+	Execute indirect call on method
+*/
 Exported void P_dodoes()
-{				/* Execute indirect call on method */
+{
 	Rso(1);
 	So(1);
-	Rpush = ip;		/* Push instruction pointer */
+	Rpush = ip;		// Push instruction pointer 
 #ifdef WALKBACK
-	*wbptr++ = curword;	/* Place word on walkback stack */
+	*wbptr++ = curword;	// Place word on walkback stack 
 #endif
 	/* The compiler having craftily squirreled away the DOES> clause
 	   address before the word definition on the heap, we back up to
@@ -2626,8 +2675,11 @@ Exported void P_dodoes()
 	Push = (stackitem)(((stackitem *)curword) + Dictwordl);
 }
 
+/*
+	Specify method for word
+*/
 prim P_does()
-{				/* Specify method for word */
+{
 
 	/* O.K., we were compiling our way through this definition and we've
 	   encountered the Dreaded and Dastardly Does.  Here's what we do
@@ -3806,15 +3858,13 @@ static void divzero()
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 
-static void exword(wp)
-dictword *wp;
-{
+static void exword(dictword *wp) {
 	curword = wp;
 	trace {
 		printf("\nTrace: %s ", curword->wname + 1);
 		fflush(stdout);
 	}
-	(*curword->wcode)();	/* Execute the first word */
+	curword->wcode();	 // Execute the first word 
 	while(ip != NULL) {
 #ifdef BREAK
 		Keybreak();	/* Poll for asynchronous interrupt */
@@ -3829,7 +3879,7 @@ dictword *wp;
 			printf("\nTrace: %s ", curword->wname + 1);
 			fflush(stdout);
 		}
-		(*curword->wcode)();	/* Execute the next word */
+		curword->wcode();	/* Execute the next word */
 	}
 	curword = NULL;
 }
@@ -3843,8 +3893,7 @@ dictword *wp;
 		  ensure that the length allocated agrees with the lengths
 		  given by the pez_... cells.  */
 
-void pez_init()
-{
+void pez_init() {
 	if(dict == NULL) {
 		pez_primdef(primt);	/* Define primitive words */
 		dictprot = dict;	/* Set protected mark in dictionary */
@@ -3985,8 +4034,8 @@ void pez_init()
 dictword *pez_lookup(name)
 char *name;
 {
-	char buf[128];
-	strcpy(buf, name);	/* Use built-in token buffer... */
+	char buf[TOK_BUF_SZ];
+	strcpy(buf, name);
 	return lookup(buf);	/* Now use normal lookup() on it */
 }
 
@@ -4039,12 +4088,9 @@ dictword *dw;
 			the dictionary item for the new word, or NULL if
 			the heap overflows. */
 
-dictword *pez_vardef(name, size)
-char *name;
-int size;
-{
+dictword *pez_vardef(char *name, int size) {
 	dictword *di;
-	char buf[128];
+	char buf[TOK_BUF_SZ];
 	int isize = (size + (sizeof(stackitem) - 1)) / sizeof(stackitem);
 
 #undef Memerrs
@@ -4126,9 +4172,7 @@ void pez_break()
 
 /*  PEZ_LOAD  --  Load a file into the system.	*/
 
-int pez_load(fp)
-FILE *fp;
-{
+int pez_load(FILE * fp) {
 	int es = PEZ_SNORM;
 	char s[134];
 	pez_statemark mk;
@@ -4231,7 +4275,18 @@ void pez_stack_string(char* str) {
 	cstrbuf = (cstrbuf + 1) % ((int)pez_ntempstr);
 }
 
-void pez_heap_real(pez_real num) {
+void pez_heap_int(pez_int val) {
+	Ho(2);
+	Hstore = s_lit;		// Push (lit) 
+	Hstore = val;	// Compile actual literal
+}
+
+void pez_stack_int(pez_int val) {
+	So(1);
+	Push = val;
+}
+
+void pez_heap_real(pez_real val) {
 	int i;
 	union {
 		pez_real r;
@@ -4241,7 +4296,7 @@ void pez_heap_real(pez_real num) {
 	Ho(Realsize + 1);
 	Hstore = s_flit;	// Push (flit) 
 
-	tru.r = num;
+	tru.r = val;
 	fflush(stderr);
 
 	for(i = 0; i < Realsize; i++) {
@@ -4249,7 +4304,7 @@ void pez_heap_real(pez_real num) {
 	}
 }
 
-void pez_stack_real(pez_real num) {
+void pez_stack_real(pez_real val) {
 	int i;
 	union {
 		pez_real r;
@@ -4259,10 +4314,87 @@ void pez_stack_real(pez_real num) {
 	fflush(stderr);
 
 	So(Realsize);
-	tru.r = num;
+	tru.r = val;
 	for(i = 0; i < Realsize; i++) {
 		Push = tru.s[i];
 	}
+}
+
+void pez_heap_word(dictword *di) {
+	Hsingle((stackitem)di);	/* Compile word address */
+}
+
+void pez_stack_word(char token_buffer[]) {
+	dictword *di;
+	tickpend = False;
+	if((di = lookup(token_buffer)) != NULL) {
+		So(1);
+		Push = (stackitem)di;	/* Push word compile address */
+	} else {
+#ifdef MEMMESSAGE
+		printf(" '%s' undefined ", token_buffer);
+#endif
+		evalstat = PEZ_UNDEFINED;
+	}
+
+}
+
+// FIXME: yes, this is not a good function name.
+void pez_forget_during_eval(char token_buffer[]) {
+	dictword *di;
+	forgetpend = False;
+	if((di = lookup(token_buffer)) != NULL) {
+		dictword *dw = dict;
+
+		/* Pass 1.  Rip through the dictionary to make sure this word is not
+		past the marker that guards against forgetting too much.  */
+
+		while(dw != NULL) {
+			if(dw == dictprot) {
+#ifdef MEMMESSAGE
+				printf("\nForget protected.\n");
+#endif
+				evalstat = PEZ_FORGETPROT;
+				di = NULL;
+			}
+			if(strcmp(dw->wname + 1, token_buffer) == 0)
+				break;
+			dw = dw->wnext;
+		}
+
+		/* Pass 2.  Walk back through the dictionary items until we encounter
+		the target of the FORGET.  Release each item's name buffer and dechain
+		it from the dictionary list. */
+
+		if(di != NULL) {
+			do {
+				dw = dict;
+				if(dw->wname != NULL)
+					free(dw->wname);
+				dict = dw->wnext;
+			} while(dw != di);
+			/* Finally, back the heap allocation pointer up to the
+			  start of the last item forgotten. */
+			hptr = (stackitem *)di;
+			/* Uhhhh, just one more thing. If this word was defined with
+			  DOES>, there's a link to the method address hidden before
+			  its wnext field.  See if it's a DOES> by testing the wcode
+			  field for P_dodoes and, if so, back up the heap one more
+			  item. */
+			if(di->wcode == (codeptr)P_dodoes) {
+#ifdef FORGETDEBUG
+				printf(" Forgetting DOES> word. ");
+#endif
+				hptr--;
+			}
+		}
+	} else {
+#ifdef MEMMESSAGE
+		printf(" '%s' undefined ", token_buffer);
+#endif
+		evalstat = PEZ_UNDEFINED;
+	}
+
 }
 
 
@@ -4300,120 +4432,26 @@ int pez_eval(char *sp) {
 		switch (token) {
 		case TokWord:
 			if(forgetpend) {
-				forgetpend = False;
-				if((di = lookup(token_buffer)) != NULL) {
-					dictword *dw = dict;
-
-					/* Pass 1.  Rip through the dictionary
-					   to make sure this word is not past the
-					   marker that guards against forgetting
-					   too much.  */
-
-					while(dw != NULL) {
-						if(dw == dictprot) {
-#ifdef MEMMESSAGE
-							printf
-								("\nForget protected.\n");
-#endif
-							evalstat =
-								PEZ_FORGETPROT;
-							di = NULL;
-						}
-						if(strcmp(dw->wname + 1, token_buffer)
-						   == 0)
-							break;
-						dw = dw->wnext;
-					}
-
-					/* Pass 2.  Walk back through the dictionary
-					   items until we encounter the target
-					   of the FORGET.  Release each item's
-					   name buffer and dechain it from the
-					   dictionary list. */
-
-					if(di != NULL) {
-						do {
-							dw = dict;
-							if(dw->wname != NULL)
-								free(dw->wname);
-							dict = dw->wnext;
-						} while(dw != di);
-						/* Finally, back the heap
-						 * allocation pointer up to the
-						 * start of the last item
-						 * forgotten. */
-						hptr = (stackitem *)di;
-						/* Uhhhh, just one more thing.
-						 * If this word was defined with
-						 * DOES>, there's a link to the
-						 * method address hidden before
-						 * its wnext field.  See if it's
-						 * a DOES> by testing the wcode
-						 * field for P_dodoes and, if
-						 * so, back up the heap one more
-						 * item. */
-						if(di->wcode ==
-						   (codeptr)P_dodoes) {
-#ifdef FORGETDEBUG
-							printf(" Forgetting DOES> word. ");
-#endif
-							hptr--;
-						}
-					}
-				} else {
-#ifdef MEMMESSAGE
-					printf(" '%s' undefined ", token_buffer);
-#endif
-					evalstat = PEZ_UNDEFINED;
-				}
-				// ending the if(forgetpend) block
+				pez_forget_during_eval(token_buffer);
 			} else if(tickpend) {
-				tickpend = False;
-				if((di = lookup(token_buffer)) != NULL) {
-					So(1);
-					Push = (stackitem)di;	/* Push word compile address */
-				} else {
-#ifdef MEMMESSAGE
-					printf(" '%s' undefined ", token_buffer);
-#endif
-					evalstat = PEZ_UNDEFINED;
-				}
+				pez_stack_word(token_buffer);
 			} else if(defpend) {
-				/* If a definition is pending, define the token and
-				   leave the address of the new word item created for
-				   it on the return stack. */
 				defpend = False;
-				if(pez_redef && (lookup(token_buffer) != NULL))
-					printf("\n%s isn't unique.", token_buffer);
-				enter(token_buffer);
+				enter(token_buffer); // Define word and enter in the dict.
 			} else { // Here's where evaluation actually happens
 				di = lookup(token_buffer);
 				if(di != NULL) {
-					/* Test the state.  If we're
-					 * interpreting, execute the word in all
-					 * cases.  If we're compiling, compile
-					 * the word unless it is a compiler word
-					 * flagged for immediate execution by
-					 * the presence of a space as the first
-					 * character of its name in the
-					 * dictionary entry. */
-					if(state &&
-					   (cbrackpend || ctickpend ||
-						!(di->wname[0] & IMMEDIATE))) {
+					/* When interpreting, execute the word in all cases.
+					Otherwise compile the word unless it is a compiler word
+					flagged for immediate execution by its dictionary entry. */
+					if(state && (cbrackpend || ctickpend || !Immediate(di))) {
 						if(ctickpend) {
-							/* If a compile-time
-							 * tick preceded this
-							 * word, compile a (lit)
-							 * word to cause its
-							 * address to be pushed
-							 * at execution time. */
-							Ho(1);
-							Hstore = s_lit;
-							ctickpend = False;
+							/* Compile (lit) so this word's address gets pushed
+							to be pushed on the stack at execution time. */
+							Hsingle(s_lit);
 						}
-						cbrackpend = False;
-						Ho(1);	/* Reserve stack space */
-						Hstore = (stackitem)di;	/* Compile word address */
+						cbrackpend = ctickpend = False;
+						pez_heap_word(di);
 					} else {
 						exword(di);	/* Execute word */
 					}
@@ -4428,62 +4466,33 @@ int pez_eval(char *sp) {
 			break;
 
 		case TokInt:
-			if(state) {
-				Ho(2);
-				Hstore = s_lit;		// Push (lit) 
-				Hstore = tokint;	// Compile actual literal 
-			} else {
-				So(1);
-				Push = tokint;
-			}
+			state ? pez_heap_int(tokint) : pez_stack_int(tokint);
 			break;
 
 #ifdef REAL
 		case TokReal:
-			if(state)
-				pez_heap_real(tokreal);
-			else
-				pez_stack_real(tokreal);
-			
+			state ? pez_heap_real(tokreal) : pez_stack_real(tokreal);
 			break;
-#endif				/* REAL */
+#endif
 		
 		case TokString:
-			/* 
-			   When interpreting (i.e. not compiling a word), we
-			   need strings to go on the stack unless we're about to
-			   print them out immediately.  Words may operate as
-			   prefixes meaning "print the string that shall appear
-			   next in the stream", by setting stringlit to be true.
-			   In this case, we just print out the string and kiss
-			   it goodbye.  Otherwise, store the string in one of
-			   the temporary buffers and push the address thereof on
-			   the stack.  
-			   
-			   If we're compiling a word, we need the string
-			   inserted inline in the word definition, whether or
-			   not stringlit is true.  If we are in stringlit mode,
-			   the previous word has set us up to handle an inline
-			   string.  Otherwise, we have to put a string-handling
-			   instruction on the heap before writing the string. 
-			 */
 			if(state) {
-				if(stringlit) {
-					stringlit = False;
-				} else {
-					Ho(1);
-					Hstore = s_strlit;
-				}
+				// When compiling, strings go on the heap
+				if(!stringlit)
+					Hsingle(s_strlit);	
+				// Preceded by an instruction when literal
+				// handling is needed
+				stringlit = False;
 				pez_heap_string(token_buffer);
-			} else {
-				if(stringlit) {
-					stringlit = False;
-					printf("%s", token_buffer);
-				} else {
+			} else {	// When interpreting, strings go on the stack
+				if(!stringlit)
 					pez_stack_string(token_buffer);
-				}
+				else	// Or get printed out immediately when they're literals.
+					printf("%s", token_buffer); stringlit = False;
+				
 			}
 			break;
+			
 		default:
 			printf("\nUnknown token type %d\n", token);
 			break;
