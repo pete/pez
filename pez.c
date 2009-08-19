@@ -77,6 +77,8 @@
 
 /* LINTLIBRARY */
 
+#define PUSH_CONSTANT(fname, constant) prim fname() { So(1); Push = constant; }
+
 /* Implicit functions (work for all numeric types). */
 
 #ifdef abs
@@ -1789,17 +1791,15 @@ prim P_open()
 }
 
 /* Man, all of these flags are tedious. */
-#define open_flag(fname,flag) prim fname() { So(1); Push = flag; }
-open_flag(P_o_append, O_APPEND)
-open_flag(P_o_async, O_ASYNC)
-open_flag(P_o_creat, O_CREAT)
-open_flag(P_o_excl, O_EXCL)
-open_flag(P_o_rdonly, O_RDONLY)
-open_flag(P_o_rdwr, O_RDWR)
-open_flag(P_o_sync, O_SYNC)
-open_flag(P_o_trunc, O_TRUNC)
-open_flag(P_o_wronly, O_WRONLY)
-#undef open_flag
+PUSH_CONSTANT(P_o_append, O_APPEND)
+PUSH_CONSTANT(P_o_async, O_ASYNC)
+PUSH_CONSTANT(P_o_creat, O_CREAT)
+PUSH_CONSTANT(P_o_excl, O_EXCL)
+PUSH_CONSTANT(P_o_rdonly, O_RDONLY)
+PUSH_CONSTANT(P_o_rdwr, O_RDWR)
+PUSH_CONSTANT(P_o_sync, O_SYNC)
+PUSH_CONSTANT(P_o_trunc, O_TRUNC)
+PUSH_CONSTANT(P_o_wronly, O_WRONLY)
 
 /*
    ( fd -- )
@@ -1881,8 +1881,32 @@ prim P_putc()
 }
 
 /*
+   ( offset whence -- new-offset )
+   Seeks to a given position in a file.
+*/
+prim P_seek()
+{
+	fprintf(stderr, "OH NOES\n");
+}
+PUSH_CONSTANT(P_seek_cur, SEEK_CUR)
+PUSH_CONSTANT(P_seek_end, SEEK_END)
+PUSH_CONSTANT(P_seek_set, SEEK_SET)
+
+/*
+   ( fd -- offset )
+   Returns the offset into the file; note that this won't work at all for 
+   certain types of file descriptors, like sockets, and will only work on some
+   platforms for others.  No worries for regular files.
+*/
+prim P_tell()
+{
+	Sl(1);
+	S0 = (stackitem)lseek(S0, 0, SEEK_CUR);
+}
+
+/*
 	TODO:  tell, seek, output>, input>, connect, send, recv, accept,
-	O_* flags for open,
+	puts, gets, socket, umask, dup, dup2, pipe
 	probably others.
 */
 
@@ -3652,6 +3676,11 @@ static struct primfcn primt[] = {
 	{"0WRITE", P_write},
 	{"0GETC", P_getc},
 	{"0PUTC", P_putc},
+	{"0SEEK", P_seek},
+	{"0SEEK_CUR", P_seek_cur},
+	{"0SEEK_END", P_seek_end},
+	{"0SEEK_SET", P_seek_set},
+	{"0TELL", P_tell},
 #endif				/* FILEIO */
 
 #ifdef EVALUATE
