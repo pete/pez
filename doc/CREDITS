@@ -5,13 +5,8 @@ downloaded from Mr. Walker's site at http://fourmilab.ch/ .  (It was
 renamed to Pez when I discovered that I was not the only one to have the
 obvious idea of adapting public domain code for my own purposes.)
 
-Porting to x86-64, adding FFI, adding OS-level facilities, and general
-mangling was done by Pete Elmore, the current developer/maintainer of
-Pez.  (All of which has been done with an eye to using it as a VM for
-his yet-to-be-released language.)
-
-The awesome name Pez (so appropriate for a stack-based language) was the
-idea of Matthew King.  Matthew has also helped with bug fixes and OS X
-compatibility issues.
+The current state of the codebase (the bugs fixed, the features added
+or removed, the refactoring, etc.) is due to the efforts of Pete Elmore
+and Matthew King.
 
 Jeff Hodges was invaluable in helping to get autotools working properly.
