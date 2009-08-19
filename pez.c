@@ -262,8 +262,7 @@ unsigned int size;
 
 	/* printf("\nAlloc %u", size); */
 	if(cp == NULL) {
-		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n",
-			size);
+		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n", size);
 		abort();
 	}
 	return cp;
@@ -285,7 +284,7 @@ static void ucase(char *c) {
 	Given the input stream, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
 */
-Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
+Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
 	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
@@ -347,21 +346,20 @@ Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 	in the token buffer.
 	These strings don't give no never mind about no escapes
 */
-Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
+Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = token_buffer;
-	char open_delim = *++sp;
 	char close_delim;
 	
-	
-	switch (open_delim) {
+	sp++;
+	switch (*sp) {
 		case '{' : close_delim = '}'; break;
 		case '(' : close_delim = ')'; break;
 		case '[' : close_delim = ']'; break;
 		case '<' : close_delim = '>'; break;
-		default : close_delim = open_delim; break;
+		default : close_delim = *sp; break;
 	}
 	
 	sp++;
@@ -377,6 +375,7 @@ Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
 			*tp++ = EOS;
 			break;
 		}
+		
 		if(toklen < TOK_BUF_SZ - 1) {
 			*tp++ = c;
 			toklen++;
@@ -437,11 +436,11 @@ static int lex(char **cp, char token_buffer[]) {
 			scanp++;
 
 		if(*scanp == '"') {
-			Boolean valid_string = assemble_quoted_string(&scanp, token_buffer);
+			Boolean valid_string = get_quoted_string(&scanp, token_buffer);
 			*cp = --scanp;
 			return valid_string ? TokString : TokNull;
 		} else if(*scanp == '\\') { // Arbitrary string delimitation
-			Boolean valid_string = assemble_delimited_string(&scanp, token_buffer);
+			Boolean valid_string = get_delimited_string(&scanp, token_buffer);
 			*cp = --scanp;
 			return valid_string ? TokString : TokNull;
 		} else {
@@ -4293,7 +4292,7 @@ void pez_heap_real(pez_real val) {
 	} tru;
 
 	Ho(Realsize + 1);
-	Hstore = s_flit;	// Push (flit) 
+	Hstore = s_flit;	// Push (flit) at execution
 
 	tru.r = val;
 	fflush(stderr);
