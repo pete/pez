@@ -1,5 +1,12 @@
 This is a sort of unordered roadmap for Pez.
 
+* Re-work the I/O, add most of the C system calls.  There's a branch for this.
+
+* Fix the bug with undefined words being referenced in definitions.  (A
+  segfault, oh my!)
+
+* Regexes.  They'll be here shortly.
+
 * Change error behavior from "keep going starting at the next word" to
   "discard the rest of the input stream, return to toplevel".  This
   seems to be a better plan for both embedded code and for running as a
