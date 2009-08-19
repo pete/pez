@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -98,14 +99,15 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 /* 
 	Utility definition to get an array's element count (at compile time, and
-	provided that you're in the same scope as the declaration).   For example:
+	provided that you're in the same scope as the declaration).   For
+	example:
 
 		int  arr[] = {1,2,3,4,5};
 		...
 		printf("%d", ELEMENTS(arr));
 
-	would print a five.  ELEMENTS("abc") can also be used to tell how many bytes
-	are in a string constant INCLUDING THE TRAILING NULL. 
+	would print a five.  ELEMENTS("abc") can also be used to tell how many
+	bytes are in a string constant INCLUDING THE TRAILING NULL. 
 */
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
@@ -177,29 +179,6 @@ Exported dictword ***rstackmax;	/* Return stack maximum excursion */
 Exported stackitem *heapmax;	/* Heap maximum excursion */
 #endif
 
-#ifdef FILEIO
-static char *fopenmodes[] = {
-#ifdef FBmode
-#define FMspecial
-	/* Fopen() mode table for systems that require a "b" in the
-	   mode string for binary files. */
-	"", "r", "", "r+",
-	"", "rb", "", "r+b",
-	"", "", "w", "w+",
-	"", "", "wb", "w+b",
-#endif
-#ifndef FMspecial
-	/* Default fopen() mode table for SVID-compatible systems not
-	   overridden by a special table above. */
-	"", "r", "", "r+",
-	"", "r", "", "r+",
-	"", "", "w", "w+",
-	"", "", "w", "w+",
-#endif
-};
-
-#endif				/* FILEIO */
-
 static char *instream = NULL;	/* Current input stream line */
 static long tokint;		/* Scanned integer */
 #ifdef REAL
@@ -223,6 +202,11 @@ static Boolean stringlit = False;	/* String literal anticipated */
 #ifdef BREAK
 static Boolean broken = False;	/* Asynchronous break received */
 #endif
+#ifdef FILEIO
+static stackitem output_stream;
+static stackitem input_stream;
+#endif				/* FILEIO */
+
 
 #ifdef COPYRIGHT
 #ifndef HIGHC
@@ -680,7 +664,6 @@ static Boolean kbquit()
 prim P_plus()
 {				/* Add two numbers */
 	Sl(2);
-/* printf("PLUS %lx + %lx = %lx\n", S1, S0, (S1 + S0)); */
 	S1 += S0;
 	Pop;
 }
@@ -1746,158 +1729,163 @@ prim P_words()
 
 #ifdef FILEIO
 
-prim P_file()
-{				/* Declare file */
-	Ho(2);
-	P_create();		/* Create variable */
-	Hstore = FileSent;	/* Store file sentinel */
-	Hstore = 0;		/* Mark file not open */
-}
-
-prim P_fopen()
-{				/* Open file: fname fmodes fd -- flag */
-	FILE *fd;
-	stackitem stat;
-
-	Sl(3);
-	Hpc(S2);
-	Hpc(S0);
-	Isfile(S0);
-	fd = fopen((char *)S2, fopenmodes[S1]);
-	if(fd == NULL) {
-		stat = Falsity;
-	} else {
-		*(((stackitem *)S0) + 1) = (stackitem)fd;
-		stat = Truth;
-	}
-	Pop2;
-	S0 = stat;
-}
-
-prim P_fclose()
-{				/* Close file: fd -- */
+/* 
+   ( fd -- )
+   Sets the output stream to the specified file descriptor.
+*/
+prim P_tooutput()
+{
 	Sl(1);
-	Hpc(S0);
-	Isfile(S0);
-	Isopen(S0);
-	fclose(FileD(S0));
-	*(((stackitem *)S0) + 1) = (stackitem)NULL;
-	Pop;
-}
-
-prim P_fdelete()
-{				/* Delete file: fname -- flag */
-	Sl(1);
-	Hpc(S0);
-	S0 = (unlink((char *)S0) == 0) ? Truth : Falsity;
-}
-
-prim P_fgetline()
-{				/* Get line: fd string -- flag */
-	Sl(2);
-	Hpc(S0);
-	Isfile(S1);
-	Isopen(S1);
-	if(pez_fgetsp((char *)S0, 132, FileD(S1)) == NULL) {
-		S1 = Falsity;
-	} else {
-		S1 = Truth;
-	}
-	Pop;
-}
-
-prim P_fputline()
-{				/* Put line: string fd -- flag */
-	Sl(2);
-	Hpc(S1);
-	Isfile(S0);
-	Isopen(S0);
-	if(fputs((char *)S1, FileD(S0)) == EOF) {
-		S1 = Falsity;
-	} else {
-		S1 = putc('\n', FileD(S0)) == EOF ? Falsity : Truth;
-	}
+	output_stream = S0;
 	Pop;
 }
 
 /*
-   ( stream len buf -- bytes-read )
-   Reads from an input stream up to len bytes, puts them in buf, and returns the
-   the actual number of bytes read.
+   ( fd -- )
+   Sets the input stream to the specified file descriptor.
 */
-prim P_fread()
+prim P_toinput()
 {
-	Sl(3);
-	Hpc(S0);
-	Isfile(S2);
-	Isopen(S2);
-	S2 = fread((char *)S0, 1, ((int)S1), FileD(S2));
-	Pop2;
+	Sl(1);
+	input_stream = S0;
+	Pop;
 }
 
 /*
-   ( len buf stream -- bytes-written )
-   Writes len bytes from buf to stream, returning the actual number of bytes
-   written.
+   ( -- fd )
+   Pushes the current output stream onto the stack.
 */
-prim P_fwrite()
+prim P_outputto()
 {
-	Sl(3);
-	Hpc(S1);
-	Isfile(S0);
-	Isopen(S0);
-	S2 = fwrite((char *)S1, 1, ((int)S2), FileD(S0));
-	Pop2;
-}
-
-prim P_fgetc()
-{				/* File get character: fd -- char */
-	Sl(1);
-	Isfile(S0);
-	Isopen(S0);
-	S0 = getc(FileD(S0));	/* Returns -1 if EOF hit */
-}
-
-prim P_fputc()
-{				/* File put character: char fd -- stat */
-	Sl(2);
-	Isfile(S0);
-	Isopen(S0);
-	S1 = putc((char)S1, FileD(S0));
-	Pop;
-}
-
-prim P_ftell()
-{				/* Return file position:  fd -- pos */
-	Sl(1);
-	Isfile(S0);
-	Isopen(S0);
-	S0 = (stackitem)ftell(FileD(S0));
-}
-
-prim P_fseek()
-{				/* Seek file:  offset base fd -- */
-	Sl(3);
-	Isfile(S0);
-	Isopen(S0);
-	fseek(FileD(S0), (long)S2, (int)S1);
-	Npop(3);
-}
-
-prim P_fload()
-{				/* Load source file:  fd -- evalstat */
-	int estat;
-	FILE *fd;
-
-	Sl(1);
-	Isfile(S0);
-	Isopen(S0);
-	fd = FileD(S0);
-	Pop;
-	estat = pez_load(fd);
 	So(1);
-	Push = estat;
+	Push = output_stream;
 }
+
+/*
+   ( -- fd )
+   Pushes the current input stream onto the stack.
+*/
+prim P_inputto()
+{
+	So(1);
+	Push = input_stream;
+}
+
+/*
+   ( fname flags mode -- fd )
+*/
+prim P_open()
+{
+	char *fname;
+	long flags, mode;
+
+	Sl(3);
+
+	mode = S0;
+	flags = S1;
+	fname = (char *)S2;
+	Pop2;
+	S0 = open(fname, flags, mode);
+}
+
+/* Man, all of these flags are tedious. */
+#define open_flag(fname,flag) prim fname() { So(1); Push = flag; }
+open_flag(P_o_append, O_APPEND)
+open_flag(P_o_async, O_ASYNC)
+open_flag(P_o_creat, O_CREAT)
+open_flag(P_o_excl, O_EXCL)
+open_flag(P_o_rdonly, O_RDONLY)
+open_flag(P_o_rdwr, O_RDWR)
+open_flag(P_o_sync, O_SYNC)
+open_flag(P_o_trunc, O_TRUNC)
+open_flag(P_o_wronly, O_WRONLY)
+#undef open_flag
+
+/*
+   ( fd -- )
+*/
+prim P_close()
+{
+	Sl(1);
+	close(S0);
+	Pop;
+}
+
+/*
+   ( fname -- stat )
+*/
+prim P_unlink()
+{
+	int status;
+	Sl(1);
+	S0 = unlink((char *)S0);
+}
+
+/*
+   ( strbuf maxlen -- len )
+*/
+prim P_gets()
+{
+	fputs("Oh, poops.", stderr);
+}
+
+/*
+   ( strbuf maxlen -- bytes-read )
+   Reads from an input stream up to maxlen bytes, puts them in strbuf, and
+   returns the the actual number of bytes read.
+*/
+prim P_read()
+{
+	int len;
+	Sl(2);
+	len = S0;
+	Pop;
+	S0 = read(input_stream, (char *)S0, len);
+}
+
+/*
+   ( string len -- bytes-written )
+   Writes len bytes from string, returning the actual number of bytes written.
+*/
+prim P_write()
+{
+	int len;
+	Sl(2);
+	len = S0;
+	Pop;
+	S0 = write(output_stream, (char *)S0, len);
+}
+
+/*
+   ( -- char )
+*/
+prim P_getc()
+{
+	char c;
+
+	So(1);
+	read(input_stream, &c, 1);
+	Push = (stackitem)c;
+}
+
+/*
+   ( char -- )
+*/
+prim P_putc()
+{
+	char c;
+	Sl(1);
+	c = (char)S0;
+	Pop;
+	write(output_stream, &c, 1);
+}
+
+/*
+	TODO:  tell, seek, output>, input>, connect, send, recv, accept,
+	O_* flags for open,
+	probably others.
+*/
+
 #endif				/* FILEIO */
 
 #ifdef EVALUATE
@@ -3643,19 +3631,27 @@ static struct primfcn primt[] = {
 #endif				/* CONIO */
 
 #ifdef FILEIO
-	{"0FILE", P_file},
-	{"0FOPEN", P_fopen},
-	{"0FCLOSE", P_fclose},
-	{"0FDELETE", P_fdelete},
-	{"0FGETS", P_fgetline},
-	{"0FPUTS", P_fputline},
-	{"0FREAD", P_fread},
-	{"0FWRITE", P_fwrite},
-	{"0FGETC", P_fgetc},
-	{"0FPUTC", P_fputc},
-	{"0FTELL", P_ftell},
-	{"0FSEEK", P_fseek},
-	{"0FLOAD", P_fload},
+	{"0>OUTPUT", P_tooutput},
+	{"0>INPUT", P_toinput},
+	{"0OUTPUT>", P_outputto},
+	{"0INPUT>", P_inputto},
+	{"0OPEN", P_open},
+	{"0O_APPEND", P_o_append},
+	{"0O_ASYNC", P_o_async},
+	{"0O_CREAT", P_o_creat},
+	{"0O_EXCL", P_o_excl},
+	{"0O_RDONLY", P_o_rdonly},
+	{"0O_RDWR", P_o_rdwr},
+	{"0O_SYNC", P_o_sync},
+	{"0O_TRUNC", P_o_trunc},
+	{"0O_WRONLY", P_o_wronly},
+	{"0CLOSE", P_close},
+	{"0UNLINK", P_unlink},
+	{"0GETS", P_gets},
+	{"0READ", P_read},
+	{"0WRITE", P_write},
+	{"0GETC", P_getc},
+	{"0PUTC", P_putc},
 #endif				/* FILEIO */
 
 #ifdef EVALUATE
@@ -3994,43 +3990,34 @@ void pez_init() {
 		{
 			static struct {
 				char *sfn;
-				FILE *sfd;
+				stackitem fd;
 			} stdfiles[] = {
-				{
-				"STDIN", NULL}, {
-				"STDOUT", NULL}, {
-				"STDERR", NULL}
+				{"STDIN", 0},
+				{"STDOUT", 1},
+				{"STDERR", 2},
 			};
 			int i;
 			dictword *dw;
 
-			/* On some systems stdin, stdout, and stderr aren't
-			   constants which can appear in an initialisation.
-			   So, we initialise them at runtime here. */
-
-			stdfiles[0].sfd = stdin;
-			stdfiles[1].sfd = stdout;
-			stdfiles[2].sfd = stderr;
-
 			for(i = 0; i < ELEMENTS(stdfiles); i++) {
-				if((dw = pez_vardef(stdfiles[i].sfn,
-							2 * sizeof(stackitem))) !=
-				   NULL) {
+				if((dw =
+				    pez_vardef(stdfiles[i].sfn,
+					       sizeof(stackitem))) != NULL) {
 					stackitem *si = pez_body(dw);
-					*si++ = FileSent;
-					*si = (stackitem)stdfiles[i].sfd;
+					*si = stdfiles[i].fd;
 				}
 			}
+			output_stream = 1;
+			input_stream = 0;
+			
 		}
 #endif				/* FILEIO */
 		dictprot = dict;	/* Protect all standard words */
 	}
 }
 
-/*  PEZ_LOOKUP	--  Look up a word in the dictionary.  Returns its
-					word item if found or NULL if the word isn't
-			in the dictionary. */
-
+/* Look up a word in the dictionary.  Returns its word item if found or NULL if
+   the word isn't in the dictionary. */
 dictword *pez_lookup(name)
 char *name;
 {
@@ -4080,14 +4067,12 @@ dictword *dw;
 	return restat;
 }
 
-/*  PEZ_VARDEF  --  Define a variable word.  Called with the word's
-			name and the number of bytes of storage to allocate
-			for its body.  All words defined with pez_vardef()
-			have the standard variable action of pushing their
-			body address on the stack when invoked.  Returns
-			the dictionary item for the new word, or NULL if
-			the heap overflows. */
-
+/* Define a variable word.  Called with the word's name and the number of bytes
+ * of storage to allocate for its body.  All words defined with pez_vardef()
+ * have the standard variable action of pushing their body address on the stack
+ * when invoked.  Returns the dictionary item for the new word, or NULL if the
+ * heap overflows. 
+ */
 dictword *pez_vardef(char *name, int size) {
 	dictword *di;
 	char buf[TOK_BUF_SZ];
