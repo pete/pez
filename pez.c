@@ -4255,13 +4255,12 @@ char *sp;
 	The string, you fling upon the heap.
 */
 
-int pez_heap_string(char* str) {
+void pez_heap_string(char* str) {
 	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
 	Ho(l);
 	*((char *)hptr) = l;	 // Store in-line skip length
 	strcpy(((char *)hptr) + 1, str);
 	hptr += l;
-	return PEZ_SNORM;
 }
 
 /*
