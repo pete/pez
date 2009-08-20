@@ -1239,6 +1239,10 @@ prim P_string()
 	Pop;
 }
 
+/*
+   ( dst src -- )
+   Copies a string from src to dest.
+*/
 prim P_strcpy()
 {				/* Copy string to address on stack */
 	Sl(2);
