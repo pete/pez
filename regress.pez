@@ -31,7 +31,7 @@ variable errors
 
 : debris
     depth if
-        checking type ." ": "
+        checking print ." ": "
         ." "Debris left on " .s cr
         oops!
        clear
@@ -49,12 +49,12 @@ variable nsi
         i pick i nsi @ + 1+ pick
         2dup <> if
             swap
-            ." "Error in " checking type
+            ." "Error in " checking print
                 nsi @ 1 <> if
-                    i " item %ld" estring strform estring type
+                    i " item %ld" estring strform estring print
                 then
-                ." ": expected " "%ld" estring strform estring type
-                ." ", received " "%ld.\n" estring strform estring type
+                ." ": expected " "%ld" estring strform estring print
+                ." ", received " "%ld.\n" estring strform estring print
             oops!
         else
             2drop
@@ -76,9 +76,9 @@ variable nsi
 
 : fok?                                ( frcv fexp --  )
     fover fover f- fabs 1.0e-10 f> if
-        ." "Error in " checking type
-            ." ": expected " "%g" estring fstrform estring type
-            ." ", received " "%g.\n" estring fstrform estring type
+        ." "Error in " checking print
+            ." ": expected " "%g" estring fstrform estring print
+            ." ", received " "%g.\n" estring fstrform estring print
         oops!
     else
         fdrop fdrop
@@ -93,9 +93,9 @@ variable nsi
 
 : sok?                                ( srcv sexp --  )
     2dup strcmp 0<> if
-        ." "Error in " checking type
-            ." ":\n    Expected " type cr
-            ." "    Received " type cr
+        ." "Error in " checking print
+            ." ":\n    Expected " puts
+            ." "    Received " puts
         oops!
     else
         2drop
@@ -338,18 +338,18 @@ variable hp
 
     "C=" tests:
         c= here cellsize - hp @ ok?
-        10 c, c= here cellsize 2 * - hp @ ok?
-        7 c, 8 c, -1 c, here cellsize 2 * 3 + - 
-		c= here cellsize 3 * - hp @ dup   2 nok?
+        10 c, c= here 2 cells - hp @ ok?
+        7 c, 8 c, -1 c, here 2 cells 3 + - 
+		c= here 3 cells - hp @ dup   2 nok?
 
     "C@" tests:
         hp @ c@ hp @ 1+ c@ 253 187   2 nok?
-        hp @ cellsize + c@ hp @ cellsize 2* + dup c@ over 1+ c@ rot 2+ c@
+        hp @ cellsize + c@ hp @ 2 cells + dup c@ over 1+ c@ rot 2+ c@
             10 7 8 255   4 nok?
 
     "C!" tests:
         hp @ dup 111 over c! c@ swap 1+ c@ 111 187   2 nok?
-        -2 hp @ cellsize 2* 1+ + c! hp @ cellsize 2* + dup c@ over 1+ c@ 
+        -2 hp @ cellsize 2* 1+ + c! hp @ 2 cells + dup c@ over 1+ c@ 
 		rot 2+ c@ 
 		7 254 255   3 nok?
 ;
@@ -372,7 +372,7 @@ constant here3
 
     "2VARIABLE" tests:
         weather body> here3 ok?
-        here4 weather - cellsize 2 * ok?
+        here4 weather - 2 cells ok?
 
     "@" tests:
         sword @ 0 ok?                 # Tests initialisation to zero
@@ -1125,7 +1125,7 @@ errcount
         ." "Console I/O tests:\n"
         ." "The following two lines should be identical..." cr
         ." ":: 1234 :: -1234.5\n"
-        ":: " type 1234 . ":: " type -1234.5 f. cr 0 0 ok?
+        ":: " print 1234 . ":: " print -1234.5 f. cr 0 0 ok?
         ." "Please type in the next line exactly as it appears:\n"
         ." "Test 1234\n"
         inline

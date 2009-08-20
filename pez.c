@@ -1088,16 +1088,44 @@ prim P_constant()
 	Pop;
 }
 
+/*
+   ( -- cellsize )
+   Pushes the size of a cell in bytes.
+*/
 prim P_cellsize()
 {
 	So(1);
 	Push = sizeof(long);
 }
 
+/* 
+   ( -- floatsize )
+   Pushes the size of a float in bytes.
+*/
 prim P_floatsize()
 {
 	So(1);
 	Push = sizeof(double);
+}
+
+/*
+   ( n -- n*cellsize )
+   Returns the number of bytes occupied by n cells.
+*/
+prim P_cells()
+{
+	Sl(1);
+	S0 *= sizeof(stackitem);
+}
+
+/*
+   ( n -- n*floatsize )
+   Returns the number of bytes occupied by n floating point numbers.
+*/
+prim P_floats()
+{
+	Sl(1);
+	S0 *= sizeof(float);
 }
 
 /*  Array primitives  */
@@ -3492,9 +3520,10 @@ static struct primfcn primt[] = {
 	{"0C,", P_ccomma},
 	{"0C=", P_cequal},
 	{"0HERE", P_here},
-
 	{"0CELLSIZE", P_cellsize},
 	{"0FLOATSIZE", P_floatsize},
+	{"0CELLS", P_cells},
+	{"0FLOATS", P_floats},
 
 #ifdef ARRAY
 	{"0ARRAY", P_array},
