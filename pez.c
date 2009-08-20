@@ -3677,7 +3677,7 @@ static struct primfcn primt[] = {
 	{"0.S", P_dots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
-	{"0TYPE", P_print},
+	{"0PRINT", P_print},
 	{"0PUTS", P_puts},
 	{"0GETS", P_gets},
 	{"0READ", P_read},
