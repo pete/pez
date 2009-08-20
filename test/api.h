@@ -72,7 +72,7 @@ static char* test_exec() {
 	return 0;
 }
 
-char* test_api() {
+char* api_suite() {
 	pez_init();	
 	mu_run_test(test_eval);
 	mu_run_test(test_mark);

@@ -6,8 +6,8 @@ int tests_run = 0;
 
 
 int main(int argc, char **argv) {
-	mu_run_suite(test_api);
-	mu_run_suite(test_eval_functions);
+	mu_run_suite(api_suite);
+	mu_run_suite(eval_functions_suite);
 
 	printf("ALL TESTS PASSED. %d tests run.\n", tests_run);
 

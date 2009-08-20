@@ -23,7 +23,7 @@ static char* test_stack_real() {
 	return 0;
 }
 
-char* test_eval_functions() {
+char* eval_functions_suite() {
 	pez_init();
 	mu_run_test(test_stack_int);
 	mu_run_test(test_stack_real);

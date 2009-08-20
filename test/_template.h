@@ -14,7 +14,7 @@ static char* test_something() {
 	return 0;
 }
 
-char* test_suite_name() {
+char* some_suite() {
 	pez_init(); // Usually necessary.
 	
 	mu_run_test(test_something);
