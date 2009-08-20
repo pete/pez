@@ -1826,7 +1826,24 @@ prim P_unlink()
 */
 prim P_gets()
 {
-	fputs("Oh, poops.", stderr);
+	stackitem max;
+	char *buf;
+
+	Sl(2);
+	buf = (char *)S1;
+
+	// TODO:  This is horribly inefficient, but will have to stay until we
+	// do internal buffering.
+	for(max = S0; max; max--) {
+		read(input_stream, buf++, 1);
+		if(buf[-1] == '\n') {
+			if(max - 1)
+				*buf = '\0';
+			break;
+		}
+	}
+	S1 = buf - (char *)S1;
+	Pop;
 }
 
 /*
@@ -1905,8 +1922,8 @@ prim P_tell()
 }
 
 /*
-	TODO:  tell, seek, output>, input>, connect, send, recv, accept,
-	puts, gets, socket, umask, dup, dup2, pipe
+	TODO:  connect, send, recv, accept, puts, gets, socket, umask, dup,
+	dup2, pipe, select
 	probably others.
 */
 
