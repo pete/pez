@@ -780,6 +780,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez
 
+regress: pez$(EXEEXT)
+	./pez regress.pez
+
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
