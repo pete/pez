@@ -2,7 +2,7 @@
 #include "minunit.h"
 
 int main(int argc, char **argv) {
-	mu_run_suite(test_stuff);
+	mu_run_suite(test_api);
 	// mu_run_suite(test_something);
 	// mu_run_suite(test_or_other);
 
