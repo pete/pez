@@ -204,10 +204,8 @@ static Boolean stringlit = False;	/* String literal anticipated */
 #ifdef BREAK
 static Boolean broken = False;	/* Asynchronous break received */
 #endif
-#ifdef FILEIO
 static stackitem output_stream;
 static stackitem input_stream;
-#endif				/* FILEIO */
 
 
 #ifdef COPYRIGHT
@@ -1700,6 +1698,7 @@ prim P_puts()
 {
 	int len;
 	Sl(1);
+	Hpc(S0);
 	len = strlen((char *)S0);
 	write(output_stream, (char *)S0, len);
 	if(*(char *)(S0 + len - 1) != '\n')
@@ -1716,6 +1715,8 @@ prim P_gets()
 	char *buf;
 
 	Sl(2);
+	Hpc(S1);
+
 	buf = (char *)S1;
 
 	// TODO:  This is horribly inefficient, but will have to stay until we
@@ -1730,6 +1731,59 @@ prim P_gets()
 	}
 	S1 = buf - (char *)S1;
 	Pop;
+}
+
+/*
+   ( strbuf maxlen -- bytes-read )
+   Reads from an input stream up to maxlen bytes, puts them in strbuf, and
+   returns the the actual number of bytes read.
+*/
+prim P_read()
+{
+	int len;
+	Sl(2);
+	Hpc(S1);
+	len = S0;
+	S1 = read(input_stream, (char *)S1, len);
+	Pop;
+}
+
+/*
+   ( string len -- bytes-written )
+   Writes len bytes from string, returning the actual number of bytes written.
+*/
+prim P_write()
+{
+	int len;
+	Sl(2);
+	Hpc(S1);
+	len = S0;
+	S1 = write(output_stream, (char *)S1, len);
+	Pop;
+}
+
+/*
+   ( -- char )
+*/
+prim P_getc()
+{
+	char c;
+
+	So(1);
+	read(input_stream, &c, 1);
+	Push = (stackitem)c;
+}
+
+/*
+   ( char -- )
+*/
+prim P_putc()
+{
+	char c;
+	Sl(1);
+	c = (char)S0;
+	Pop;
+	write(output_stream, &c, 1);
 }
 
 prim P_words()
@@ -1848,57 +1902,6 @@ prim P_unlink()
 	int status;
 	Sl(1);
 	S0 = unlink((char *)S0);
-}
-
-/*
-   ( strbuf maxlen -- bytes-read )
-   Reads from an input stream up to maxlen bytes, puts them in strbuf, and
-   returns the the actual number of bytes read.
-*/
-prim P_read()
-{
-	int len;
-	Sl(2);
-	len = S0;
-	Pop;
-	S0 = read(input_stream, (char *)S0, len);
-}
-
-/*
-   ( string len -- bytes-written )
-   Writes len bytes from string, returning the actual number of bytes written.
-*/
-prim P_write()
-{
-	int len;
-	Sl(2);
-	len = S0;
-	Pop;
-	S0 = write(output_stream, (char *)S0, len);
-}
-
-/*
-   ( -- char )
-*/
-prim P_getc()
-{
-	char c;
-
-	So(1);
-	read(input_stream, &c, 1);
-	Push = (stackitem)c;
-}
-
-/*
-   ( char -- )
-*/
-prim P_putc()
-{
-	char c;
-	Sl(1);
-	c = (char)S0;
-	Pop;
-	write(output_stream, &c, 1);
 }
 
 /*
@@ -3672,6 +3675,11 @@ static struct primfcn primt[] = {
 	{"1.(", P_dotparen},
 	{"0TYPE", P_type},
 	{"0PUTS", P_puts},
+	{"0GETS", P_gets},
+	{"0READ", P_read},
+	{"0WRITE", P_write},
+	{"0GETC", P_getc},
+	{"0PUTC", P_putc},
 	{"0WORDS", P_words},
 #endif				/* CONIO */
 
@@ -3692,11 +3700,6 @@ static struct primfcn primt[] = {
 	{"0O_WRONLY", P_o_wronly},
 	{"0CLOSE", P_close},
 	{"0UNLINK", P_unlink},
-	{"0GETS", P_gets},
-	{"0READ", P_read},
-	{"0WRITE", P_write},
-	{"0GETC", P_getc},
-	{"0PUTC", P_putc},
 	{"0SEEK", P_seek},
 	{"0SEEK_CUR", P_seek_cur},
 	{"0SEEK_END", P_seek_end},
