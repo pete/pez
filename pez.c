@@ -282,7 +282,7 @@ static void ucase(char *c) {
 }
 
 /*
-	Given the input stream and an opening delimiter, try to assemble a string
+	Given the input stream, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
 */
 Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
