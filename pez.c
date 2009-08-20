@@ -1681,8 +1681,12 @@ prim P_dotparen()
 	}
 }
 
-prim P_type()
-{				/* Print string pointed to by stack */
+/*
+   ( string -- )
+   Prints the string at the top of the stack.
+*/
+prim P_print()
+{
 	Sl(1);
 	Hpc(S0);
 	printf("%s", (char *)S0);
@@ -3673,7 +3677,7 @@ static struct primfcn primt[] = {
 	{"0.S", P_dots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
-	{"0TYPE", P_type},
+	{"0TYPE", P_print},
 	{"0PUTS", P_puts},
 	{"0GETS", P_gets},
 	{"0READ", P_read},
