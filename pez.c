@@ -1692,14 +1692,43 @@ prim P_type()
 }
 
 /*
-   Print the string at the top of the stack, followed by \n.
+   Print the string at the top of the stack, followed by \n, unless the string
+   already contains it.
    ( string -- )
 */
 prim P_puts()
 {
+	int len;
 	Sl(1);
-	// Hpc(S0);
-	puts((char *)S0);
+	len = strlen((char *)S0);
+	write(output_stream, (char *)S0, len);
+	if(*(char *)(S0 + len - 1) != '\n')
+		P_cr();
+	Pop;
+}
+
+/*
+   ( strbuf maxlen -- len )
+*/
+prim P_gets()
+{
+	stackitem max;
+	char *buf;
+
+	Sl(2);
+	buf = (char *)S1;
+
+	// TODO:  This is horribly inefficient, but will have to stay until we
+	// do internal buffering.
+	for(max = S0; max; max--) {
+		read(input_stream, buf++, 1);
+		if(buf[-1] == '\n') {
+			if(max - 1)
+				*buf = '\0';
+			break;
+		}
+	}
+	S1 = buf - (char *)S1;
 	Pop;
 }
 
@@ -1822,31 +1851,6 @@ prim P_unlink()
 }
 
 /*
-   ( strbuf maxlen -- len )
-*/
-prim P_gets()
-{
-	stackitem max;
-	char *buf;
-
-	Sl(2);
-	buf = (char *)S1;
-
-	// TODO:  This is horribly inefficient, but will have to stay until we
-	// do internal buffering.
-	for(max = S0; max; max--) {
-		read(input_stream, buf++, 1);
-		if(buf[-1] == '\n') {
-			if(max - 1)
-				*buf = '\0';
-			break;
-		}
-	}
-	S1 = buf - (char *)S1;
-	Pop;
-}
-
-/*
    ( strbuf maxlen -- bytes-read )
    Reads from an input stream up to maxlen bytes, puts them in strbuf, and
    returns the the actual number of bytes read.
@@ -1922,8 +1926,8 @@ prim P_tell()
 }
 
 /*
-	TODO:  connect, send, recv, accept, puts, gets, socket, umask, dup,
-	dup2, pipe, select
+	TODO:  connect, send, recv, accept, socket, umask, dup, dup2, pipe,
+	select
 	probably others.
 */
 
