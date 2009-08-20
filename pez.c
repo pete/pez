@@ -1687,9 +1687,13 @@ prim P_dotparen()
 */
 prim P_print()
 {
+	int len;
+
 	Sl(1);
 	Hpc(S0);
-	printf("%s", (char *)S0);
+
+	len = strlen((char *)S0);
+	write(output_stream, (char *)S0, len);
 	Pop;
 }
 
@@ -1701,8 +1705,10 @@ prim P_print()
 prim P_puts()
 {
 	int len;
+
 	Sl(1);
 	Hpc(S0);
+
 	len = strlen((char *)S0);
 	write(output_stream, (char *)S0, len);
 	if(*(char *)(S0 + len - 1) != '\n')
