@@ -1,3 +1,5 @@
+#! /usr/bin/env pez
+
 2variable x
 2variable y
 
@@ -38,6 +40,3 @@
 
 : cbenchmark 1600000 0 do 2.0 csqrt 2drop loop ." "Done\n" ;
 : sbenchmark 16000000 0 do 2.0 sqrt 2drop loop ." "Done\n" ;
-
-.( "Type \"cbenchmark\" to run the CSQRT benchmark (1600000 iterations).\n"
-.( "Type \"sbenchmark\" to run the SQRT benchmark (16000000 iterations).\n"
