@@ -1686,6 +1686,8 @@ prim P_dots()
 			printf(base == 16 ? "%lx " : "%ld ", *tsp);
 		}
 	}
+	puts("");
+	fflush(stdout);
 }
 
 /*
@@ -1927,13 +1929,12 @@ PUSH_CONSTANT(P_o_trunc, O_TRUNC)
 PUSH_CONSTANT(P_o_wronly, O_WRONLY)
 
 /*
-   ( fd -- )
+   ( fd -- status )
 */
 prim P_close()
 {
 	Sl(1);
-	close(S0);
-	Pop;
+	S0 = close(S0);
 }
 
 /*
@@ -1947,12 +1948,14 @@ prim P_unlink()
 }
 
 /*
-   ( offset whence -- new-offset )
+   ( fd offset whence -- new-offset )
    Seeks to a given position in a file.
 */
 prim P_seek()
 {
-	fprintf(stderr, "OH NOES\n");
+	Sl(3);
+	S2 = lseek(S2, S1, S0);
+	Pop2;
 }
 PUSH_CONSTANT(P_seek_cur, SEEK_CUR)
 PUSH_CONSTANT(P_seek_end, SEEK_END)
