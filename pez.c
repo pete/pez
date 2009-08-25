@@ -1668,10 +1668,13 @@ prim P_question()
 	Pop;
 }
 
+/*
+   ( -- )
+   Prints a newline to the output stream.
+*/
 prim P_cr()
-{				/* Carriage return */
-	printf("\n");
-	fflush(stdout);
+{
+	write(output_stream, "\n", 1);
 }
 
 prim P_dots()
@@ -1971,6 +1974,25 @@ prim P_tell()
 {
 	Sl(1);
 	S0 = (stackitem)lseek(S0, 0, SEEK_CUR);
+}
+
+/*
+   ( fd -- evalstat )
+   Reads a file descriptor, loads the code.
+*/
+prim P_load()
+{
+	FILE *f;
+	stackitem evalstat;
+
+	Sl(1);
+	f = fopen((char *)S0, "r");
+	if(f) {
+		S0 = pez_load(f);
+	} else {
+		perror("P_load");
+		S0 = PEZ_BADFILE;
+	}
 }
 
 /*
@@ -3751,6 +3773,7 @@ static struct primfcn primt[] = {
 	{"0SEEK_END", P_seek_end},
 	{"0SEEK_SET", P_seek_set},
 	{"0TELL", P_tell},
+	{"0LOAD", P_load},
 #endif				/* FILEIO */
 
 #ifdef EVALUATE
@@ -4281,7 +4304,7 @@ int pez_load(FILE * fp) {
 	   error status and unwind the file.  */
 	if((es == PEZ_SNORM) && (pez_comment == Truth)) {
 #ifdef MEMMESSAGE
-		printf("\nRunaway `(' comment.\n");
+		fprintf(stderr, "\nRunaway `(' comment.\n");
 #endif
 		es = PEZ_RUNCOMM;
 		pez_unwind(&mk);
@@ -4303,12 +4326,11 @@ char *sp;
 		char *pname;
 		pez_int *pparam;
 	} proname[] = {
-		{
-		"STACK ", &pez_stklen}, {
-		"RSTACK ", &pez_rstklen}, {
-		"HEAP ", &pez_heaplen}, {
-		"TEMPSTRL ", &pez_ltempstr}, {
-		"TEMPSTRN ", &pez_ntempstr}
+		{"STACK ", &pez_stklen},
+		{"RSTACK ", &pez_rstklen},
+		{"HEAP ", &pez_heaplen},
+		{"TEMPSTRL ", &pez_ltempstr},
+		{"TEMPSTRN ", &pez_ntempstr},
 	};
 
 	if(strncmp(sp, "# *", 3) == 0) {

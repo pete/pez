@@ -1045,38 +1045,36 @@ testlctl
 
 #   Loading programs from a file
 
-(
 : testload
-    "FLOAD" tests:
-        "regtemp.tmp" tstr s!
-        tstr 10 fio fopen -1 ok?
-        "XX : 8times 8 * ;" fio fputs -1 ok?
-        ": 11plus 11 + ;" fio fputs -1 ok?
-        fio fclose
-        tstr 5 fio fopen -1 ok?
-        3 0 fio fseek fio fload 0 ok?
-        fio fclose
-        "regtemp.tmp" fdelete -1 ok?
-;
-)
+	"FLOAD" tests:
+		"regtemp.pez" fname s!
+		fname o_wronly o_creat or o_trunc or 0644 open fd1 !
+		fd1 @ 0 > -1 ok?
+		fd1 @ >output 
+		": 8times 8 * ;" puts
+		": 11plus 11 + ;" puts
+		fd1 @ close 0 ok?
 
-# testload
-# 3 8times 11plus 11plus 46 ok?
+		fname load 0 ok?
+;
+
+testload
+3 8times 11plus 11plus 46 ok?
 
 #   Print error summary
 
 : errcount
 	errors @ if
+		2 >output
 		errors @ 1 = if
-			2 >output
 			"1 error.\n" puts cr
-			1 >output
 		else
 			errors ? ." "errors." cr
 		then
 	else
-        "No errors.\n" puts
-    then
+		1 >output
+		"No errors." puts
+	then
 ;
 errcount
 
