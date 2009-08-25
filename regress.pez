@@ -1046,7 +1046,7 @@ testlctl
 #   Loading programs from a file
 
 : testload
-	"FLOAD" tests:
+	"LOAD" tests:
 		"regtemp.pez" fname s!
 		fname o_wronly o_creat or o_trunc or 0644 open fd1 !
 		fd1 @ 0 > -1 ok?
@@ -1056,7 +1056,7 @@ testlctl
 		fd1 @ close 0 ok?
 
 		fname load 0 ok?
-;
+		fname unlink drop ;
 
 testload
 3 8times 11plus 11plus 46 ok?
