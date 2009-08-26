@@ -815,7 +815,7 @@ variable fd1
 		fname o_rdwr o_creat or o_trunc or 0666 open fd1 !
 		fd1 @ 0 > -1 ok?
 		fd1 @ >output
-		output> fd1 @ ok?
+		output> dup >output fd1 @ ok?
 	
 	"WRITE" tests:
 		"Who told you that?\n" dup strlen dup rot rot write ok?

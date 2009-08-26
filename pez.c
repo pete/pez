@@ -204,9 +204,15 @@ static Boolean stringlit = False;	/* String literal anticipated */
 #ifdef BREAK
 static Boolean broken = False;	/* Asynchronous break received */
 #endif
-static stackitem output_stream;
-static stackitem input_stream;
 
+// Circular buffer.
+#define MAX_IO_STREAMS 10
+static stackitem output_stk[MAX_IO_STREAMS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+static stackitem input_stk[MAX_IO_STREAMS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static int output_idx = 0;
+static int input_idx = 0;
+#define output_stream output_stk[output_idx]
+#define input_stream input_stk[input_idx]
 
 #ifdef COPYRIGHT
 #ifndef HIGHC
@@ -244,7 +250,6 @@ unsigned int size;
 {
 	char *cp = malloc(size);
 
-	/* printf("\nAlloc %u", size); */
 	if(cp == NULL) {
 		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n",
 			size);
@@ -1515,6 +1520,7 @@ prim P_fdot()
 	memcpy(&f, stk - 1, sizeof(double));
 	Sl(Realsize);
 	printf("%f ", REAL0);
+	fflush(stdout);
 	Realpop;
 }
 
@@ -1654,9 +1660,10 @@ prim P_argv()
 }
 
 prim P_dot()
-{				/* Print top of stack, pop it */
+{
 	Sl(1);
 	printf(base == 16 ? "%lx " : "%ld ", S0);
+	fflush(stdout);
 	Pop;
 }
 
@@ -1665,6 +1672,7 @@ prim P_question()
 	Sl(1);
 	Hpc(S0);
 	printf(base == 16 ? "%lx " : "%ld ", *((stackitem *)S0));
+	fflush(stdout);
 	Pop;
 }
 
@@ -1677,8 +1685,25 @@ prim P_cr()
 	write(output_stream, "\n", 1);
 }
 
+/*
+   ( char -- )
+   Prints the character at the top of the stack.
+*/
+prim P_emit()
+{
+	char c;
+	Sl(1);
+	c = (char)S0;
+	write(output_stream, &c, 1);
+	Pop;
+}
+
+/*
+   ( ... -- ... )
+   Print the entire stack, as cell-sized integers.
+*/
 prim P_dots()
-{				/* Print entire contents of stack */
+{
 	stackitem *tsp;
 
 	printf("Stack: ");
@@ -1689,8 +1714,8 @@ prim P_dots()
 			printf(base == 16 ? "%lx " : "%ld ", *tsp);
 		}
 	}
-	puts("");
 	fflush(stdout);
+	P_cr();
 }
 
 /*
@@ -1710,7 +1735,7 @@ prim P_dotquote()
 prim P_dotparen()
 {
 	if(ip) {
-		printf("%s", ((char *)ip) + 1);
+		write(output_stream, (char *)ip + 1, strlen((char *)ip + 1));
 		Skipstring;	// So we don't execute the string.
 	} else {
 		// We have to sort of wing it if the string isn't yet available.
@@ -1868,6 +1893,7 @@ prim P_words()
 prim P_tooutput()
 {
 	Sl(1);
+	output_idx = (output_idx + 1) % MAX_IO_STREAMS;
 	output_stream = S0;
 	Pop;
 }
@@ -1879,6 +1905,7 @@ prim P_tooutput()
 prim P_toinput()
 {
 	Sl(1);
+	input_idx = (input_idx + 1) % MAX_IO_STREAMS;
 	input_stream = S0;
 	Pop;
 }
@@ -1891,6 +1918,7 @@ prim P_outputto()
 {
 	So(1);
 	Push = output_stream;
+	output_idx = (output_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
 }
 
 /*
@@ -1901,6 +1929,7 @@ prim P_inputto()
 {
 	So(1);
 	Push = input_stream;
+	input_idx = (input_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
 }
 
 /*
@@ -3738,6 +3767,7 @@ static struct primfcn primt[] = {
 	{"0.", P_dot},
 	{"0?", P_question},
 	{"0CR", P_cr},
+	{"0EMIT", P_emit},
 	{"0.S", P_dots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
