@@ -1686,19 +1686,6 @@ prim P_cr()
 }
 
 /*
-   ( char -- )
-   Prints the character at the top of the stack.
-*/
-prim P_emit()
-{
-	char c;
-	Sl(1);
-	c = (char)S0;
-	write(output_stream, &c, 1);
-	Pop;
-}
-
-/*
    ( ... -- ... )
    Print the entire stack, as cell-sized integers.
 */
@@ -1854,8 +1841,8 @@ prim P_putc()
 	char c;
 	Sl(1);
 	c = (char)S0;
-	Pop;
 	write(output_stream, &c, 1);
+	Pop;
 }
 
 prim P_words()
@@ -3763,7 +3750,6 @@ static struct primfcn primt[] = {
 	{"0.", P_dot},
 	{"0?", P_question},
 	{"0CR", P_cr},
-	{"0EMIT", P_emit},
 	{"0.S", P_dots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
