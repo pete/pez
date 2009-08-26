@@ -308,6 +308,8 @@ Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
 				break;
 			case 't': c = '\t';
 				break;
+			case 'v': c = '\v';
+				break;
 			default:
 				break;
 			}
