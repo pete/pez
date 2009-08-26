@@ -323,7 +323,7 @@ Boolean assemble_quoted_string(char **strbuf, char token_buffer[]) {
 	*strbuf = sp;
 	if(!valid_string) {
 #ifdef MEMMESSAGE
-		printf("\nRunaway string: %s\n", token_buffer);
+		fprintf(stderr, "\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
@@ -376,7 +376,7 @@ Boolean assemble_delimited_string(char **strbuf, char token_buffer[]) {
 	*strbuf = sp;
 	if(!valid_string) {
 #ifdef MEMMESSAGE
-		printf("\nRunaway string: %s\n", token_buffer);
+		fprintf(stderr, "\nRunaway string: %s\n", token_buffer);
 #endif
 		evalstat = PEZ_RUNSTRING;
 	}
@@ -627,7 +627,7 @@ void pez_memstat()
 
 static void enter(char *tkname) {
 	if(pez_redef && (lookup(tkname) != NULL))
-		printf("\n%s isn't unique.\n", tkname);
+		fprintf(stderr, "\n%s isn't unique.\n", tkname);
 	/* Allocate name buffer */
 	createword->wname = alloc(((unsigned int)strlen(tkname) + 2));
 	createword->wname[0] = 0;	/* Clear flags */
@@ -800,7 +800,6 @@ prim P_leq()
 prim P_and()
 {				/* Logical and */
 	Sl(2);
-/* printf("AND %lx & %lx = %lx\n", S1, S0, (S1 & S0)); */
 	S1 &= S0;
 	Pop;
 }
@@ -1694,12 +1693,14 @@ prim P_dots()
 	stackitem *tsp;
 
 	printf("Stack: ");
-	if(stk == stackbot)
-		printf("Empty. ");
-	else {
-		for(tsp = stack; tsp < stk; tsp++) {
-			printf(base == 16 ? "%lx " : "%ld ", *tsp);
-		}
+
+	if(stk == stackbot) {
+		puts("Empty.");
+		return;
+	}
+
+	for(tsp = stack; tsp < stk; tsp++) {
+		printf(base == 16 ? "%lx " : "%ld ", *tsp);
 	}
 	fflush(stdout);
 	P_cr();
@@ -2886,12 +2887,15 @@ prim P_tick()
 
 			if((di = lookup(token_buffer)) != NULL) {
 				So(1);
-				Push = (stackitem)di;	/* Push word compile address */
+				// Word compile address:
+				Push = (stackitem)di;
 			} else {
-				printf(" '%s' undefined ", token_buffer);
+				fprintf(stderr, " '%s' undefined ", 
+					token_buffer);
 			}
 		} else {
-			printf("\nWord not specified when expected.\n");
+			fprintf(stderr, 
+				"\nWord not specified when expected.\n");
 			P_abort();
 		}
 	} else {
@@ -2902,8 +2906,8 @@ prim P_tick()
 		if(ip == NULL) {
 			tickpend = True;	/* Set tick pending */
 		} else {
-			printf
-				("\nWord requested by ` not on same input line.\n");
+			fprintf(stderr, "\nWord requested by ` not "
+					"on same input line.\n");
 			P_abort();
 		}
 	}
@@ -2982,7 +2986,7 @@ prim P_toname()
 prim P_tolink()
 {
 	if(DfOff(wnext) != 0)
-		printf("\n>LINK Foulup--wnext is not at zero!\n");
+		fprintf(stderr, "\n>LINK Foulup--wnext is not at zero!\n");
 	// Null operation.  Wnext is first.
 	// Sl(1);
 	// SO += DfOff(wnext)
@@ -3003,7 +3007,7 @@ prim P_fromname()
 prim P_fromlink()
 {				/* Get compile address from link */
 	if(DfOff(wnext) != 0)
-		printf("\nLINK> Foulup--wnext is not at zero!\n");
+		fprintf(stderr, "\nLINK> Foulup--wnext is not at zero!\n");
 /*  Sl(1);
 					S0 -= DfOff(wnext);  *//* Null operation.  Wnext is first */
 }
@@ -3367,6 +3371,7 @@ prim P_wordsused()
 		dw = dw->wnext;
 	}
 	printf("\n");
+	fflush(stdout);
 }
 
 prim P_wordsunused()
@@ -3385,6 +3390,7 @@ prim P_wordsunused()
 		dw = dw->wnext;
 	}
 	printf("\n");
+	fflush(stdout);
 }
 #endif				/* WORDSUSED */
 
@@ -3870,6 +3876,7 @@ static void pwalkback()
 		while(wbptr > wback) {
 			dictword *wb = *(--wbptr);
 			printf("   %s\n", wb->wname + 1);
+			fflush(stdout);
 		}
 	}
 }
@@ -3881,7 +3888,7 @@ static void trouble(kind)
 char *kind;
 {
 #ifdef MEMMESSAGE
-	printf("\n%s.\n", kind);
+	fprintf(stderr, "\n%s.\n", kind);
 #endif
 #ifdef WALKBACK
 	pwalkback();
@@ -4450,7 +4457,7 @@ void pez_stack_word(char token_buffer[]) {
 		Push = (stackitem)di;	/* Push word compile address */
 	} else {
 #ifdef MEMMESSAGE
-		printf(" '%s' undefined ", token_buffer);
+		fprintf(stderr, " '%s' undefined ", token_buffer);
 #endif
 		evalstat = PEZ_UNDEFINED;
 	}
@@ -4575,7 +4582,9 @@ int pez_eval(char *sp) {
 					}
 				} else {
 #ifdef MEMMESSAGE
-					printf(" '%s' undefined ", token_buffer);
+					fprintf(stderr, 
+						" '%s' undefined ", 
+						token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
 					state = Falsity;
@@ -4612,7 +4621,7 @@ int pez_eval(char *sp) {
 			break;
 			
 		default:
-			printf("\nUnknown token type %d\n", token);
+			fprintf(stderr, "\nUnknown token type %d\n", token);
 			break;
 		}
 	}
