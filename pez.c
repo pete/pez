@@ -1873,14 +1873,10 @@ prim P_words()
 		if(kbquit()) {
 			break;
 		}
-#else
-		/* If this system can't trap keystrokes, just stop the WORDS
-		   listing after 20 words. */
-		if(++key >= 20)
-			break;
 #endif
 	}
 	printf("\n");
+	fflush(stdout);
 }
 #endif				/* CONIO */
 
