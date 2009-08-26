@@ -27,7 +27,7 @@ variable filter
 # Prints without newlines.  puts, like in C, Ruby, etc., prints a string and a
 # newline; this version prints a string followed by a space, to mimic echo's
 # behavior when passed -n.
-: no-newline   type " " type ;
+: no-newline   print " " print ;
 
 # We want to build a table to map escaped characters to the code they represent,
 # so we use 'constant'.  'constant' operates like 'variable', but expects a

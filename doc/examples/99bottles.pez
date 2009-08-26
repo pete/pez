@@ -7,10 +7,10 @@
 
 : bottle(s) ( n -- ) 
 	dup pluralize-bottle swap ?dup 
-	0= if "No more " type else . then type ;
+	0= if "No more " print else . then print ;
 
-: of-beer ( -- ) " of beer" type ;
-: on-the-wall ( -- ) " on the wall" type ;
+: of-beer ( -- ) " of beer" print ;
+: on-the-wall ( -- ) " on the wall" print ;
 : take-one-down ( -- ) "Take one down," puts ;
 : pass-it-around ( -- ) "Pass it around," puts ;
 
