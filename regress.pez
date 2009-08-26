@@ -1,7 +1,7 @@
 #! /usr/bin/env pez
 # *heap 6100
 
-#  ATLAST  --  Comprehensive regression test
+#  Pez  --  Comprehensive regression test
 
 #  Check integer result
 
@@ -31,7 +31,7 @@ variable errors
 
 : debris
     depth if
-        checking type ." ": "
+        checking print ." ": "
         ." "Debris left on " .s cr
         oops!
        clear
@@ -49,12 +49,12 @@ variable nsi
         i pick i nsi @ + 1+ pick
         2dup <> if
             swap
-            ." "Error in " checking type
+            ." "Error in " checking print
                 nsi @ 1 <> if
-                    i " item %ld" estring strform estring type
+                    i " item %ld" estring strform estring print
                 then
-                ." ": expected " "%ld" estring strform estring type
-                ." ", received " "%ld.\n" estring strform estring type
+                ." ": expected " "%ld" estring strform estring print
+                ." ", received " "%ld.\n" estring strform estring print
             oops!
         else
             2drop
@@ -76,9 +76,9 @@ variable nsi
 
 : fok?                                ( frcv fexp --  )
     fover fover f- fabs 1.0e-10 f> if
-        ." "Error in " checking type
-            ." ": expected " "%g" estring fstrform estring type
-            ." ", received " "%g.\n" estring fstrform estring type
+        ." "Error in " checking print
+            ." ": expected " "%g" estring fstrform estring print
+            ." ", received " "%g.\n" estring fstrform estring print
         oops!
     else
         fdrop fdrop
@@ -93,9 +93,9 @@ variable nsi
 
 : sok?                                ( srcv sexp --  )
     2dup strcmp 0<> if
-        ." "Error in " checking type
-            ." ":\n    Expected " type cr
-            ." "    Received " type cr
+        ." "Error in " checking print
+            ." ":\n    Expected " puts
+            ." "    Received " puts
         oops!
     else
         2drop
@@ -338,18 +338,18 @@ variable hp
 
     "C=" tests:
         c= here cellsize - hp @ ok?
-        10 c, c= here cellsize 2 * - hp @ ok?
-        7 c, 8 c, -1 c, here cellsize 2 * 3 + - 
-		c= here cellsize 3 * - hp @ dup   2 nok?
+        10 c, c= here 2 cells - hp @ ok?
+        7 c, 8 c, -1 c, here 2 cells 3 + - 
+		c= here 3 cells - hp @ dup   2 nok?
 
     "C@" tests:
         hp @ c@ hp @ 1+ c@ 253 187   2 nok?
-        hp @ cellsize + c@ hp @ cellsize 2* + dup c@ over 1+ c@ rot 2+ c@
+        hp @ cellsize + c@ hp @ 2 cells + dup c@ over 1+ c@ rot 2+ c@
             10 7 8 255   4 nok?
 
     "C!" tests:
         hp @ dup 111 over c! c@ swap 1+ c@ 111 187   2 nok?
-        -2 hp @ cellsize 2* 1+ + c! hp @ cellsize 2* + dup c@ over 1+ c@ 
+        -2 hp @ cellsize 2* 1+ + c! hp @ 2 cells + dup c@ over 1+ c@ 
 		rot 2+ c@ 
 		7 254 255   3 nok?
 ;
@@ -372,7 +372,7 @@ constant here3
 
     "2VARIABLE" tests:
         weather body> here3 ok?
-        here4 weather - cellsize 2 * ok?
+        here4 weather - 2 cells ok?
 
     "@" tests:
         sword @ 0 ok?                 # Tests initialisation to zero
@@ -805,84 +805,54 @@ variable k
 
 #   File I/O
 
-file fio
-variable fp1
+20 string fname
+variable fd1
 
 : testfile
-    "regtest.tmp" tstr s!
+	"regtest.tmp" fname s!
 
-    "FOPEN" tests:
-        tstr 15 fio fopen -1 ok?
+	"OPEN" tests:
+		fname o_rdwr o_creat or o_trunc or 0666 open fd1 !
+		fd1 @ 0 > -1 ok?
+		fd1 @ >output
+		output> dup >output fd1 @ ok?
+	
+	"WRITE" tests:
+		"Who told you that?\n" dup strlen dup rot rot write ok?
+	
+	"SEEK" tests:
+		1 >output
+		fd1 @ tell >r # For the second "ok?" down there:
+		fd1 @ 0 seek_set seek 0 ok?
+		fd1 @ 0 seek_end seek r> ok?
+		fd1 @ tell fd1 @ 0 seek_cur seek ok?
+	
+	"READ" tests:
+		fd1 @ 0 seek_set seek drop
+		fd1 @ >input
+		0 tstr !
+		hex
+		tstr 1 cells read 1 cells ok?
+		tstr @ "Who told you that?\n" @ ok?
+	
+	"PUTC" tests:
+		fd1 @ >output
+		0x6b putc
+	"GETC" tests:
+		fd1 @ >input
+		fd1 @ -1 seek_cur seek drop getc 0x6b ok?
+	
+	"CLOSE" tests:
+		fd1 @ close 0 ok?
+		fd1 @ close -1 ok?
+	
+	"UNLINK" tests:
+		fname unlink 0 ok?
+		"There totally is not a file by this name." unlink -1 ok?
 
-    "FWRITE" tests:
-        "I work on Unix\n" dup strlen dup rot fio fwrite ok?
-        "I work on DOS and OS/2\r\n" dup strlen dup rot fio fwrite ok?
-        fio ftell hp !
-        " Never on Macintoshes\r" dup strlen dup rot fio fwrite ok?
-        "I work on VAXes too\n\r" dup strlen dup rot fio fwrite ok?
-
-    "FSEEK" tests:
-        fio ftell fp1 ! 0 0 fio fseek fio ftell 0 ok?
-        0 2 fio fseek fio ftell fp1 @ ok?
-        hp @ 0 fio fseek -4 1 fio fseek fio ftell hp @ 4 - ok?
-
-    "FWRITE" tests:
-        hp @ 0 fio fseek
-        "U work" dup strlen dup rot fio fwrite ok?
-
-    "FREAD" tests:
-        hp @ 0 fio fseek -6 1 fio fseek
-        0 tstr1 29 + c!
-        fio 29 tstr1 fread 29 ok?
-        tstr1 "OS/2\r\nU work on Macintoshes\rI" sok?
-
-    "FGETC" tests:
-        fio fgetc fio fgetc fio fgetc 0 2 fio fseek fio fgetc
-            0x20 0x77 0x6F -1   4 nok?
-
-    "FPUTC" tests:
-        hp @ 0 fio fseek 0x49 fio fputc 0x49 ok?
-
-    "FCLOSE" tests:
-        fio fclose
-
-    "FOPEN" tests:
-        tstr 5 fio fopen -1 ok?
-
-    "FGETS" tests:
-        fio tstr1 fgets -1 ok? tstr1 "I work on Unix" sok? 
-        fio tstr1 fgets -1 ok? tstr1 "I work on DOS and OS/2" sok?
-        fio tstr1 fgets -1 ok? tstr1 "I work on Macintoshes" sok?
-        fio tstr1 fgets -1 ok? tstr1 "I work on VAXes too" sok?
-        fio tstr1 fgets 0 ok?
-        fio fclose
-
-    "FOPEN" tests:
-        tstr 10 fio fopen -1 ok?
-
-    "FPUTS" tests:
-        "In the eyes of a wise judge, proofs by" fio fputs -1 ok?
-        "reasoning are of more value than witnesses." fio fputs -1 ok?
-        "               -- Cicero, 50 B.C" fio fputs -1 ok?
-        fio fclose
-
-    "FOPEN" tests:
-        tstr 5 fio fopen -1 ok?
-
-    "FGETS" tests:
-        fio tstr1 fgets -1 ok?
-        tstr1 "In the eyes of a wise judge, proofs by" sok?
-        fio tstr1 fgets -1 ok?
-        tstr1 "reasoning are of more value than witnesses." sok?
-        fio tstr1 fgets -1 ok?
-        tstr1 "               -- Cicero, 50 B.C" sok?
-        fio tstr1 fgets 0 ok?
-        fio fclose
-
-    "FDELETE" tests:
-        "nonesuch.tmp" fdelete 0 ok?
-        tstr fdelete -1 ok?
-        tstr 5 fio fopen 0 ok?
+	# Restore the state of the world:
+	1 >output
+	0 >input
 ;
 
 #   Dictionary field access
@@ -1076,17 +1046,17 @@ testlctl
 #   Loading programs from a file
 
 : testload
-    "FLOAD" tests:
-        "regtemp.tmp" tstr s!
-        tstr 10 fio fopen -1 ok?
-        "XX : 8times 8 * ;" fio fputs -1 ok?
-        ": 11plus 11 + ;" fio fputs -1 ok?
-        fio fclose
-        tstr 5 fio fopen -1 ok?
-        3 0 fio fseek fio fload 0 ok?
-        fio fclose
-        "regtemp.tmp" fdelete -1 ok?
-;
+	"LOAD" tests:
+		"regtemp.pez" fname s!
+		fname o_wronly o_creat or o_trunc or 0644 open fd1 !
+		fd1 @ 0 > -1 ok?
+		fd1 @ >output 
+		": 8times 8 * ;" puts
+		": 11plus 11 + ;" puts
+		fd1 @ close 0 ok?
+
+		fname load 0 ok?
+		fname unlink drop ;
 
 testload
 3 8times 11plus 11plus 46 ok?
@@ -1094,15 +1064,17 @@ testload
 #   Print error summary
 
 : errcount
-    errors @ if
-        errors @ 1 = if
-            "1 error.\n" stderr fputs drop cr
-        else
-            errors ? ." "errors." cr
-        then
-    else
-        "No errors.\n" stdout fputs drop
-    then
+	errors @ if
+		2 >output
+		errors @ 1 = if
+			"1 error.\n" puts cr
+		else
+			errors ? ." "errors." cr
+		then
+	else
+		1 >output
+		"No errors." puts
+	then
 ;
 errcount
 
@@ -1111,7 +1083,7 @@ errcount
 
 : inline
     75 0 do
-        stdin fgetc dup
+        getc dup
         32 < if
             drop 0 tstr i + c!
             leave
@@ -1125,7 +1097,7 @@ errcount
         ." "Console I/O tests:\n"
         ." "The following two lines should be identical..." cr
         ." ":: 1234 :: -1234.5\n"
-        ":: " type 1234 . ":: " type -1234.5 f. cr 0 0 ok?
+        ":: " print 1234 . ":: " print -1234.5 f. cr 0 0 ok?
         ." "Please type in the next line exactly as it appears:\n"
         ." "Test 1234\n"
         inline

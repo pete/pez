@@ -199,10 +199,12 @@ char *argv[];
 	while(TRUE) {
 		char t[132];
 
-		if(!fname)
-			printf(pez_comment ? "(  " :	/* Show pending comment */
-			       /* Show compiling state */
+		if(!fname) {
+			printf(pez_comment ? "(  " :	// Show pending comment
+			       // Show compiling state */
 			       (((heap != NULL) && state) ? ":> " : "-> "));
+			fflush(stdout);
+		}
 		if(fgets(t, 132, ifp) == NULL) {
 			if(fname && defmode) {
 				fname = defmode = FALSE;
