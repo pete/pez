@@ -387,22 +387,22 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 /*
 	Scan a token from the input stream and return its type.
 	It works something like this:
-		- If the last input string left open an inline comment, try to close it.
-		Failing that, pass the buck by returning TokNull.
+		- If the last input string left open an inline comment, try to
+		close it.  Failing that, pass the buck by returning TokNull.
 		- We're not in a comment, so drive right on by any whitespace.
-		- See if a string is about to happen.  This is signified by either a
-		double quote or the backslash char.  A backslash causes the very next
-		char to be used as the string delimiter, with support for the usual
-		paired delimiters.
+		- See if a string is about to happen.  This is signified by
+		either a double quote or the backslash char.  A backslash causes
+		the very next char to be used as the string delimiter, with
+		support for the usual paired delimiters.
 			"I am string." \{ Hear me roar.} \/LA LA LA/ puts puts puts
 		- If not a string, scan on until whitespace or string end.
-		- Next, we have to decide what to do with the token.  It might be a
-		comment opener, either rest-of-line or open-close flavor.
-		- The token might be a number, as signified by a digit or minus sign
-		for its first char.  Try to sscanf it to a TokInt or a TokReal.
+		- Next, we have to decide what to do with the token.  It might
+		be a comment opener, either rest-of-line or open-close flavor.
+		- The token might be a number, as signified by a digit or minus
+		sign for its first char.  Try to sscanf it to a TokInt or a
+		TokReal.
 		- If not otherwise identified, we have a word.
 */
-
 static int lex(char **cp, char token_buffer[]) {
 	char *scanp = *cp;
 
