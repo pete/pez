@@ -24,3 +24,6 @@ libpez_la_SOURCES = pez.c
 
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez
+
+regress: pez$(EXEEXT)
+	./pez regress.pez

@@ -1,0 +1,42 @@
+#! /usr/bin/env pez
+
+2variable x
+2variable y
+
+: csqrt
+        2dup 0.0 f< if
+           cr ." "SQRT: Negative argument!"
+           exit
+        then
+        2dup 0.0 f<> if
+           2dup 2dup x 2!
+           1.893872 f* 0.154116 f+
+           1.047988 f* 1.0 f+
+           f/ y 2!                 # y=(0.154116+1.893872*x)/(1.0+1.047988*x)
+
+           y 2@                    # y
+           0.0                     # y c
+           begin
+                 2swap             # c y
+                 2dup              # c y y
+                 x 2@              # c y y x
+                 2over             # c y y x y
+                 f/                # c y y x/y
+                 f-                # c y y-x/y
+                 -0.5              # c y (y-x/y) -0.5
+                 f*                # c y (y-x/y)*-0.5
+                 2dup              # cl y c c
+                 2rot              # cl c c y
+                 f+                # cl c c+y
+                 2rot              # c c+y cl
+                 2rot              # c+y cl c
+                 2swap             # c+y c cl
+                 2over             # c+y c cl c
+                 f=                # c+y c =0?
+           until
+           2drop
+        then
+;
+
+: cbenchmark 1600000 0 do 2.0 csqrt 2drop loop ." "Done\n" ;
+: sbenchmark 16000000 0 do 2.0 sqrt 2drop loop ." "Done\n" ;
