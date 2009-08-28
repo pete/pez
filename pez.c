@@ -89,6 +89,7 @@
 #define abs(x)	 ((x) < 0	? -(x) : (x))
 #define max(a,b) ((a) >  (b) ?	(a) : (b))
 #define min(a,b) ((a) <= (b) ?	(a) : (b))
+#define unit_scale(a) ((a) == 1 ? 1 : ((a) % ((a) - 1)))
 
 /*  Globals imported  */
 
@@ -1275,10 +1276,12 @@ prim P_strlen()
 */
 prim P_strcmp()
 {
+	int i;
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	S1 = strcmp((char *)S1, (char *)S0);
+	i = strcmp((char *)S1, (char *)S0);
+	S1 = unit_scale(i);
 	Pop;
 }
 
@@ -1288,10 +1291,12 @@ prim P_strcmp()
 */
 prim P_strncmp()
 {
+	int i;
 	Sl(3);
 	Hpc(S1);
 	Hpc(S2);
-	S2 = strncmp((char *)S2, (char *)S1, S0);
+	i = strncmp((char *)S2, (char *)S1, S0);
+	S2 = unit_scale(i);
 	Pop2;
 }
 
