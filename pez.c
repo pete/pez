@@ -1268,16 +1268,31 @@ prim P_strlen()
 	S0 = strlen((char *)S0);
 }
 
+/*
+   ( str1 str2 -- comp )
+   Compares two strings.  If they are equal, the result is zero.  If str1 sorts
+   before str2, the result is -1.  Otherwise, the result is 1.
+*/
 prim P_strcmp()
-{				/* Compare top two strings on stack */
-	int i;
-
+{
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	i = strcmp((char *)S1, (char *)S0);
-	S1 = (i == 0) ? 0L : ((i > 0) ? 1L : -1L);
+	S1 = strcmp((char *)S1, (char *)S0);
 	Pop;
+}
+
+/*
+   ( str1 str2 len -- comp )
+   Like strcmp, but only matches up to len characters.
+*/
+prim P_strncmp()
+{
+	Sl(2);
+	Hpc(S1);
+	Hpc(S2);
+	S2 = strncmp((char *)S2, (char *)S1, S0);
+	Pop2;
 }
 
 prim P_strchar()
