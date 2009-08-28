@@ -89,7 +89,7 @@
 #define abs(x)	 ((x) < 0	? -(x) : (x))
 #define max(a,b) ((a) >  (b) ?	(a) : (b))
 #define min(a,b) ((a) <= (b) ?	(a) : (b))
-#define unit_scale(a) ((a) == 1 ? 1 : ((a) % ((a) - 1)))
+#define unit_scale(a) ((a) >= 1 ? 1 : ((a) % ((a) - 1)))
 
 /*  Globals imported  */
 
