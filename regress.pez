@@ -931,10 +931,14 @@ variable fd1
 
 	"RMATCH" tests:
 		"jkl;" "a((.)*(f))" 0 regex rmatch 0 ok?
+
+		"as\tDF \t jKl;"
+		# Note that double-escaping isn't necessary here:
+		\{as\sdf\s+jkl;} "i" regex rmatch -1 ok?
+
+	"$0" tests:
 		"asdf" tstr s!
 		tstr "a((.)*(f))" 0 regex rmatch -1 ok?
-	
-	"$0" tests:
 		$0 tstr + "asdf" rot strncmp 0 ok?
 		$1 3  1  2 nok?
 		$2 1  2  2 nok?
