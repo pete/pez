@@ -1416,7 +1416,7 @@ prim P_rmatch()
 	Pop;
 }
 
-#define PUSH_RX(fname,n) prim fname() { So(1); \
+#define PUSH_RX(fname,n) prim fname() { So(2); \
 	Push = regex_matches[n].rm_so;\
 	Push = regex_matches[n].rm_eo - regex_matches[n].rm_so;\
 	}
