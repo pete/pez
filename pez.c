@@ -122,8 +122,8 @@ typedef enum { False = 0, True = 1 } Boolean;
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
 pez_int pez_heaplen = 20000;	/* Heap length */
-pez_int pez_ltempstr = 2560;	/* Temporary string buffer length */
-pez_int pez_ntempstr = 4;	/* Number of temporary string buffers */
+pez_int pez_ltempstr = 2048;	/* Temporary string buffer length */
+pez_int pez_ntempstr = 8;	/* Number of temporary string buffers */
 
 pez_int pez_trace = Falsity;	/* Tracing if true */
 pez_int pez_walkback = Truth;	/* Walkback enabled if true */
@@ -244,14 +244,13 @@ STATIC void pwalkback();
 #endif
 
 /*  ALLOC  --  Allocate memory and error upon exhaustion.  */
-
-static char *alloc(size)
-unsigned int size;
+static char *alloc(unsigned long size)
 {
-	char *cp = malloc(size);
+	char *cp = (char *)malloc(size);
 
 	if(cp == NULL) {
-		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n", size);
+		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n", 
+			size);
 		abort();
 	}
 	return cp;
@@ -4098,16 +4097,13 @@ void pez_init() {
 			   stackitems. */
 			pez_ltempstr += sizeof(stackitem) -
 				(pez_ltempstr % sizeof(stackitem));
-			cp = alloc((((unsigned int)pez_heaplen) *
-					sizeof(stackitem)) +
-				   ((unsigned int)(pez_ntempstr *
-							pez_ltempstr)));
+			cp = alloc((pez_heaplen * sizeof(stackitem)) +
+				   ((pez_ntempstr * pez_ltempstr)));
 			heapbot = (stackitem *)cp;
-			strbuf = (char **)alloc(((unsigned int)pez_ntempstr) *
-						 sizeof(char *));
+			strbuf = (char **)alloc(pez_ntempstr * sizeof(char *));
 			for(i = 0; i < pez_ntempstr; i++) {
 				strbuf[i] = cp;
-				cp += ((unsigned int)pez_ltempstr);
+				cp += pez_ltempstr;
 			}
 			cstrbuf = 0;
 			// Available heap memory starts after the temp strings:
