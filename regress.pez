@@ -770,13 +770,6 @@ variable k
     "STRNCMP" tests:
     	"a1" "a2" 1 strncmp 0 ok?
 
-    "COMPARE" tests:
-        "a" "b" compare -1 ok?
-        "a" "a" compare 0 ok?
-        "b" "a" compare 1 ok?
-        "Foose1" "Foose2" compare -1 ok?
-        "Fingers" "Finger" compare 1 ok?
-
     "STRFORM" tests:
         -11 "Test <%ld> 1" tstr strform tstr "Test <-11> 1" sok?
         0x1A2E "Test <%lX> 2" tstr strform tstr "Test <1A2E> 2" sok?

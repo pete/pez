@@ -2792,6 +2792,21 @@ prim P_xploop()
 	Pop;
 }
 
+prim P_times()
+{
+	int i, max;
+
+	Sl(2);
+	max = S0;
+	Pop;
+
+	for(i = 0; i < max; i++) {
+		P_dup();
+		P_execute();
+	}
+	Pop;
+}
+
 prim P_leave()
 {				/* Compile LEAVE */
 	Rsl(3);
@@ -3681,7 +3696,6 @@ static struct primfcn primt[] = {
 	{"0STRNCMP", P_strncmp},
 	{"0STRCHAR", P_strchar},
 	{"0SUBSTR", P_substr},
-	{"0COMPARE", P_strcmp},
 	{"0STRFORM", P_strform},
 #ifdef REAL
 	{"0FSTRFORM", P_fstrform},
