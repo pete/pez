@@ -767,6 +767,9 @@ variable k
         "Foose1" "Foose2" strcmp -1 ok?
         "Fingers" "Finger" strcmp 1 ok?
 
+    "STRNCMP" tests:
+    	"a1" "a2" 1 strncmp 0 ok?
+
     "COMPARE" tests:
         "a" "b" compare -1 ok?
         "a" "a" compare 0 ok?
@@ -915,6 +918,30 @@ variable fd1
 		"pezregress" unsetenv -1 ok?
 ;
 
+#   Test regular expression support.
+: testregexes
+	"REGEX" tests:
+		"" 0 regex 0= 0 ok?
+		"" "" regex 0= 0 ok?
+		"" "i" regex 0= 0 ok?
+		"" "m" regex 0= 0 ok?
+		"" "mi" regex 0= 0 ok?
+		"" "im" regex 0= 0 ok?
+		"*" 0 regex 0= -1 ok? # This one's invalid, starts with *.
+
+	"RMATCH" tests:
+		"jkl;" "a((.)*(f))" 0 regex rmatch 0 ok?
+		"asdf" tstr s!
+		tstr "a((.)*(f))" 0 regex rmatch -1 ok?
+	
+	"$0" tests:
+		$0 tstr + "asdf" rot strncmp 0 ok?
+		$1 3  1  2 nok?
+		$2 1  2  2 nok?
+		$3 1  3  2 nok?
+		$4 0 -1  2 nok?
+;
+
 #   Run all the regression subtests
 
 "int" puts
@@ -947,6 +974,8 @@ testdict
 testeval
 "process" puts
 testprocess
+"regexes" puts
+testregexes
 
 #   Low-level control structure primitives
 

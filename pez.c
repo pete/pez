@@ -1288,7 +1288,7 @@ prim P_strcmp()
 */
 prim P_strncmp()
 {
-	Sl(2);
+	Sl(3);
 	Hpc(S1);
 	Hpc(S2);
 	S2 = strncmp((char *)S2, (char *)S1, S0);
@@ -1431,9 +1431,18 @@ prim P_rmatch()
 	Pop;
 }
 
+/*
+   ( -- len first-offset )
+   An approximation of Perl's/Ruby's/other's regex match variables.  The most
+   recent regex to be matched is used, and the length and initial offset into
+   the string are pushed.  The entire match is $0, the first group is $1, and so
+   on.  If there was no match, then the initial offset will be -1 and the length
+   will be zero.  (Note, however, that a match can have length zero and still be
+   valid; check the offset to be sure if an optional part matched.)
+*/
 #define PUSH_RX(fname,n) prim fname() { So(2); \
-	Push = regex_matches[n].rm_so;\
 	Push = regex_matches[n].rm_eo - regex_matches[n].rm_so;\
+	Push = regex_matches[n].rm_so;\
 	}
 PUSH_RX(P_money0, 0)
 PUSH_RX(P_money1, 1)
@@ -3669,6 +3678,7 @@ static struct primfcn primt[] = {
 	{"0S+", P_strcat},
 	{"0STRLEN", P_strlen},
 	{"0STRCMP", P_strcmp},
+	{"0STRNCMP", P_strncmp},
 	{"0STRCHAR", P_strchar},
 	{"0SUBSTR", P_substr},
 	{"0COMPARE", P_strcmp},
