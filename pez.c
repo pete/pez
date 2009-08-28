@@ -220,7 +220,7 @@ static int input_idx = 0;
 #define MAX_REGEXES 10
 static regex_t regexes[MAX_REGEXES];
 #define MAX_REGEX_MATCHES 20 // Hey, they're small.
-static regmatch_t matches[MAX_REGEX_MATCHES];
+static regmatch_t regex_matches[MAX_REGEX_MATCHES];
 static int regex_idx = 0;
 
 #ifdef COPYRIGHT
@@ -1379,7 +1379,7 @@ prim P_regex()
 {
 	int flags = REG_EXTENDED;
 
-	Sl(1);
+	Sl(2);
 
 	regfree(regexes + regex_idx);
 	regex_idx = (regex_idx + 1) % MAX_REGEXES;
@@ -1402,8 +1402,47 @@ prim P_regex()
 	Pop;
 }
 
-/*  Floating point primitives  */
+/*
+   ( string regex -- match? )
+   Attempts to match the supplied string against the supplied regular
+   expression.
+*/
+prim P_rmatch()
+{
+	Sl(2);
 
+	S1 = regexec((regex_t *)S0, (char *)S1, 
+			MAX_REGEX_MATCHES, regex_matches, 0) - 1;
+	Pop;
+}
+
+#define PUSH_RX(fname,n) prim fname() { So(1); \
+	Push = regex_matches[n].rm_so;\
+	Push = regex_matches[n].rm_eo - regex_matches[n].rm_so;\
+	}
+PUSH_RX(P_money0, 0)
+PUSH_RX(P_money1, 1)
+PUSH_RX(P_money2, 2)
+PUSH_RX(P_money3, 3)
+PUSH_RX(P_money4, 4)
+PUSH_RX(P_money5, 5)
+PUSH_RX(P_money6, 6)
+PUSH_RX(P_money7, 7)
+PUSH_RX(P_money8, 8)
+PUSH_RX(P_money9, 9)
+PUSH_RX(P_money10, 10)
+PUSH_RX(P_money11, 11)
+PUSH_RX(P_money12, 12)
+PUSH_RX(P_money13, 13)
+PUSH_RX(P_money14, 14)
+PUSH_RX(P_money15, 15)
+PUSH_RX(P_money16, 16)
+PUSH_RX(P_money17, 17)
+PUSH_RX(P_money18, 18)
+PUSH_RX(P_money19, 19)
+#undef PUSH_RX
+
+/*  Floating point primitives  */
 #ifdef REAL
 
 prim P_flit()
@@ -3627,6 +3666,27 @@ static struct primfcn primt[] = {
 	{"0STRREAL", P_strreal},
 #endif
 	{"0REGEX", P_regex},
+	{"0RMATCH", P_rmatch},
+	{"0$0", P_money0},
+	{"0$1", P_money1},
+	{"0$2", P_money2},
+	{"0$3", P_money3},
+	{"0$4", P_money4},
+	{"0$5", P_money5},
+	{"0$6", P_money6},
+	{"0$7", P_money7},
+	{"0$8", P_money8},
+	{"0$9", P_money9},
+	{"0$10", P_money10},
+	{"0$11", P_money11},
+	{"0$12", P_money12},
+	{"0$13", P_money13},
+	{"0$14", P_money14},
+	{"0$15", P_money15},
+	{"0$16", P_money16},
+	{"0$17", P_money17},
+	{"0$18", P_money18},
+	{"0$19", P_money19},
 
 #ifdef REAL
 	{"0(FLIT)", P_flit},
