@@ -269,7 +269,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Hsingle(val) do { Ho(1); *hptr++ = val; } while(0)
 #define state  (*heap)		      /* Execution state is first heap word */
 
-#define prim static void	      /* Attributes of primitive functions */
+#define prim inline static void	      /* Attributes of primitive functions */
 
 /*  Real number definitions (used only if REAL is configured).	*/
 
