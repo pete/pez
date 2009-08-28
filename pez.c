@@ -8,6 +8,7 @@
 
 #include <config.h>
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -16,6 +17,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/time.h>
+#include <regex.h>
 
 #ifdef ALIGNMENT
 #ifdef __TURBOC__
@@ -213,6 +215,13 @@ static int output_idx = 0;
 static int input_idx = 0;
 #define output_stream output_stk[output_idx]
 #define input_stream input_stk[input_idx]
+
+// Like above...
+#define MAX_REGEXES 10
+static regex_t regexes[MAX_REGEXES];
+#define MAX_REGEX_MATCHES 20 // Hey, they're small.
+static regmatch_t matches[MAX_REGEX_MATCHES];
+static int regex_idx = 0;
 
 #ifdef COPYRIGHT
 #ifndef HIGHC
@@ -1370,6 +1379,41 @@ prim P_strreal()
 	}
 }
 #endif				/* REAL */
+
+/*
+   ( string option-string -- regex )
+   Compiles a regular expression, leaving its address on the stack.  For invalid
+   regexes, NULL is returned instead.  Options are passed as a string, which
+   should be NULL or contain one or both of "i" or "m", which mean,
+   respectively, case-insensitive matching (REG_ICASE) and the newline tweaking
+   rules (REG_NEWLINE).  See the man page for regex(3) for more information.
+*/
+prim P_regex()
+{
+	int flags = REG_EXTENDED;
+
+	Sl(1);
+
+	reg_free(regexes + regex_idx);
+	regex_idx = (regex_idx + 1) % MAX_REGEXES;
+
+	if(S0) {
+		if(strchr((char *)S0, 'i'))
+			flags |= REG_ICASE;
+		if(strchr((char *)S0, 'm'))
+			flags |= REG_NEWLINE;
+	}
+
+	if(regcomp(regexes + regex_idx, (char *)S1, flags)) {
+		S1 = 0;
+		Pop;
+		return;
+	}
+
+	S1 = (stackitem)(regexes + regex_idx);
+
+	Pop;
+}
 
 /*  Floating point primitives  */
 
@@ -3592,7 +3636,10 @@ static struct primfcn primt[] = {
 	{"0FSTRFORM", P_fstrform},
 #endif
 	{"0STRINT", P_strint},
+#ifdef REAL
 	{"0STRREAL", P_strreal},
+#endif
+	{"0REGEX", P_regex},
 
 #ifdef REAL
 	{"0(FLIT)", P_flit},
@@ -4026,11 +4073,13 @@ static void exword(dictword *wp) {
 		  for them and stored the addresses into the respective
 		  pointers.  In either case, the storage management
 		  pointers are initialised to the correct addresses.  If
-				  the caller preallocates the buffers, it's up to him to
+		  the caller preallocates the buffers, it's up to him to
 		  ensure that the length allocated agrees with the lengths
 		  given by the pez_... cells.  */
 
 void pez_init() {
+	int i;
+
 	if(dict == NULL) {
 		pez_primdef(primt);	/* Define primitive words */
 		dictprot = dict;	/* Set protected mark in dictionary */
@@ -4124,6 +4173,13 @@ void pez_init() {
 		/* Now that dynamic memory is up and running, allocate constants
 		   and variables built into the system.  */
 
+		// This is some hackery, so that we can free regexes without
+		// keeping track of which have been allocated so far.  Again,
+		// going away when interpreter instances are implemented and
+		// memory management gets overhauled.  Until then:  hackery.
+		for(i = 0; i < MAX_REGEXES; i++)
+			regcomp(regexes + i, "", REG_EXTENDED);
+
 #ifdef FILEIO
 		{
 			static struct {
@@ -4134,7 +4190,6 @@ void pez_init() {
 				{"STDOUT", 1},
 				{"STDERR", 2},
 			};
-			int i;
 			dictword *dw;
 
 			for(i = 0; i < ELEMENTS(stdfiles); i++) {
