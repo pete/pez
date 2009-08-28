@@ -2792,21 +2792,6 @@ prim P_xploop()
 	Pop;
 }
 
-prim P_times()
-{
-	int i, max;
-
-	Sl(2);
-	max = S0;
-	Pop;
-
-	for(i = 0; i < max; i++) {
-		P_dup();
-		P_execute();
-	}
-	Pop;
-}
-
 prim P_leave()
 {				/* Compile LEAVE */
 	Rsl(3);
