@@ -1381,7 +1381,7 @@ prim P_regex()
 
 	Sl(1);
 
-	reg_free(regexes + regex_idx);
+	regfree(regexes + regex_idx);
 	regex_idx = (regex_idx + 1) % MAX_REGEXES;
 
 	if(S0) {
