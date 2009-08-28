@@ -867,7 +867,7 @@ variable fd1
         "Unknown" tstr s! tstr find tstr 0   2 nok?
 
     ">NAME" tests:
-        "testint" find drop >name tstr name>s! tstr "TESTINT" sok?
+        "testint" find drop >name tstr name>s! tstr "testint" sok?
 
     ">LINK" tests:
         "e" find drop >link @ ['] pi ok?
@@ -881,17 +881,17 @@ variable fd1
 
     "NAME>" tests:
         "problems" find drop >name dup tstr name>s!
-            tstr "PROBLEMS" strcmp swap name>  0 ['] problems 2 nok?
+            tstr "problems" strcmp swap name>  0 ['] problems 2 nok?
 
     "LINK>" tests:
         "e" find drop >link dup @ swap link> ['] pi ['] e   2 nok?
 
     "N>LINK" tests:
         "e" find drop >name dup tstr name>s!
-            tstr "E" strcmp swap n>link @ 0 ['] pi 2 nok?
+            tstr "e" strcmp swap n>link @ 0 ['] pi 2 nok?
 
     "L>NAME" tests:
-        "e" find drop >link l>name tstr name>s! tstr "E" sok?
+        "e" find drop >link l>name tstr name>s! tstr "e" sok?
 
     "S>NAME!" tests:
         "problems" find drop >name "DOUBLE-TROUBLE" swap s>name!

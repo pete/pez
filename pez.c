@@ -265,18 +265,6 @@ static char *alloc(unsigned long size)
 	return cp;
 }
 
-/*  UCASE  --  Force letters in string to upper case.  */
-
-static void ucase(char *c) {
-	char ch;
-
-	while((ch = *c) != EOS) {
-		if(islower(ch))
-			*c = toupper(ch);
-		c++;
-	}
-}
-
 /*
 	Given the input stream, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
@@ -531,10 +519,9 @@ static int lex(char **cp, char token_buffer[]) {
 static dictword *lookup(char *tkname) {
 	dictword *dw = dict;
 
-	ucase(tkname);		/* Force name to upper case */
 	while(dw != NULL) {
 		if(!(dw->wname[0] & WORDHIDDEN) &&
-		   (strcmp(dw->wname + 1, tkname) == 0)) {
+		   (strcasecmp(dw->wname + 1, tkname) == 0)) {
 #ifdef WORDSUSED
 			*(dw->wname) |= WORDUSED;	/* Mark this word used */
 #endif
@@ -3005,7 +2992,7 @@ prim P_find()
 	So(1);
 	Hpc(S0);
 	strcpy(buf, (char *)S0);	/* Use built-in token buffer... */
-	dw = lookup(buf);	/* So ucase() in lookup() doesn't wipe */
+	dw = lookup(buf);
 	/* the token on the stack */
 	if(dw != NULL) {
 		S0 = (stackitem)dw;
@@ -4408,9 +4395,8 @@ char *sp;
 		int i;
 		char *vp = sp + 3, *ap;
 
-		ucase(vp);
 		for(i = 0; i < ELEMENTS(proname); i++) {
-			if(strncmp(sp + 3, proname[i].pname,
+			if(strncasecmp(sp + 3, proname[i].pname,
 				   strlen(proname[i].pname)) == 0) {
 				if((ap = strchr(sp + 3, ' ')) != NULL) {
 					sscanf(ap + 1, "%li",
@@ -4533,7 +4519,7 @@ void pez_forget_during_eval(char token_buffer[]) {
 				evalstat = PEZ_FORGETPROT;
 				di = NULL;
 			}
-			if(strcmp(dw->wname + 1, token_buffer) == 0)
+			if(strcasecmp(dw->wname + 1, token_buffer) == 0)
 				break;
 			dw = dw->wnext;
 		}
