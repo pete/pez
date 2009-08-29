@@ -546,22 +546,15 @@ static dictword *lookup(char *tkname) {
 
 #ifdef FgetspNeeded
 
-/*  PEZ_FGETSP	--  Portable database version of FGETS.  This reads the
-			next line into a buffer a la fgets().  A line is
-			delimited by either a carriage return or a line
-			feed, optionally followed by the other character
-			of the pair.  The string is always null
-			terminated, and limited to the length specified - 1
-			(excess characters on the line are discarded.
-			The string is returned, or NULL if end of file is
-			encountered and no characters were stored.	No end
-			of line character is stored in the string buffer.
-			*/
-
-Exported char *pez_fgetsp(s, n, stream)
-char *s;
-int n;
-FILE *stream;
+/*  Portable database version of FGETS.  This reads the next line into a buffer
+ *  a la fgets().  A line is delimited by either a carriage return or a line
+ *  feed, optionally followed by the other character of the pair.  The string is
+ *  always null terminated, and limited to the length specified - 1 (excess
+ *  characters on the line are discarded.  The string is returned, or NULL if
+ *  end of file is encountered and no characters were stored.  No end of line
+ *  character is stored in the string buffer.  
+ */
+Exported char *pez_fgetsp(char *s, int n, FILE *stream)
 {
 	int i = 0, ch;
 
@@ -652,6 +645,15 @@ static Boolean kbquit()
 	return False;
 }
 #endif				/* Keyhit */
+
+static void print_regex_error(int code, regex_t *rx)
+{
+	char buf[1024];
+	regerror(code, rx, buf, 1024);
+	fprintf(stderr, "Regex error:  %s\n", buf);
+	fflush(stderr);
+}
+
 
 /*  Primitive word definitions.  */
 
@@ -1397,7 +1399,7 @@ prim P_strreal()
 */
 prim P_regex()
 {
-	int flags = REG_EXTENDED;
+	int flags = REG_EXTENDED, problem;
 
 	Sl(2);
 
@@ -1411,15 +1413,10 @@ prim P_regex()
 			flags |= REG_NEWLINE;
 	}
 
-	if(regcomp(regexes + regex_idx, (char *)S1, flags)) {
-		S1 = 0;
-		Pop;
-		return;
-	}
-
-	S1 = (stackitem)(regexes + regex_idx);
-
+	problem = regcomp(regexes + regex_idx, (char *)S1, flags);
+	S1 = problem ? 0 : (stackitem)(regexes + regex_idx);
 	Pop;
+	return;
 }
 
 /*
@@ -1429,10 +1426,12 @@ prim P_regex()
 */
 prim P_rmatch()
 {
+	int match;
 	Sl(2);
 
-	S1 = regexec((regex_t *)S0, (char *)S1, 
-			MAX_REGEX_MATCHES, regex_matches, 0) - 1;
+	match = !regexec((regex_t *)S0, (char *)S1, 
+			MAX_REGEX_MATCHES, regex_matches, 0);
+	S1 = match ? Truth : Falsity;
 	Pop;
 }
 
