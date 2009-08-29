@@ -1,13 +1,17 @@
 Pez is a small, lightweight, 100% C (for now), embeddable or standalone,
-public domain, portable dialect of Forth.  It is based on the Atlast
-system (see doc/CREDITS for more information).
+public domain, portable dialect of Forth.  It was originally based on
+the Atlast system (see doc/CREDITS for more information), but the
+feature set has been expanded significantly and there are flagrant
+breaks with Forth compatibility.
 
 The primary goal of the Pez project, much like the goal of the Atlast
 project, is to bring dead-simple scriptability and dynamism to otherwise
 static code, with a focus on user-level scripting of applications.
 There are a number of compile-time options for trimming down and
 limiting in the case of untrusted input, and also a large number of
-OS-level facilities both added and planned.
+OS-level facilities both added and planned.  Pez is also designed to
+work well as a stand-alone language for general-purpose coding.  And
+it's designed to be fun.
 
 I highly recommend having a look at doc/atlast.pdf, written by Mr.
 Walker in 1990, especially the introduction which is still shockingly
@@ -31,6 +35,7 @@ Pez has added to the Atlast system a number of features:
   etc.
 * Numerous small improvements, and more large improvements on the way.  See
   doc/TODO.
+* Regular expression support.
 
 I certainly hope that you find this codebase to be as useful and as much
 fun as I have.
