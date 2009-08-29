@@ -264,14 +264,14 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Hpc(n)
 #endif
 
-#define Hstore *hptr++		     	// Store item on heap 
+#define Hstore *hptr++		     	// Store item on heap
 // Item on heap with overflow check
 #define Hsingle(val) do { Ho(1); *hptr++ = val; } while(0)
-#define state  (*heap)		      /* Execution state is first heap word */
+#define state  (*heap)			// Execution state is first heap word
 
-#define prim inline static void	      /* Attributes of primitive functions */
+#define prim inline static void		// Attributes of primitive functions
 
-/*  Real number definitions (used only if REAL is configured).	*/
+/*  Real number definitions (used only if REAL is configured). */
 
 #define Realsize (sizeof(pez_real)/sizeof(stackitem)) /* Stack cells / real */
 #define Realpop  stk -= Realsize      /* Pop real from stack */
