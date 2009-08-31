@@ -53,7 +53,7 @@ int print_usage(FILE * s, char *pname)
 
 static void init_pez_argv(int argc)
 {
-	int size = sizeof(char *) * argc;
+	int size = sizeof(char *) *argc;
 	pez_argv = malloc(size);
 	if(!pez_argv) {
 		fprintf(stderr, "Couldn't allocate enough memory to duplicate "
