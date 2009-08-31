@@ -44,6 +44,8 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 
+AM_CPPFLAGS="-DCONF_LIBDIR=\"${libdir}\""
+
 AC_DEFINE([EXPORT], [1], [TODO: These are going away.])
 AC_DEFINE([READONLYSTRINGS], [1], [TODO: These are going away.])
 AC_DEFINE([MEMSTAT], [1], [TODO: These are going away.])
@@ -53,5 +55,5 @@ AC_PROG_INSTALL
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 # AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])
-AC_OUTPUT
+# AC_OUTPUT
 
