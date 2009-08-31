@@ -17,7 +17,8 @@ pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
 pez_CFLAGS = $(AM_CFLAGS)
 include_HEADERS = pez.h pezdef.h
 
-EXTRA_DIST = doc/COPYING doc/CREDITS doc/TODO doc/ctags pez.h pezdef.h regress.pez
+EXTRA_DIST = README doc/COPYING doc/CREDITS doc/TODO doc/ctags \
+	     pez.h pezdef.h regress.pez
 
 lib_LTLIBRARIES = libpez.la
 
