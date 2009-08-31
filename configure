@@ -13981,8 +13981,6 @@ fi
 done
 
 
-AM_CPPFLAGS="-DCONF_LIBDIR=\"${libdir}\""
-
 
 cat >>confdefs.h <<\_ACEOF
 #define EXPORT 1
@@ -16455,4 +16453,3 @@ fi
 
 # AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])
 # AC_OUTPUT
-
