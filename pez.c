@@ -6,7 +6,9 @@
    This program is in the public domain.
 */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -79,7 +81,7 @@
 
 /* LINTLIBRARY */
 
-#define PUSH_CONSTANT(fname, constant) prim fname() { So(1); Push = constant; }
+#define PUSH_CONSTANT(fname, constant) prim fname() { So(1); Push = (stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
 
@@ -1130,6 +1132,20 @@ prim P_floats()
 	Sl(1);
 	S0 *= sizeof(float);
 }
+
+/*  Reflection for Pez's compile-time options, for building libs from Pez: */
+
+PUSH_CONSTANT(P_pezconf_bindir, PEZCONF_BINDIR)
+PUSH_CONSTANT(P_pezconf_libdir, PEZCONF_LIBDIR)
+PUSH_CONSTANT(P_pezconf_cc, PEZCONF_CC)
+PUSH_CONSTANT(P_pezconf_ld, PEZCONF_LD)
+PUSH_CONSTANT(P_pezconf_cflags, PEZCONF_CFLAGS)
+PUSH_CONSTANT(P_pezconf_ldflags, PEZCONF_LDFLAGS)
+PUSH_CONSTANT(P_pezconf_ld_lib_cmd, 
+	PEZCONF_LD " " PEZCONF_LDFLAGS " " PEZCONF_SO_FLAGS)
+PUSH_CONSTANT(P_pezconf_build_lib_cmd, 
+	PEZCONF_CC " " PEZCONF_CFLAGS " " PEZCONF_LDFLAGS " " PEZCONF_SO_FLAGS)
+
 
 /*  Array primitives  */
 
@@ -3189,11 +3205,11 @@ prim P_system()
    ( libname -- status )
    Loads a .so file that must contain at least one of the following in order
    to be useful:
-   	1.  A function declared as prim pez_ffi_init() that performs the
-		necessary initializations
+	1.  A function declared as prim pez_ffi_init() that performs the
+	    necessary initializations
 	2.  An array named pez_ffi_definitions with type struct primfcn that
-		contains the definitions of new words to be added when the library
-		is loaded.
+	    contains the definitions of new words to be added when the library
+	    is loaded.
    If the status is false, there has been an error, which can be checked with
    dlerror.
 */
@@ -3224,8 +3240,9 @@ prim P_ffi_load()
 		pez_primdef(defs);
 }
 
-/* Just a thin wrapper around the system's dlopen. 
+/*
    ( libname flags -- libhandle )
+   Just a thin wrapper around the system's dlopen. 
 */
 prim P_dlopen()
 {
@@ -3237,8 +3254,8 @@ prim P_dlopen()
 }
 
 /*
-   Pushes the RTLD_LAZY flag onto the stack.
    ( -- RTLD_LAZY )
+   Pushes the RTLD_LAZY flag onto the stack.
 */
 prim P_rtld_lazy()
 {
@@ -3247,8 +3264,8 @@ prim P_rtld_lazy()
 }
 
 /*
-   Resolves a symbol.
    ( libhandle symname -- function_address )
+   Resolves a symbol.
 */
 prim P_dlsym()
 {
@@ -3260,8 +3277,8 @@ prim P_dlsym()
 }
 
 /*
-   Returns the last error returned by dlopen/dlsym/dlclose.
    ( -- error_string )
+   Returns the last error returned by dlopen/dlsym/dlclose.
 */
 prim P_dlerror()
 {
@@ -3322,7 +3339,8 @@ extern char **environ;
 /*
    ( -- environment )
    Pushes the environ pointer onto the stack.  You probably actually want to
-   interact with getenv/setenv unless you're iterating over the environment.
+   interact with getenv/setenv unless you're iterating over all of the
+   environment variables.
 */
 prim P_environ()
 {
@@ -3669,6 +3687,15 @@ static struct primfcn primt[] = {
 	{"0FLOATSIZE", P_floatsize},
 	{"0CELLS", P_cells},
 	{"0FLOATS", P_floats},
+
+	{"0PEZ-BINDIR", P_pezconf_bindir},
+	{"0PEZ-LIBDIR", P_pezconf_libdir},
+	{"0PEZ-CC", P_pezconf_cc},
+	{"0PEZ-LD", P_pezconf_ld},
+	{"0PEZ-CFLAGS", P_pezconf_cflags},
+	{"0PEZ-LDFLAGS", P_pezconf_ldflags},
+	{"0PEZ-LD-LIB-CMD", P_pezconf_ld_lib_cmd},
+	{"0PEZ-BUILD-LIB-CMD", P_pezconf_build_lib_cmd},
 
 #ifdef ARRAY
 	{"0ARRAY", P_array},

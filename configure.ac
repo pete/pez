@@ -54,4 +54,3 @@ AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 # AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])
 # AC_OUTPUT
-

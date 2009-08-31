@@ -9,7 +9,13 @@ ACLOCAL_AMFLAGS = -I m4
 # TODO how to include examples?
 # doc_DATA = doc/COPYING doc/CREDITS doc/ChangeLog doc/TODO doc/ctags examples
 
-AM_CPPFLAGS="-DCONF_LIBDIR=\"${libdir}\"" "-DCONF_CFLAGS=\"${CFLAGS}\""
+AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
+	    "-DPEZCONF_BINDIR=\"${bindir}\"" \
+	    "-DPEZCONF_CFLAGS=\"${CFLAGS}\"" \
+	    "-DPEZCONF_LDFLAGS=\"${LDFLAGS}\"" \
+	    "-DPEZCONF_SO_FLAGS=\"-shared ${pic_flag}\"" \
+	    "-DPEZCONF_LD=\"${LD}\"" \
+	    "-DPEZCONF_CC=\"${CC}\""
 
 bin_PROGRAMS = pez$(EXEEXT)
 
