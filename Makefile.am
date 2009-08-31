@@ -26,7 +26,7 @@ libpez_la_SOURCES = pez.c
 # libpez_la_LIBTOOLFLAGS = -version-info 1:4:3
 
 repl: pez$(EXEEXT)
-	$(RLWRAP) ./pez
+	$(RLWRAP) ./pez$(EXEEXT)
 
 regress: pez$(EXEEXT)
-	./pez regress.pez
+	./pez$(EXEEXT) regress.pez
