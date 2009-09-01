@@ -914,20 +914,17 @@ variable fd1
 #   Test regular expression support.
 : testregexes
 	"REGEX" tests:
-		"" 0 regex 0= 0 ok?
-		"" "" regex 0= 0 ok?
-		"" "i" regex 0= 0 ok?
-		"" "m" regex 0= 0 ok?
-		"" "mi" regex 0= 0 ok?
-		"" "im" regex 0= 0 ok?
+		" " 0 regex 0= 0 ok?
+		" " "" regex 0= 0 ok?
+		" " "i" regex 0= 0 ok?
+		" " "m" regex 0= 0 ok?
+		" " "mi" regex 0= 0 ok?
+		" " "im" regex 0= 0 ok?
 		"*" 0 regex 0= -1 ok? # This one's invalid, starts with *.
 
 	"RMATCH" tests:
 		"jkl;" "a((.)*(f))" 0 regex rmatch 0 ok?
-
-		"as\tDF \t jKl;"
-		# Note that double-escaping isn't necessary here:
-		\{as\sdf\s+jkl;} "i" regex rmatch -1 ok?
+		"as\tDF \t jKl;" \{as.df.+jkl;} "i" regex rmatch -1 ok?
 
 	"$0" tests:
 		"asdf" tstr s!
