@@ -20,6 +20,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <regex.h>
+#include <limits.h>
 
 #ifdef ALIGNMENT
 #ifdef __TURBOC__
@@ -122,12 +123,12 @@ typedef enum { False = 0, True = 1 } Boolean;
 /*  Globals visible to calling programs  */
 
 // TODO:  Bascially all of these globals are going into the struct that
-// represents an instance of a Pez interpreter.
-
+// represents an instance of a Pez interpreter.  Furthermore, most are going
+// away when we add the GC.
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
 pez_int pez_heaplen = 20000;	/* Heap length */
-pez_int pez_ltempstr = 2048;	/* Temporary string buffer length */
+pez_int pez_ltempstr = max(PATH_MAX, 2048);	/* Temporary string buffer length */
 pez_int pez_ntempstr = 8;	/* Number of temporary string buffers */
 
 pez_int pez_trace = Falsity;	/* Tracing if true */
@@ -1146,13 +1147,13 @@ PUSH_CONSTANT(P_pezconf_ld_lib_cmd,
 PUSH_CONSTANT(P_pezconf_build_lib_cmd, 
 	PEZCONF_CC " " PEZCONF_CFLAGS " " PEZCONF_LDFLAGS " " PEZCONF_SO_FLAGS)
 
-
 /*  Array primitives  */
 
 #ifdef ARRAY
 
 /*
-	Array subscript calculation *//* sub1 sub2 ... subn -- addr
+   ( sub1 sub2 ... subn -- addr )
+   Array subscript calculation
 */
 prim P_arraysub()
 {
@@ -1194,7 +1195,7 @@ prim P_arraysub()
    Declares an array and stores its elements.
 */
 prim P_array()
-{				/* Declare array *//* sub1 sub2 ... subn n esize -- array */
+{
 	int i, nsubs, asize = 1;
 	stackitem *isp;
 
@@ -2121,6 +2122,8 @@ prim P_load()
 		S0 = PEZ_BADFILE;
 	}
 }
+
+PUSH_CONSTANT(P_pathmax, PATH_MAX)
 
 /*
 	TODO:  connect, send, recv, accept, socket, umask, dup, dup2, pipe,
@@ -3941,6 +3944,7 @@ static struct primfcn primt[] = {
 	{"0SEEK_SET", P_seek_set},
 	{"0TELL", P_tell},
 	{"0LOAD", P_load},
+	{"0PATHMAX", P_pathmax},
 #endif				/* FILEIO */
 
 #ifdef EVALUATE
