@@ -1131,7 +1131,7 @@ prim P_cells()
 prim P_floats()
 {
 	Sl(1);
-	S0 *= sizeof(float);
+	S0 *= sizeof(double);
 }
 
 /*  Reflection for Pez's compile-time options, for building libs from Pez: */
