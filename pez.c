@@ -82,6 +82,8 @@
 
 /* LINTLIBRARY */
 
+/*
+*/
 #define PUSH_CONSTANT(fname, constant) prim fname() { So(1); Push = (stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
@@ -1817,8 +1819,8 @@ prim P_dots()
 	for(tsp = stack; tsp < stk; tsp++) {
 		printf(base == 16 ? "%lx " : "%ld ", *tsp);
 	}
+	printf("\n");
 	fflush(stdout);
-	P_cr();
 }
 
 /*
