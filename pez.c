@@ -21,6 +21,7 @@
 #include <sys/time.h>
 #include <regex.h>
 #include <limits.h>
+#include <lightning.h>
 
 #ifdef ALIGNMENT
 #ifdef __TURBOC__
@@ -264,7 +265,7 @@ static char *alloc(unsigned long size)
 	char *cp = (char *)malloc(size);
 
 	if(cp == NULL) {
-		fprintf(stderr, "\n\nOut of memory!  %u bytes requested.\n", 
+		fprintf(stderr, "\n\nOut of memory!  %lu bytes requested.\n", 
 			size);
 		abort();
 	}
@@ -1056,12 +1057,15 @@ Exported void P_create()
 	hptr += Dictwordl;	/* Allocate heap space for word */
 }
 
+
 /*
 	Forget word
 */
 prim P_forget()
 {
-	forgetpend = True;	/* Mark forget pending */
+	// Works by setting this, so that eval runs the actual special sauce
+	// forgetting measures when the next token comes down the pipe.
+	forgetpend = True;
 }
 
 /*
@@ -1881,6 +1885,72 @@ prim P_puts()
 	if(*(char *)(S0 + len - 1) != '\n')
 		P_cr();
 	Pop;
+}
+
+/*
+   A proof of concept:  building a function from scratch.
+   Would be extra-nice if we could make compile mode do this, but there are a
+   few things in the way, for now.  (See P_nest()...)
+
+   Anyway, I see no reason we couldn't move in this direction later.  Lightning
+   doesn't support ARM, but that's easy to remedy if you speak ARM.  (and I do!
+   lucky!)
+
+   Anyway, this function creates a new word, called "fakeputs", that is really
+   just a call to puts.  There's some trickiness, but it provably works.
+
+   How to try it out:
+
+   -> testnative "asdf" fakeputs
+   asdf
+
+   MONUMENTAL!!
+*/
+jit_insn code_buffer[4096];
+prim P_testnative()
+{
+	void *sp = &stk;
+	createword = (dictword *)hptr;
+	hptr += Dictwordl;
+	createword->wcode = (void (*)())(jit_set_ip(code_buffer).vptr);
+
+	// New function:
+	jit_prolog(0);
+
+	// Get ready to call puts:
+	jit_prepare(1);
+
+	// Get the *address* of the stack pointer into R0, and do R1 = *R0.  The
+	// reason for this is that the value is resolved *now*, and it may be
+	// different (should be different) when the new function is called.
+	jit_movi_p(JIT_R0, sp);
+	jit_ldr_l(JIT_R1, JIT_R0);
+
+	// The stack pointer points at the next *empty* part of the stack, so to
+	// get at the top one, we need to get stk[-1].
+	jit_movi_p(JIT_R2, (-sizeof(stackitem)));
+	jit_ldxr_l(JIT_R0, JIT_R1, JIT_R2);
+
+	// Hey, we have it!
+	jit_pusharg_p(JIT_R0);
+	// Do the actual call.
+	jit_finish(puts);
+
+	// "Pop":
+	jit_movi_p(JIT_R0, sp);
+	jit_ldr_l(JIT_R1, JIT_R0);
+	jit_subi_l(JIT_R1, JIT_R1, sizeof(stackitem));
+	jit_str_l(JIT_R0, JIT_R1);
+
+	// Return
+	jit_ret();
+	jit_flush_code((char *)code_buffer, jit_get_ip().ptr);
+
+	createword->wname = malloc(10);
+	strcpy(createword->wname, "0fakeputs");
+	createword->wnext = dict;
+	dict = createword;
+	createword = NULL;
 }
 
 /*
@@ -3675,6 +3745,7 @@ static struct primfcn primt[] = {
 	{"0F@", P_fat},
 #endif				/* DOUBLE */
 
+	{"0testnative", P_testnative},
 	{"0VARIABLE", P_variable},
 	{"0CONSTANT", P_constant},
 	{"0!", P_bang},
