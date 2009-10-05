@@ -1927,8 +1927,7 @@ prim P_testnative()
 
 	// The stack pointer points at the next *empty* part of the stack, so to
 	// get at the top one, we need to get stk[-1].
-	jit_movi_p(JIT_R2, (-sizeof(stackitem)));
-	jit_ldxr_l(JIT_R0, JIT_R1, JIT_R2);
+	jit_ldxi_l(JIT_R0, JIT_R1, (-sizeof(stackitem)));
 
 	// Hey, we have it!
 	jit_pusharg_p(JIT_R0);
