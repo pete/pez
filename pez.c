@@ -1890,11 +1890,13 @@ prim P_puts()
 /*
    A proof of concept:  building a function from scratch.
    Would be extra-nice if we could make compile mode do this, but there are a
-   few things in the way, for now.  (See P_nest()...)
+   few things in the way, for now.  (See P_nest()...Calling functions defined
+   within Pez can cause issues; I'd like a native/nonnative flag initially, but
+   if we go with a 100% JIT approach, then everything will be native code.)
 
    Anyway, I see no reason we couldn't move in this direction later.  Lightning
-   doesn't support ARM, but that's easy to remedy if you speak ARM.  (and I do!
-   lucky!)
+   doesn't support ARM (sort of a priority for me), but that's easy to remedy if
+   you speak ARM.  (and I do!  lucky!)
 
    Anyway, this function creates a new word, called "fakeputs", that is really
    just a call to puts.  There's some trickiness, but it provably works.
@@ -1906,15 +1908,19 @@ prim P_puts()
 
    MONUMENTAL!!
 */
-jit_insn code_buffer[4096];
+jit_insn code_buffer[4096];  // Yeah, same buffer, every time.
 prim P_testnative()
 {
 	void *sp = &stk;
 	createword = (dictword *)hptr;
 	hptr += Dictwordl;
+
+	// Tell Lightning to start writing instructions to code_buffer, and set
+	// the new word's function pointer directly there.
 	createword->wcode = (void (*)())(jit_set_ip(code_buffer).vptr);
 
-	// New function:
+	// Start with the initial instructions that functions need to start with
+	// on this platform.
 	jit_prolog(0);
 
 	// Get ready to call puts:
@@ -1935,15 +1941,16 @@ prim P_testnative()
 	jit_finish(puts);
 
 	// "Pop":
-	jit_movi_p(JIT_R0, sp);
-	jit_ldr_l(JIT_R1, JIT_R0);
+	jit_ldi_l(JIT_R1, sp);
 	jit_subi_l(JIT_R1, JIT_R1, sizeof(stackitem));
-	jit_str_l(JIT_R0, JIT_R1);
+	jit_sti_l(sp, JIT_R1);
 
 	// Return
 	jit_ret();
+	// Does cache-flushing and mprotect()ing where necessary.
 	jit_flush_code((char *)code_buffer, jit_get_ip().ptr);
 
+	// I'm happy; let's stuff it in the dictionary.
 	createword->wname = malloc(10);
 	strcpy(createword->wname, "0fakeputs");
 	createword->wnext = dict;
