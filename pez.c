@@ -1923,8 +1923,7 @@ prim P_testnative()
 	// Get the *address* of the stack pointer into R0, and do R1 = *R0.  The
 	// reason for this is that the value is resolved *now*, and it may be
 	// different (should be different) when the new function is called.
-	jit_movi_p(JIT_R0, sp);
-	jit_ldr_l(JIT_R1, JIT_R0);
+	jit_ldi_l(JIT_R1, sp);
 
 	// The stack pointer points at the next *empty* part of the stack, so to
 	// get at the top one, we need to get stk[-1].
