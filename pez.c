@@ -81,7 +81,6 @@
 	Push = (stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
-
 #ifdef abs
 #undef abs
 #endif
@@ -120,6 +119,7 @@ typedef enum { False = 0, True = 1 } Boolean;
 // represents an instance of a Pez interpreter.  Furthermore, most are going
 // away when we add the GC.
 
+// This is the big global state area.  I'm preparing to wrap it all in a struct.
 // {
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
@@ -2930,8 +2930,8 @@ prim P_xploop()
 	niter = ((stackitem)R0) + S0;
 	if(niter == (stackitem)R1
 	   || abs(S0) > abs((stackitem)R0 - (stackitem)R1)) {
-		rstk -= 3;	/* Pop iteration variable and limit */
-		ip++;		/* Skip the jump address */
+		rstk -= 3;	// Pop iteration variable and limit
+		ip++;		// Skip the jump address
 	} else {
 		ip += (stackitem) * ip;
 		R0 = (rstackitem)niter;

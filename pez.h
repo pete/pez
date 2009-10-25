@@ -8,7 +8,7 @@
    internally within PEZ (which might create conflicts if
    included in calling programs).
 
-   See doc/CREDITS for information about the authors.  
+   See doc/CREDITS for information about the authors.
    This program is in the public domain.
 */
 
@@ -41,21 +41,21 @@ extern char **pez_argv;		// The argv that the pez program sees.
 
 /*  PEZ_EVAL return status codes  */
 
-#define PEZ_SNORM	0	// Normal evaluation 
-#define PEZ_STACKOVER	1	// Stack overflow 
-#define PEZ_STACKUNDER	2	// Stack underflow 
-#define PEZ_RSTACKOVER	3	// Return stack overflow 
-#define PEZ_RSTACKUNDER 4	// Return stack underflow 
-#define PEZ_HEAPOVER	5	// Heap overflow 
-#define PEZ_BADPOINTER	6	// Pointer outside the heap 
-#define PEZ_UNDEFINED	7	// Undefined word 
-#define PEZ_FORGETPROT	8	// Attempt to forget protected word 
-#define PEZ_NOTINDEF	9	// Compiler word outside definition 
-#define PEZ_RUNSTRING	10	// Unterminated string 
-#define PEZ_RUNCOMM	11	// Unterminated comment in file 
-#define PEZ_BREAK	12	// Asynchronous break signal received 
-#define PEZ_DIVZERO	13	// Attempt to divide by zero 
-#define PEZ_APPLICATION 14	// Application primitive pez_error() 
+#define PEZ_SNORM	0	// Normal evaluation
+#define PEZ_STACKOVER	1	// Stack overflow
+#define PEZ_STACKUNDER	2	// Stack underflow
+#define PEZ_RSTACKOVER	3	// Return stack overflow
+#define PEZ_RSTACKUNDER 4	// Return stack underflow
+#define PEZ_HEAPOVER	5	// Heap overflow
+#define PEZ_BADPOINTER	6	// Pointer outside the heap
+#define PEZ_UNDEFINED	7	// Undefined word
+#define PEZ_FORGETPROT	8	// Attempt to forget protected word
+#define PEZ_NOTINDEF	9	// Compiler word outside definition
+#define PEZ_RUNSTRING	10	// Unterminated string
+#define PEZ_RUNCOMM	11	// Unterminated comment in file
+#define PEZ_BREAK	12	// Asynchronous break signal received
+#define PEZ_DIVZERO	13	// Attempt to divide by zero
+#define PEZ_APPLICATION 14	// Application primitive pez_error()
 #define PEZ_BADFILE	15	// Attempt to load a bad file
 
 /*  Entry points  */
