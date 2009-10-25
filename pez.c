@@ -49,7 +49,6 @@
 #define COMPILERW		// Compiler-writing words
 #define CONIO			// Interactive console I/O
 #define DEFFIELDS		// Definition field access for words
-#define DOUBLE			// Double word primitives (2DUP)
 #define EVALUATE		// The EVALUATE primitive
 #define FILEIO			// File I/O primitives
 #define MATH			// Math functions
@@ -2454,8 +2453,6 @@ prim P_time()
 
 /*  Double stack manipulation items  */
 
-#ifdef DOUBLE
-
 prim P_2dup()
 {				/* Duplicate stack top doubleword */
 	stackitem s;
@@ -2679,7 +2676,6 @@ prim P_fat()
 		break;
 	}
 }
-#endif				/* DOUBLE */
 
 /*  Data transfer primitives  */
 
@@ -3787,7 +3783,6 @@ static struct primfcn primt[] = {
 	{"00>", P_0gtr},
 	{"00<", P_0lss},
 
-#ifdef DOUBLE
 	{"02DUP", P_2dup},
 	{"02DROP", P_2drop},
 	{"02SWAP", P_2swap},
@@ -3808,7 +3803,6 @@ static struct primfcn primt[] = {
 	{"0FCONSTANT", P_fconstant},
 	{"0F!", P_fbang},
 	{"0F@", P_fat},
-#endif				/* DOUBLE */
 
 	{"0VARIABLE", P_variable},
 	{"0CONSTANT", P_constant},
