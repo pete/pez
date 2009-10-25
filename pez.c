@@ -76,11 +76,9 @@
 #include <math.h>
 #endif
 
-/* LINTLIBRARY */
-
-/*
-*/
-#define PUSH_CONSTANT(fname, constant) prim fname() { So(1); Push = (stackitem)constant; }
+// Macro for defining primitives that push constant values:
+#define PUSH_CONSTANT(fname, constant) prim fname() { So(1);\
+	Push = (stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
 
