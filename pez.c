@@ -2,7 +2,7 @@
    Pez
    Main Interpreter and Compiler
 
-   See doc/CREDITS for information about the authors.  
+   See doc/CREDITS for information about the authors.
    This program is in the public domain.
 */
 
@@ -111,7 +111,7 @@ typedef enum { False = 0, True = 1 } Boolean;
 		printf("%d", ELEMENTS(arr));
 
 	would print a five.  ELEMENTS("abc") can also be used to tell how many
-	bytes are in a string constant INCLUDING THE TRAILING NULL. 
+	bytes are in a string constant INCLUDING THE TRAILING NULL.
 */
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
@@ -278,11 +278,11 @@ Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
 	int toklen = 0;
 	char *sp = *strbuf;
 	char *tp = token_buffer;
-	
+
 	sp++;
 	while(True) {
 		char c = *sp++;
-	
+
 		if(c == '"') {
 			sp++;
 			*tp++ = 0;
@@ -343,7 +343,7 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 	char *sp = *strbuf;
 	char *tp = token_buffer;
 	char close_delim;
-	
+
 	sp++;
 	switch (*sp) {
 		case '{' : close_delim = '}'; break;
@@ -352,11 +352,11 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 		case '<' : close_delim = '>'; break;
 		default : close_delim = *sp; break;
 	}
-	
+
 	sp++;
 	while(True) {
 		char c = *sp++;
-	
+
 		if(c == close_delim) {
 			sp++;
 			*tp++ = 0;
@@ -366,7 +366,7 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 			*tp++ = 0;
 			break;
 		}
-		
+
 		if(toklen < TOK_BUF_SZ - 1) {
 			*tp++ = c;
 			toklen++;
@@ -409,7 +409,7 @@ static int lex(char **cp, char token_buffer[]) {
 	while(True) {
 		char *tp = token_buffer;
 		int toklen = 0;
-		
+
 		// handle rudely interrupted comments
 		if(pez_comment) {
 			while(*scanp != ')') {
@@ -436,7 +436,7 @@ static int lex(char **cp, char token_buffer[]) {
 			return valid_string ? TokString : TokNull;
 		} else {
 
-			// Scan the next raw token 
+			// Scan the next raw token
 			while(True) {
 				char c = *scanp++;
 
@@ -555,7 +555,7 @@ static dictword *lookup(char *tkname) {
  *  always null terminated, and limited to the length specified - 1 (excess
  *  characters on the line are discarded.  The string is returned, or NULL if
  *  end of file is encountered and no characters were stored.  No end of line
- *  character is stored in the string buffer.  
+ *  character is stored in the string buffer.
  */
 Exported char *pez_fgetsp(char *s, int n, FILE *stream)
 {
@@ -1116,7 +1116,7 @@ prim P_var()
 	So(1);
 	Push = (stackitem)(((stackitem *)curword) + Dictwordl);
 }
-/* 
+/*
 	Create a new word
 */
 Exported void P_create()
@@ -1179,7 +1179,7 @@ prim P_cellsize()
 	Push = sizeof(long);
 }
 
-/* 
+/*
    ( -- floatsize )
    Pushes the size of a float in bytes.
 */
@@ -1217,9 +1217,9 @@ PUSH_CONSTANT(P_pezconf_cc, PEZCONF_CC)
 PUSH_CONSTANT(P_pezconf_ld, PEZCONF_LD)
 PUSH_CONSTANT(P_pezconf_cflags, PEZCONF_CFLAGS)
 PUSH_CONSTANT(P_pezconf_ldflags, PEZCONF_LDFLAGS)
-PUSH_CONSTANT(P_pezconf_ld_lib_cmd, 
+PUSH_CONSTANT(P_pezconf_ld_lib_cmd,
 	PEZCONF_LD " " PEZCONF_LDFLAGS " " PEZCONF_SO_FLAGS)
-PUSH_CONSTANT(P_pezconf_build_lib_cmd, 
+PUSH_CONSTANT(P_pezconf_build_lib_cmd,
 	PEZCONF_CC " " PEZCONF_CFLAGS " " PEZCONF_LDFLAGS " " PEZCONF_SO_FLAGS)
 
 /*  Array primitives  */
@@ -1405,7 +1405,7 @@ prim P_strchar()
 
 /*
    (source start length/-1 dest -- )
-   Extract and store substring 
+   Extract and store substring
 */
 prim P_substr()
 {
@@ -1521,7 +1521,7 @@ prim P_rmatch()
 	int match;
 	Sl(2);
 
-	match = !regexec((regex_t *)S0, (char *)S1, 
+	match = !regexec((regex_t *)S0, (char *)S1,
 			MAX_REGEX_MATCHES, regex_matches, 0);
 	S1 = match ? Truth : Falsity;
 	Pop;
@@ -1963,8 +1963,8 @@ prim P_dots()
 prim P_dotquote()
 {
 	Compiling;
-	stringlit = True;		// Set string literal expected 
-	Compconst(s_dotparen);	// Compile .( word 
+	stringlit = True;		// Set string literal expected
+	Compconst(s_dotparen);	// Compile .( word
 }
 
 /*
@@ -2116,7 +2116,7 @@ prim P_words()
 
 #ifdef FILEIO
 
-/* 
+/*
    ( fd -- )
    Sets the output stream to the specified file descriptor.
 */
@@ -2224,7 +2224,7 @@ PUSH_CONSTANT(P_seek_set, SEEK_SET)
 
 /*
    ( fd -- offset )
-   Returns the offset into the file; note that this won't work at all for 
+   Returns the offset into the file; note that this won't work at all for
    certain types of file descriptors, like sockets, and will only work on some
    platforms for others.  No worries for regular files.
 */
@@ -3019,9 +3019,9 @@ Exported void P_dodoes()
 {
 	Rso(1);
 	So(1);
-	Rpush = ip;		// Push instruction pointer 
+	Rpush = ip;		// Push instruction pointer
 #ifdef WALKBACK
-	*wbptr++ = curword;	// Place word on walkback stack 
+	*wbptr++ = curword;	// Place word on walkback stack
 #endif
 	/* The compiler having craftily squirreled away the DOES> clause
 	   address before the word definition on the heap, we back up to
@@ -3096,8 +3096,8 @@ prim P_does()
 */
 prim P_colon()
 {
-	state = Truth;	// Set compilation underway 
-	P_create();		// Create conventional word 
+	state = Truth;	// Set compilation underway
+	P_create();		// Create conventional word
 }
 
 prim P_semicolon()
@@ -3133,11 +3133,11 @@ prim P_tick()
 				// Word compile address:
 				Push = (stackitem)di;
 			} else {
-				fprintf(stderr, " '%s' undefined ", 
+				fprintf(stderr, " '%s' undefined ",
 					token_buffer);
 			}
 		} else {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"\nWord not specified when expected.\n");
 			P_abort();
 		}
@@ -3224,7 +3224,7 @@ prim P_toname()
 }
 
 /*
-   Find link field from compile addr 
+   Find link field from compile addr
  */
 prim P_tolink()
 {
@@ -3371,7 +3371,7 @@ prim P_ffi_load()
 
 /*
    ( libname flags -- libhandle )
-   Just a thin wrapper around the system's dlopen. 
+   Just a thin wrapper around the system's dlopen.
 */
 prim P_dlopen()
 {
@@ -3415,7 +3415,7 @@ prim P_dlerror()
 	Push = (long)dlerror();
 }
 
-/* 
+/*
    Calls a void (*)() from the top of the stack.
 */
 prim P_call_void_0()
@@ -3674,7 +3674,7 @@ prim P_backmark()
 {
 	Compiling;
 	So(1);
-	Push = (stackitem)hptr;	// Push heap address onto stack 
+	Push = (stackitem)hptr;	// Push heap address onto stack
 }
 
 /*
@@ -3951,7 +3951,7 @@ static struct primfcn primt[] = {
 	{"0UNSETENV", P_unsetenv},
 	{"0DIE!", P_diebang},
 	// at-exit is going to have to wait until I figure out a good way to do
-	// it.  I am thinking a queue of words to push to 
+	// it.  I am thinking a queue of words to push to
 	// {"0AT-EXIT", P_at_exit},
 	{"0FORK", P_fork},
 	{"0EXECV", P_execv},
@@ -4268,7 +4268,7 @@ static void exword(dictword *wp) {
 		printf("\nTrace: %s ", curword->wname + 1);
 		fflush(stdout);
 	}
-	curword->wcode();	 // Execute the first word 
+	curword->wcode();	 // Execute the first word
 	while(ip != NULL) {
 #ifdef BREAK
 		Keybreak();	/* Poll for asynchronous interrupt */
@@ -4381,7 +4381,7 @@ void pez_init() {
 		/* The system state word is kept in the first word of the heap
 		   so that pointer checking doesn't bounce references to it.
 		   When creating the heap, we preallocate this word and
-		   initialise the state to the interpretive state. 
+		   initialise the state to the interpretive state.
 		 */
 		hptr = heap + 1;
 		state = Falsity;
@@ -4422,7 +4422,7 @@ void pez_init() {
 			}
 			output_stream = 1;
 			input_stream = 0;
-			
+
 		}
 #endif				/* FILEIO */
 		dictprot = dict;	/* Protect all standard words */
@@ -4484,7 +4484,7 @@ dictword *dw;
  * of storage to allocate for its body.  All words defined with pez_vardef()
  * have the standard variable action of pushing their body address on the stack
  * when invoked.  Returns the dictionary item for the new word, or NULL if the
- * heap overflows. 
+ * heap overflows.
  */
 dictword *pez_vardef(char *name, int size) {
 	dictword *di;
@@ -4672,7 +4672,7 @@ void pez_stack_string(char* str) {
 
 void pez_heap_int(pez_int val) {
 	Ho(2);
-	Hstore = s_lit;		// Push (lit) 
+	Hstore = s_lit;		// Push (lit)
 	Hstore = val;	// Compile actual literal
 }
 
@@ -4802,9 +4802,9 @@ int pez_eval(char *sp) {
 #undef Memerrs
 #define Memerrs evalstat
 	instream = sp;
-	evalstat = PEZ_SNORM;	 // Set normal evaluation status 
+	evalstat = PEZ_SNORM;	 // Set normal evaluation status
 #ifdef BREAK
-	broken = False;		 // Reset asynchronous break 
+	broken = False;		 // Reset asynchronous break
 #endif
 
 /* If automatic prologue processing is configured and we haven't yet
@@ -4819,8 +4819,8 @@ int pez_eval(char *sp) {
 		pez_init();
 	}
 #endif				/* PROLOGUE */
-		
-	while((evalstat == PEZ_SNORM) && 
+
+	while((evalstat == PEZ_SNORM) &&
 		(token = lex(&instream, token_buffer)) != TokNull) {
 		dictword *di;
 
@@ -4852,8 +4852,7 @@ int pez_eval(char *sp) {
 					}
 				} else {
 #ifdef MEMMESSAGE
-					fprintf(stderr,
-						" '%s' undefined ",
+					fprintf(stderr, " '%s' undefined ",
 						token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
@@ -4869,12 +4868,12 @@ int pez_eval(char *sp) {
 		case TokReal:
 			state ? pez_heap_real(tokreal) : pez_stack_real(tokreal);
 			break;
-		
+
 		case TokString:
 			if(state) {
 				// When compiling, strings go on the heap
 				if(!stringlit)
-					Hsingle(s_strlit);	
+					Hsingle(s_strlit);
 				// Preceded by an instruction when literal
 				// handling is needed
 				stringlit = False;
@@ -4884,15 +4883,15 @@ int pez_eval(char *sp) {
 					pez_stack_string(token_buffer);
 				else	// Or get printed out immediately when they're literals.
 					printf("%s", token_buffer); stringlit = False;
-				
+
 			}
 			break;
-			
+
 		default:
 			fprintf(stderr, "\nUnknown token type %d\n", token);
 			break;
 		}
 	}
-	
+
 	return evalstat;
 }
