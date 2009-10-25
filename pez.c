@@ -54,7 +54,6 @@
 #define MATH			// Math functions
 #define MEMMESSAGE		// Print message for stack/heap errors
 #define PROLOGUE		// Prologue processing and auto-init
-#define REAL			// Floating point numbers
 #define SYSTEM			// System command function
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
@@ -188,11 +187,9 @@ Exported stackitem *heapmax;	/* Heap maximum excursion */
 
 static char *instream = NULL;	/* Current input stream line */
 static long tokint;		/* Scanned integer */
-#ifdef REAL
 static pez_real tokreal;	/* Scanned real number */
 #ifdef ALIGNMENT
 Exported pez_real rbuf0, rbuf1, rbuf2;	/* Real temporary buffers */
-#endif
 #endif
 static long base = 10;		/* Number base */
 Exported dictword **ip = NULL;	/* Instruction pointer */
@@ -513,11 +510,9 @@ static int lex(char **cp, char token_buffer[]) {
 				return TokInt;
 			}
 #endif
-#ifdef REAL
 			if(sscanf(token_buffer, "%lf%c", &tokreal, &tc) == 1) {
 				return TokReal;
 			}
-#endif
 		}
 		return TokWord;
 	}
@@ -1445,7 +1440,6 @@ prim P_strform()
 	Npop(3);
 }
 
-#ifdef REAL
 prim P_fstrform()
 {				/* Format real using sprintf() *//* rvalue "%6.2f" str -- */
 	Sl(2 + Realsize);
@@ -1454,7 +1448,6 @@ prim P_fstrform()
 	sprintf((char *)S0, (char *)S1, ((pez_real *)(stk - 2))[-1]);
 	Npop(2 + Realsize);
 }
-#endif				/* REAL */
 
 prim P_strint()
 {				/* String to integer *//* str -- endptr value */
@@ -1469,7 +1462,6 @@ prim P_strint()
 	Push = is;
 }
 
-#ifdef REAL
 prim P_strreal()
 {				/* String to real *//* str -- endptr value */
 	int i;
@@ -1488,7 +1480,6 @@ prim P_strreal()
 		Push = fsu.fss[i];
 	}
 }
-#endif				/* REAL */
 
 /*
    ( string option-string -- regex )
@@ -1572,7 +1563,6 @@ PUSH_RX(P_money19, 19)
 #undef PUSH_RX
 
 /*  Floating point primitives  */
-#ifdef REAL
 
 /*
    Pushes a float literal from the input stream.
@@ -1824,7 +1814,7 @@ prim P_ftime()
 
 #ifdef MATH
 
-#define Mathfunc(x) Sl(Realsize); SREAL0(x(REAL0))
+#define Mathfunc(x) do { Sl(Realsize); SREAL0(x(REAL0)); } while(0)
 
 prim P_acos()
 {				/* Arc cosine */
@@ -1887,7 +1877,6 @@ prim P_tan()
 
 #undef Mathfunc
 #endif				/* MATH */
-#endif				/* REAL */
 
 /*  Console I/O primitives  */
 
@@ -3847,13 +3836,9 @@ static struct primfcn primt[] = {
 	{"0STRCHAR", P_strchar},
 	{"0SUBSTR", P_substr},
 	{"0STRFORM", P_strform},
-#ifdef REAL
 	{"0FSTRFORM", P_fstrform},
-#endif
 	{"0STRINT", P_strint},
-#ifdef REAL
 	{"0STRREAL", P_strreal},
-#endif
 	{"0REGEX", P_regex},
 	{"0RMATCH", P_rmatch},
 	{"0$0", P_money0},
@@ -3877,7 +3862,6 @@ static struct primfcn primt[] = {
 	{"0$18", P_money18},
 	{"0$19", P_money19},
 
-#ifdef REAL
 	{"0(FLIT)", P_flit},
 	{"0F+", P_fplus},
 	{"0F-", P_fminus},
@@ -3911,7 +3895,6 @@ static struct primfcn primt[] = {
 	{"0SQRT", P_sqrt},
 	{"0TAN", P_tan},
 #endif				/* MATH */
-#endif				/* REAL */
 
 	{"0(NEST)", P_nest},
 	{"0EXIT", P_exit},
@@ -4869,8 +4852,8 @@ int pez_eval(char *sp) {
 					}
 				} else {
 #ifdef MEMMESSAGE
-					fprintf(stderr, 
-						" '%s' undefined ", 
+					fprintf(stderr,
+						" '%s' undefined ",
 						token_buffer);
 #endif
 					evalstat = PEZ_UNDEFINED;
@@ -4883,11 +4866,9 @@ int pez_eval(char *sp) {
 			state ? pez_heap_int(tokint) : pez_stack_int(tokint);
 			break;
 
-#ifdef REAL
 		case TokReal:
 			state ? pez_heap_real(tokreal) : pez_stack_real(tokreal);
 			break;
-#endif
 		
 		case TokString:
 			if(state) {
