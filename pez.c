@@ -91,23 +91,21 @@
 #ifdef abs
 #undef abs
 #endif
-#define abs(x)	 ((x) < 0	? -(x) : (x))
-#define max(a,b) ((a) >  (b) ?	(a) : (b))
-#define min(a,b) ((a) <= (b) ?	(a) : (b))
-#define unit_scale(a) ((a) >= 1 ? 1 : ((a) % ((a) - 1)))
+#define abs(x)		((x) < 0    ? -(x) : (x))
+#define max(a,b)	((a) >  (b) ? (a) : (b))
+#define min(a,b)	((a) <= (b) ? (a) : (b))
+#define unit_scale(a)	((a) >= 1 ? 1 : ((a) % ((a) - 1)))
 
 /*  Globals imported  */
 
-/*  Data types	*/
+/*  Data types  */
 
 typedef enum { False = 0, True = 1 } Boolean;
 
-#define EOS	 '\0'		/* End of string characters */
+#define Truth -1L	// Stack value for truth
+#define Falsity 0L	// Stack value for falsity
 
-#define Truth	-1L		/* Stack value for truth */
-#define Falsity 0L		/* Stack value for falsity */
-
-/* 
+/*
 	Utility definition to get an array's element count (at compile time, and
 	provided that you're in the same scope as the declaration).   For
 	example:
@@ -127,6 +125,8 @@ typedef enum { False = 0, True = 1 } Boolean;
 // TODO:  Bascially all of these globals are going into the struct that
 // represents an instance of a Pez interpreter.  Furthermore, most are going
 // away when we add the GC.
+
+// {
 pez_int pez_stklen = 1000;	/* Evaluation stack length */
 pez_int pez_rstklen = 1000;	/* Return stack length */
 pez_int pez_heaplen = 20000;	/* Heap length */
@@ -229,6 +229,9 @@ static regex_t regexes[MAX_REGEXES];
 static regmatch_t regex_matches[MAX_REGEX_MATCHES];
 static int regex_idx = 0;
 
+// }
+// And that's the end of the wacky global state...I hope.
+
 #ifdef COPYRIGHT
 #ifndef HIGHC
 #ifndef lint
@@ -287,16 +290,16 @@ Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
 	
 		if(c == '"') {
 			sp++;
-			*tp++ = EOS;
+			*tp++ = 0;
 			break;
-		} else if(c == EOS) {
+		} else if(!c) {
 			valid_string = False;
-			*tp++ = EOS;
+			*tp++ = 0;
 			break;
 		}
 		if(c == '\\') {
 			c = *sp++;
-			if(c == EOS) {
+			if(!c) {
 				valid_string = False;
 				break;
 			}
@@ -361,11 +364,11 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 	
 		if(c == close_delim) {
 			sp++;
-			*tp++ = EOS;
+			*tp++ = 0;
 			break;
-		} else if(c == EOS) {
+		} else if(!c) {
 			valid_string = False;
-			*tp++ = EOS;
+			*tp++ = 0;
 			break;
 		}
 		
@@ -415,7 +418,7 @@ static int lex(char **cp, char token_buffer[]) {
 		// handle rudely interrupted comments
 		if(pez_comment) {
 			while(*scanp != ')') {
-				if(*scanp == EOS) {
+				if(*scanp == 0) {
 					*cp = scanp;
 					return TokNull;
 				}
@@ -442,8 +445,8 @@ static int lex(char **cp, char token_buffer[]) {
 			while(True) {
 				char c = *scanp++;
 
-				if(c == EOS || isspace(c)) {
-					*tp++ = EOS;
+				if(!c || isspace(c)) {
+					*tp++ = 0;
 					break;
 				}
 				if(toklen < TOK_BUF_SZ - 1) {
@@ -454,14 +457,16 @@ static int lex(char **cp, char token_buffer[]) {
 		}
 		*cp = --scanp;
 
-		if(token_buffer[0] == EOS)
+		if(!token_buffer[0])
 			return TokNull;
 
-		/* 	If token is a comment to end of line character, discard the rest of 
-			the line and return null for this token request. */
+		/* If token is a comment to end of line character, discard
+		 * the rest of the line and return null for this token
+		 * request. */
 
-		if(strcmp(token_buffer, "#") == 0 || strcmp(token_buffer, "#!") == 0) {
-			while(*scanp != EOS)
+		if(strcmp(token_buffer, "#") == 0 ||
+				strcmp(token_buffer, "#!") == 0) {
+			while(*scanp)
 				scanp++;
 			*cp = scanp;
 			return TokNull;
@@ -472,7 +477,7 @@ static int lex(char **cp, char token_buffer[]) {
 		   delimiter. */
 
 		if(strcmp(token_buffer, "(") == 0) {
-			while(*scanp != EOS) {
+			while(*scanp) {
 				if(*scanp == ')')
 					break;
 				scanp++;
@@ -585,7 +590,7 @@ Exported char *pez_fgetsp(char *s, int n, FILE *stream)
 		if(i < (n - 1))
 			s[i++] = ch;
 	}
-	s[i] = EOS;
+	s[i] = 0;
 	return s;
 }
 #endif				/* FgetspNeeded */
@@ -1330,8 +1335,12 @@ prim P_strchar()
 	Pop;
 }
 
+/*
+   (source start length/-1 dest -- )
+   Extract and store substring 
+*/
 prim P_substr()
-{				/* Extract and store substring *//* source start length/-1 dest -- */
+{
 	long sl, sn;
 	char *ss, *sp, *se, *ds;
 
@@ -1346,7 +1355,7 @@ prim P_substr()
 	ds = (char *)S0;
 	while(sn-- && (sp < se))
 		*ds++ = *sp++;
-	*ds++ = EOS;
+	*ds++ = 0;
 	Npop(4);
 }
 
