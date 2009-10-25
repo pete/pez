@@ -257,7 +257,12 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #endif
 
 #ifdef RESTRICTED_POINTERS
-#define Hpc(n) if ((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){badpointer(); return Memerrs;}
+#define Hpc(n) do {\
+	if((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){\
+		badpointer();\
+		return Memerrs;\
+	}\
+} while(0)
 #else
 #define Hpc(n)
 #endif
@@ -301,15 +306,6 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #else // TRACE
 #define trace if(0)
 #endif
-
-
-/*  File I/O definitions (used only if FILEIO is configured).  */
-
-#define FileSent    0x831FDF9DL       /* Courtesy Marinchip Radioactive
-					 random number generator */
-#define Isfile(x) Hpc(x); if (*((stackitem *)(x))!=FileSent) {printf("\nNot a file\n");return;}
-#define FileD(x)  ((FILE *)*(((stackitem *)(x)) + 1))
-#define Isopen(x) if (FileD(x) == NULL) {printf("\nFile not open\n");return;}
 
 // Miscellaneous conveniences
 #define Immediate(word) (di->wname[0] & IMMEDIATE)
