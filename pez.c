@@ -710,8 +710,12 @@ prim P_times()
 	Pop;
 }
 
+/*
+   ( a b -- a/b )
+   Divides the second number on the stack by the first.
+*/
 prim P_div()
-{				/* Divide two numbers */
+{
 	Sl(2);
 #ifdef MATH_CHECK
 	if(S0 == 0) {
@@ -723,8 +727,12 @@ prim P_div()
 	Pop;
 }
 
+/*
+   ( a b -- a%b )
+   The remainder of the second number on the stack divided by the first.
+*/
 prim P_mod()
-{				/* Take remainder */
+{
 	Sl(2);
 #ifdef MATH_CHECK
 	if(S0 == 0) {
@@ -736,8 +744,13 @@ prim P_mod()
 	Pop;
 }
 
+/*
+   ( a b -- a/b a%b )
+   Divides the second number on the stack by the first, returning the quotient
+   and the remainder.
+*/
 prim P_divmod()
-{				/* Compute quotient and remainder */
+{
 	stackitem quot;
 
 	Sl(2);
@@ -752,41 +765,65 @@ prim P_divmod()
 	S0 = quot;
 }
 
+/*
+   ( a b -- min )
+   Returns the minimum of the top two numbers on the stack.
+*/
 prim P_min()
-{				/* Take minimum of stack top */
+{
 	Sl(2);
 	S1 = min(S1, S0);
 	Pop;
 }
 
+/*
+   ( a b -- max )
+   Returns the maximum of the top two numbers on the stack.
+*/
 prim P_max()
-{				/* Take maximum of stack top */
+{
 	Sl(2);
 	S1 = max(S1, S0);
 	Pop;
 }
 
+/*
+   ( a -- -a )
+   Negates the top number on the stack.
+*/
 prim P_neg()
-{				/* Negate top of stack */
+{
 	Sl(1);
 	S0 = -S0;
 }
 
+/*
+   ( a -- abs(a) )
+   Returns the absolute value of the top number on the stack.
+*/
 prim P_abs()
-{				/* Take absolute value of top of stack */
+{
 	Sl(1);
 	S0 = abs(S0);
 }
 
+/*
+   ( a b -- a=b )
+   Tests the top two numbers on the stack for equality.
+*/
 prim P_equal()
-{				/* Test equality */
+{
 	Sl(2);
 	S1 = (S1 == S0) ? Truth : Falsity;
 	Pop;
 }
 
+/*
+   ( a b -- a<>b )
+   Returns true iff the top two numbers on the stack are unequal.
+*/
 prim P_unequal()
-{				/* Test inequality */
+{
 	Sl(2);
 	S1 = (S1 != S0) ? Truth : Falsity;
 	Pop;
