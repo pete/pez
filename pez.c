@@ -56,8 +56,6 @@
 #define MEMMESSAGE		// Print message for stack/heap errors
 #define PROLOGUE		// Prologue processing and auto-init
 #define REAL			// Floating point numbers
-#define SHORTCUTA		// Shortcut integer arithmetic words
-#define SHORTCUTC		// Shortcut integer comparison
 #define SYSTEM			// System command function
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
@@ -829,70 +827,101 @@ prim P_unequal()
 	Pop;
 }
 
+/*
+   ( a b -- a>b )
+*/
 prim P_gtr()
-{				/* Test greater than */
+{
 	Sl(2);
 	S1 = (S1 > S0) ? Truth : Falsity;
 	Pop;
 }
 
+/*
+   ( a b -- a<b )
+*/
 prim P_lss()
-{				/* Test less than */
+{
 	Sl(2);
 	S1 = (S1 < S0) ? Truth : Falsity;
 	Pop;
 }
 
+/*
+   ( a b -- a>=b )
+*/
 prim P_geq()
-{				/* Test greater than or equal */
+{
 	Sl(2);
 	S1 = (S1 >= S0) ? Truth : Falsity;
 	Pop;
 }
 
+/*
+   ( a b -- a<=b )
+*/
 prim P_leq()
-{				/* Test less than or equal */
+{
 	Sl(2);
 	S1 = (S1 <= S0) ? Truth : Falsity;
 	Pop;
 }
 
+/*
+   ( a b -- a&b )
+   Returns the bitwise AND of the top two elements on the stack.
+*/
 prim P_and()
-{				/* Logical and */
+{
 	Sl(2);
 	S1 &= S0;
 	Pop;
 }
 
+/*
+   ( a b -- a|b )
+   Bitwise OR of the top two elements on the stack.
+*/
 prim P_or()
-{				/* Logical or */
+{
 	Sl(2);
 	S1 |= S0;
 	Pop;
 }
 
+/*
+   ( a b -- a^b )
+   Bitwise XOR of the top two elements on the stack.
+*/
 prim P_xor()
-{				/* Logical xor */
+{
 	Sl(2);
 	S1 ^= S0;
 	Pop;
 }
 
+/*
+   ( a -- ~a )
+   Bitwise negation of the top element on the stack.
+*/
 prim P_not()
-{				/* Logical negation */
+{
 	Sl(1);
 	S0 = ~S0;
 }
 
+/*
+   ( a b -- a<<b )
+   Arithmetic shift left of the second item on the stack by number of bits in
+   the top item.  Shifts right if the top item is negative.
+*/
 prim P_shift()
-{				/* Shift:  value nbits -- value */
+{
 	Sl(1);
 	S1 = (S0 < 0) ? (((unsigned long)S1) >> (-S0)) :
 		(((unsigned long)S1) << S0);
 	Pop;
 }
-
-#ifdef SHORTCUTA
 
 prim P_1plus()
 {				/* Add one */
@@ -930,10 +959,6 @@ prim P_2div()
 	S0 /= 2;
 }
 
-#endif				/* SHORTCUTA */
-
-#ifdef SHORTCUTC
-
 prim P_0equal()
 {				/* Equal to zero ? */
 	Sl(1);
@@ -957,8 +982,6 @@ prim P_0lss()
 	Sl(1);
 	S0 = (S0 < 0) ? Truth : Falsity;
 }
-
-#endif				/* SHORTCUTC */
 
 /*  Storage allocation (heap) primitives  */
 
@@ -3752,21 +3775,17 @@ static struct primfcn primt[] = {
 	{"0R@", P_rfetch},
 	{"0TIME", P_time},
 
-#ifdef SHORTCUTA
 	{"01+", P_1plus},
 	{"02+", P_2plus},
 	{"01-", P_1minus},
 	{"02-", P_2minus},
 	{"02*", P_2times},
 	{"02/", P_2div},
-#endif				/* SHORTCUTA */
 
-#ifdef SHORTCUTC
 	{"00=", P_0equal},
 	{"00<>", P_0notequal},
 	{"00>", P_0gtr},
 	{"00<", P_0lss},
-#endif				/* SHORTCUTC */
 
 #ifdef DOUBLE
 	{"02DUP", P_2dup},
