@@ -1,13 +1,11 @@
 /*
-
-   Pez
    Definitions for components of PEZ
-    This  file	contains the definitions for modules within the PEZ
-    language system itself.  Definitions used by programs that link to
-    PEZ   are   in	PEZ.H,  which  is  included	by  this  file
-    automatically.
+   This file contains the definitions for modules within the PEZ
+   language system itself. Definitions used by programs that link to
+   PEZ are in PEZ.H, which is included by this file
+   automatically.
 
-   See doc/CREDITS for information about the authors.  
+   See doc/CREDITS for information about the authors.
    This program is in the public domain.
 */
 
