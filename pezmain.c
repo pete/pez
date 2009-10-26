@@ -81,6 +81,10 @@ int main(int argc, char *argv[])
 	char **pez_argv_current;
 
 	p = pez_init();
+	if(!p) {
+		fprintf(stderr, "Couldn't initialize Pez!\n");
+		exit(1);
+	}
 
 	init_pez_argv(argc);
 	pez_argv_current = p->argv;
