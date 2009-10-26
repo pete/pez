@@ -19,6 +19,8 @@
 #define FALSE	0
 #define TRUE	1
 
+pez_instance *p;
+
 /*  Globals imported  */
 
 #ifndef HIGHC
@@ -33,7 +35,7 @@ static void ctrlc(sig)
 int sig;
 {
 	if(sig == SIGINT)
-		pez_break();
+		pez_break(p);
 }
 #endif				/* HIGHC */
 
@@ -54,22 +56,20 @@ int print_usage(FILE * s, char *pname)
 static void init_pez_argv(int argc)
 {
 	int size = sizeof(char *) *argc;
-	pez_argv = malloc(size);
-	if(!pez_argv) {
+	p->argv = malloc(size);
+	if(!p->argv) {
 		fprintf(stderr, "Couldn't allocate enough memory to duplicate "
 			"argv (%d bytes).\n"
 			"Something's real bad wrong.\n", size);
 		exit(2);
 	}
-	memset(pez_argv, 0, size);
+	memset(p->argv, 0, size);
 }
 
 
 /*  MAIN  --  Main program.  */
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	int i;
 	int fname = FALSE, defmode = FALSE;
@@ -80,8 +80,10 @@ char *argv[];
 	int in = 0;
 	char **pez_argv_current;
 
+	p = pez_init();
+
 	init_pez_argv(argc);
-	pez_argv_current = pez_argv;
+	pez_argv_current = p->argv;
 
 	ifp = stdin;
 
@@ -104,7 +106,7 @@ char *argv[];
 				break;
 
 			case 'H':
-				pez_heaplen = atol(cp + 1);
+				p->heaplen = atol(cp + 1);
 				break;
 
 			case 'I':
@@ -112,15 +114,15 @@ char *argv[];
 				break;
 
 			case 'R':
-				pez_rstklen = atol(cp + 1);
+				p->rstklen = atol(cp + 1);
 				break;
 
 			case 'S':
-				pez_stklen = atol(cp + 1);
+				p->stklen = atol(cp + 1);
 				break;
 
 			case 'T':
-				pez_trace = TRUE;
+				p->trace = TRUE;
 				break;
 
 			case '-':
@@ -182,7 +184,7 @@ char *argv[];
 				include[i]);
 			return 1;
 		}
-		stat = pez_load(fp);
+		stat = pez_load(p, fp);
 		fclose(fp);
 		if(stat != PEZ_SNORM) {
 			printf("\nError %d in include file %s\n", stat,
@@ -200,9 +202,9 @@ char *argv[];
 		char t[132];
 
 		if(!fname) {
-			printf(pez_comment ? "(  " :	// Show pending comment
+			printf(p->comment ? "(  " :	// Show pending comment
 			       // Show compiling state */
-			       (((heap != NULL) && state) ? ":> " : "-> "));
+			       (((p->heap != NULL) && state) ? ":> " : "-> "));
 			fflush(stdout);
 		}
 		if(fgets(t, 132, ifp) == NULL) {
@@ -213,7 +215,7 @@ char *argv[];
 			}
 			break;
 		}
-		pez_eval(t);
+		pez_eval(p, t);
 	}
 	if(!fname)
 		printf("\n");

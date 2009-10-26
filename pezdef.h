@@ -14,18 +14,6 @@
 
 #include "pez.h"                   /* Define user linkage structures */
 
-typedef void (*codeptr)();	      /* Machine code pointer */
-
-/*  Dictionary word entry  */
-
-typedef struct dw {
-    struct dw *wnext;		      /* Next word in dictionary */
-    char *wname;		      /* Word name.  The first character is
-					 actually the word flags, including
-					 the (IMMEDIATE) bit. */
-    codeptr wcode;		      /* Machine code implementation */
-} dictword;
-
 /*  Word flag bits  */
 
 #define IMMEDIATE   1		      /* Word is immediate */
@@ -33,9 +21,6 @@ typedef struct dw {
 #define WORDHIDDEN  4		      /* Word is hidden from lookup */
 
 /*  Data types	*/
-
-typedef long stackitem;
-typedef dictword **rstackitem;
 
 /* Stack items occupied by a dictionary word definition */
 #define Dictwordl ((sizeof(dictword)+(sizeof(stackitem)-1))/sizeof(stackitem))
@@ -52,58 +37,15 @@ typedef dictword **rstackitem;
 
 struct primfcn {
     char *pname;
-    codeptr pcode;
+    pez_wordp pcode;
 };
 
 /*  Internal state marker item	*/
 
-typedef struct {
-    stackitem *mstack;		      /* Stack position marker */
-    stackitem *mheap;		      /* Heap allocation marker */
-    dictword ***mrstack;	      /* Return stack position marker */
-    dictword *mdict;		      /* Dictionary marker */
-} pez_statemark;
-
 #ifdef EXPORT
 #define Exported
-#ifndef NOMANGLE
-#define stk	    pez__sp
-#define stack	    pez__sk
-#define stackbot    pez__sb
-#define stacktop    pez__st
-#define rstk	    pez__rp
-#define rstack	    pez__rk
-#define rstackbot   pez__rb
-#define rstacktop   pez__rt
-#define heap	    pez__hb
-#define hptr	    pez__hp
-#define heapbot     pez__hs
-#define heaptop     pez__ht
-#define dict	    pez__dh
-#define dictprot    pez__dp
-#define strbuf	    pez__ts
-#define cstrbuf     pez__tn
-#define ip	    pez__ip
-#define curword     pez__cw
-#define createword  pez__wd
-#endif /* NOMANGLE */
-
-#ifdef MEMSTAT
-#ifndef NOMANGLE
-#define stackmax    pez__sx
-#define rstackmax   pez__rx
-#define heapmax     pez__hx
-#endif /* NOMANGLE */
-extern stackitem *stackmax, *heapmax;
-extern dictword ***rstackmax;
-#endif
 
 #ifdef ALIGNMENT
-#ifndef NOMANGLE
-#define rbuf0	    pez__r0
-#define rbuf1	    pez__r1
-#define rbuf2	    pez__r2
-#endif /* NOMANGLE */
 extern pez_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
 #endif
 
@@ -112,32 +54,12 @@ extern pez_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
 #define FmodeB	    4		      /* Binary file mode */
 #define FmodeCre    8		      /* Create new file */
 
-extern stackitem *stack, *stk, *stackbot, *stacktop, *heap, *hptr,
-		 *heapbot, *heaptop;
-extern dictword ***rstack, ***rstk, ***rstackbot, ***rstacktop;
-extern dictword *dict, *dictprot, *curword, *createword;
-extern dictword **ip;
-extern char **strbuf;
-extern int cstrbuf;
-
-#ifndef NOMANGLE
-#define P_create    pez__Pcr
-#define P_dodoes    pez__Pds
-#endif /* NOMANGLE */
 extern void P_create(), P_dodoes();
 #else  /* EXPORT */
 #define Exported static
 #endif /* EXPORT */
 
 #ifdef EXPORT
-#ifndef NOMANGLE
-#define stakover    pez__Eso
-#define rstakover   pez__Erso
-#define heapover    pez__Eho
-#define badpointer  pez__Ebp
-#define stakunder   pez__Esu
-#define rstakunder  pez__Ersu
-#endif /* NOMANGLE */
 extern
 #endif
 void stakover(), rstakover(), heapover(), badpointer(),
@@ -145,8 +67,8 @@ void stakover(), rstakover(), heapover(), badpointer(),
 
 /* Functions called by exported extensions. */
 extern void pez_primdef(), pez_error();
-extern dictword *pez_lookup(), *pez_vardef();
-extern stackitem *pez_body();
+extern pez_dictword *pez_lookup(), *pez_vardef();
+extern pez_stackitem *pez_body();
 extern int pez_exec();
 #ifdef EXPORT
 extern char *pez_fgetsp();
@@ -202,22 +124,22 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 /*  Stack access definitions  */
 
-#define S0  stk[-1]		      /* Top of stack */
-#define S1  stk[-2]		      /* Next on stack */
-#define S2  stk[-3]		      /* Third on stack */
-#define S3  stk[-4]		      /* Fourth on stack */
-#define S4  stk[-5]		      /* Fifth on stack */
-#define S5  stk[-6]		      /* Sixth on stack */
-#define Pop stk--		      /* Pop the top item off the stack */
-#define Pop2 stk -= 2		      /* Pop two items off the stack */
-#define Npop(n) stk -= (n)	      /* Pop N items off the stack */
+#define S0  p->stk[-1]		      /* Top of stack */
+#define S1  p->stk[-2]		      /* Next on stack */
+#define S2  p->stk[-3]		      /* Third on stack */
+#define S3  p->stk[-4]		      /* Fourth on stack */
+#define S4  p->stk[-5]		      /* Fifth on stack */
+#define S5  p->stk[-6]		      /* Sixth on stack */
+#define Pop p->stk--		      /* Pop the top item off the stack */
+#define Pop2 p->stk -= 2		      /* Pop two items off the stack */
+#define Npop(n) p->stk -= (n)	      /* Pop N items off the stack */
 // TODO:  See Realpush().
-#define Push *stk++		      /* Push item onto stack */
+#define Push *p->stk++		      /* Push item onto stack */
 
 #ifdef MEMSTAT
-#define Mss(n) if ((stk+(n))>stackmax) stackmax = stk+(n);
-#define Msr(n) if ((rstk+(n))>rstackmax) rstackmax = rstk+(n);
-#define Msh(n) if ((hptr+(n))>heapmax) heapmax = hptr+(n);
+#define Mss(n) if ((p->stk+(n))>p->stack) p->stackmax = p->stk+(n);
+#define Msr(n) if ((p->rstk+(n))>p->rstack) p->rstackmax = p->rstk+(n);
+#define Msh(n) if ((p->hptr+(n))>p->heap) p->heapmax = p->hptr+(n);
 #else
 #define Mss(n)
 #define Msr(n)
@@ -226,8 +148,8 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #ifdef BOUNDS_CHECK
 #define Memerrs
-#define Sl(x) if ((stk-stack)<(x)) {stakunder(); return Memerrs;}
-#define So(n) Mss(n) if ((stk+(n))>stacktop) {stakover(); return Memerrs;}
+#define Sl(x) if ((p->stk - p->stack)<(x)) {stakunder(); return Memerrs;}
+#define So(n) Mss(n) if((p->stk+(n)) > p->stacktop){stakover(); return Memerrs;}
 #else
 #define Sl(x)
 #define So(n)
@@ -235,14 +157,15 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 /*  Return stack access definitions  */
 
-#define R0  rstk[-1]		      /* Top of return stack */
-#define R1  rstk[-2]		      /* Next on return stack */
-#define R2  rstk[-3]		      /* Third on return stack */
-#define Rpop rstk--		      /* Pop return stack */
-#define Rpush *rstk++		      /* Push return stack */
+#define R0  p->rstk[-1]		      /* Top of return stack */
+#define R1  p->rstk[-2]		      /* Next on return stack */
+#define R2  p->rstk[-3]		      /* Third on return stack */
+#define Rpop p->rstk--		      /* Pop return stack */
+#define Rpush *p->rstk++		      /* Push return stack */
 #ifdef BOUNDS_CHECK
-#define Rsl(x) if ((rstk-rstack)<(x)) {rstakunder(); return Memerrs;}
-#define Rso(n) Msr(n) if ((rstk+(n))>rstacktop){rstakover(); return Memerrs;}
+#define Rsl(x) if((p->rstk - p->rstack)<(x)) {rstakunder(); return Memerrs;}
+#define Rso(n) Msr(n) \
+	if((p->rstk + (n)) > p->rstacktop){rstakover(); return Memerrs;}
 #else
 #define Rsl(x)
 #define Rso(n)
@@ -251,14 +174,15 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 /*  Heap access definitions  */
 
 #ifdef BOUNDS_CHECK
-#define Ho(n)  Msh(n) if ((hptr+(n))>heaptop){heapover(); return Memerrs;}
+#define Ho(n) Msh(n) if((p->hptr+(n)) > p->heaptop){heapover(); return Memerrs;}
 #else
 #define Ho(n)
 #endif
 
 #ifdef RESTRICTED_POINTERS
 #define Hpc(n) do {\
-	if((((stackitem *)(n))<heapbot)||(((stackitem *)(n))>=heaptop)){\
+	if((((stackitem *)(n)) < p->heapbot)||\
+			(((stackitem *)(n)) >= p->heaptop)){\
 		badpointer();\
 		return Memerrs;\
 	}\
@@ -267,20 +191,20 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Hpc(n)
 #endif
 
-#define Hstore *hptr++		     	// Store item on heap
+#define Hstore *p->hptr++		// Store item on heap
 // Item on heap with overflow check
-#define Hsingle(val) do { Ho(1); *hptr++ = val; } while(0)
-#define state  (*heap)			// Execution state is first heap word
+#define Hsingle(val) do { Ho(1); *p->hptr++ = val; } while(0)
+#define state  (*p->heap)		// Execution state is first heap word
 
 #define prim inline static void		// Attributes of primitive functions
 
 /*  Real number definitions (used only if REAL is configured). */
 
 #define Realsize (sizeof(pez_real)/sizeof(stackitem)) /* Stack cells / real */
-#define Realpop  stk -= Realsize      /* Pop real from stack */
-#define Realpop2 stk -= (2 * Realsize) /* Pop two reals from stack */
+#define Realpop  p->stk -= Realsize      /* Pop real from stack */
+#define Realpop2 p->stk -= (2 * Realsize) /* Pop two reals from stack */
 
-#define REALSTACK ((pez_real *)stk)
+#define REALSTACK ((pez_real *)p->stk)
 #ifdef ALIGNMENT
 #define REAL0 *((pez_real *)memcpy((char *)&rbuf0, (char *)(REALSTACK - 1), \
 			sizeof(pez_real)))
@@ -299,12 +223,13 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
 #endif
-#define Realpush(x) do { So(Realsize); ((pez_real *)stk++)[0] = (x); } while(0)
+#define Realpush(x) do { \
+	So(Realsize); ((pez_real *)p->stk++)[0] = (x); } while(0)
 
 #ifdef TRACE
-#define trace if(pez_trace)
+#define tracing if(p->trace)
 #else // TRACE
-#define trace if(0)
+#define tracing if(0)
 #endif
 
 // Miscellaneous conveniences
