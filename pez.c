@@ -4156,11 +4156,10 @@ Exported void rstakunder(pez_instance *p)
 	p->evalstat = PEZ_RSTACKUNDER;
 }
 
-/*  HEAPOVER  --  Recover from heap overflow.  Note that a heap
-				  overflow does NOT wipe the heap; it's up to
-		  the user to do this manually with FORGET or
-		  some such. */
-
+/*  HEAPOVER  --  Recover from heap overflow.  Note that a heap overflow does
+ *  NOT wipe the heap; it's up to the user to do this manually with FORGET or
+ *  some such.
+ */
 Exported void heapover(pez_instance *p)
 {
 	trouble(p, "Heap overflow");
