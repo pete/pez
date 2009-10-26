@@ -23,7 +23,8 @@
 /*  Data types	*/
 
 /* Stack items occupied by a dictionary word definition */
-#define Dictwordl ((sizeof(dictword)+(sizeof(stackitem)-1))/sizeof(stackitem))
+#define Dictwordl ((sizeof(pez_dictword) + (sizeof(pez_stackitem)-1)) \
+		/ sizeof(pez_stackitem))
 
 /* Token types */
 
@@ -54,7 +55,7 @@ extern pez_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
 #define FmodeB	    4		      /* Binary file mode */
 #define FmodeCre    8		      /* Create new file */
 
-extern void P_create(), P_dodoes();
+extern void P_create(pez_instance *p), P_dodoes(pez_instance *p);
 #else  /* EXPORT */
 #define Exported static
 #endif /* EXPORT */
@@ -62,16 +63,20 @@ extern void P_create(), P_dodoes();
 #ifdef EXPORT
 extern
 #endif
-void stakover(), rstakover(), heapover(), badpointer(),
-     stakunder(), rstakunder();
+void stakover(pez_instance *p), rstakover(pez_instance *p),
+     heapover(pez_instance *p), badpointer(pez_instance *p),
+     stakunder(pez_instance *p), rstakunder(pez_instance *p);
 
 /* Functions called by exported extensions. */
-extern void pez_primdef(), pez_error();
-extern pez_dictword *pez_lookup(), *pez_vardef();
-extern pez_stackitem *pez_body();
-extern int pez_exec();
+extern void pez_primdef(pez_instance *p, struct primfcn *pt),
+	pez_error(pez_instance *p, char *kind);
+
+extern pez_dictword *pez_lookup(pez_instance *p, char *name),
+       *pez_vardef(pez_instance *p, char *name, int size);
+extern pez_stackitem *pez_body(pez_instance *p, pez_dictword *dw);
+extern int pez_exec(pez_instance *p, pez_dictword *dw);
 #ifdef EXPORT
-extern char *pez_fgetsp();
+extern char *pez_fgetsp(pez_instance *p, char *s, int n, FILE *stream);
 #endif
 
 /*  If explicit alignment is not requested, enable it in any case for
@@ -151,8 +156,10 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #ifdef BOUNDS_CHECK
 #define Memerrs
-#define Sl(x) if ((p->stk - p->stack)<(x)) {stakunder(); return Memerrs;}
-#define So(n) Mss(n) if((p->stk+(n)) > p->stacktop){stakover(); return Memerrs;}
+#define Sl(x) if ((p->stk - p->stack)<(x)) {stakunder(p); return Memerrs;}
+#define So(n) do {\
+	Mss(n); if((p->stk+(n)) > p->stacktop){stakover(p); return Memerrs;} \
+} while(0)
 #else
 #define Sl(x)
 #define So(n)
@@ -166,9 +173,9 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Rpop p->rstk--		      /* Pop return stack */
 #define Rpush *p->rstk++		      /* Push return stack */
 #ifdef BOUNDS_CHECK
-#define Rsl(x) if((p->rstk - p->rstack)<(x)) {rstakunder(); return Memerrs;}
+#define Rsl(x) if((p->rstk - p->rstack)<(x)) {rstakunder(p); return Memerrs;}
 #define Rso(n) Msr(n) \
-	if((p->rstk + (n)) > p->rstacktop){rstakover(); return Memerrs;}
+	if((p->rstk + (n)) > p->rstacktop){rstakover(p); return Memerrs;}
 #else
 #define Rsl(x)
 #define Rso(n)
@@ -177,16 +184,18 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 /*  Heap access definitions  */
 
 #ifdef BOUNDS_CHECK
-#define Ho(n) Msh(n) if((p->hptr+(n)) > p->heaptop){heapover(); return Memerrs;}
+#define Ho(n) do { \
+	Msh(n); if((p->hptr+(n)) > p->heaptop){heapover(p); return Memerrs;} \
+} while(0);
 #else
 #define Ho(n)
 #endif
 
 #ifdef RESTRICTED_POINTERS
 #define Hpc(n) do {\
-	if((((stackitem *)(n)) < p->heapbot)||\
-			(((stackitem *)(n)) >= p->heaptop)){\
-		badpointer();\
+	if((((pez_stackitem *)(n)) < p->heapbot)||\
+			(((pez_stackitem *)(n)) >= p->heaptop)){\
+		badpointer(p);\
 		return Memerrs;\
 	}\
 } while(0)
@@ -201,11 +210,13 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #define prim inline static void		// Attributes of primitive functions
 
-/*  Real number definitions (used only if REAL is configured). */
-
-#define Realsize (sizeof(pez_real)/sizeof(stackitem)) /* Stack cells / real */
-#define Realpop  p->stk -= Realsize      /* Pop real from stack */
-#define Realpop2 p->stk -= (2 * Realsize) /* Pop two reals from stack */
+/*  Floating point macros: */
+// How many cells a float takes up:
+#define Realsize (sizeof(pez_real)/sizeof(pez_stackitem))
+// Pop a float:
+#define Realpop  p->stk -= Realsize
+// Pop two floats:
+#define Realpop2 p->stk -= (2 * Realsize)
 
 #define REALSTACK ((pez_real *)p->stk)
 #ifdef ALIGNMENT

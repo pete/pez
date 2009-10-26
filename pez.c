@@ -77,7 +77,7 @@
 #endif
 
 // Macro for defining primitives that push constant values:
-#define PUSH_CONSTANT(fname, constant) prim fname() { So(1);\
+#define PUSH_CONSTANT(fname, constant) prim fname(pez_instance *p) { So(1);\
 	Push = (pez_stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
@@ -172,12 +172,13 @@ static pez_stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 
 /*  Forward functions  */
 
-STATIC void exword(), trouble();
+STATIC void exword(pez_instance *p, pez_dictword *dw),
+	trouble(pez_instance *p, char *kind);
 #ifdef MATH_CHECK
-STATIC void notcomp(), divzero();
+STATIC void notcomp(pez_instance *p), divzero(pez_instance *p);
 #endif
 #ifdef WALKBACK
-STATIC void pwalkback();
+STATIC void pwalkback(pez_instance *p);
 #endif
 
 /*  ALLOC  --  Allocate memory and error upon exhaustion.  */
@@ -439,7 +440,7 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 
 /*  LOOKUP  --	Look up token in the dictionary.  */
 
-static pez_dictword *lookup(char *tkname)
+static pez_dictword *lookup(pez_instance *p, char *tkname)
 {
 	pez_dictword *dw = p->dict;
 
@@ -477,7 +478,7 @@ static pez_dictword *lookup(char *tkname)
  *  end of file is encountered and no characters were stored.  No end of line
  *  character is stored in the string buffer.
  */
-Exported char *pez_fgetsp(char *s, int n, FILE *stream)
+Exported char *pez_fgetsp(pez_instance *p, char *s, int n, FILE *stream)
 {
 	int i = 0, ch;
 
@@ -538,9 +539,9 @@ void pez_memstat(pez_instance *p)
 
 /*  ENTER  --  Enter word in dictionary.  */
 
-static void enter(char *tkname)
+static void enter(pez_instance *p, char *tkname)
 {
-	if(p->redef && (lookup(tkname) != NULL))
+	if(p->redef && (lookup(p, tkname) != NULL))
 		fprintf(stderr, "\n%s isn't unique.\n", tkname);
 	// Allocate name buffer
 	p->createword->wname = alloc(((unsigned int)strlen(tkname) + 2));
@@ -605,7 +606,7 @@ prim P_plus(pez_instance *p)
    Subtracts the number at the top of the stack from the next number on the
    stack.
 */
-prim P_minus()
+prim P_minus(pez_instance *p)
 {
 	Sl(2);
 	S1 -= S0;
@@ -616,7 +617,7 @@ prim P_minus()
    ( a b -- a*b )
    Multiplies the two numbers at the top of the stack.
 */
-prim P_times()
+prim P_times(pez_instance *p)
 {
 	Sl(2);
 	S1 *= S0;
@@ -627,12 +628,12 @@ prim P_times()
    ( a b -- a/b )
    Divides the second number on the stack by the first.
 */
-prim P_div()
+prim P_div(pez_instance *p)
 {
 	Sl(2);
 #ifdef MATH_CHECK
 	if(S0 == 0) {
-		divzero();
+		divzero(p);
 		return;
 	}
 #endif
@@ -644,12 +645,12 @@ prim P_div()
    ( a b -- a%b )
    The remainder of the second number on the stack divided by the first.
 */
-prim P_mod()
+prim P_mod(pez_instance *p)
 {
 	Sl(2);
 #ifdef MATH_CHECK
 	if(S0 == 0) {
-		divzero();
+		divzero(p);
 		return;
 	}
 #endif
@@ -662,14 +663,14 @@ prim P_mod()
    Divides the second number on the stack by the first, returning the quotient
    and the remainder.
 */
-prim P_divmod()
+prim P_divmod(pez_instance *p)
 {
 	pez_stackitem quot;
 
 	Sl(2);
 #ifdef MATH_CHECK
 	if(S0 == 0) {
-		divzero();
+		divzero(p);
 		return;
 	}
 #endif
@@ -682,7 +683,7 @@ prim P_divmod()
    ( a b -- min )
    Returns the minimum of the top two numbers on the stack.
 */
-prim P_min()
+prim P_min(pez_instance *p)
 {
 	Sl(2);
 	S1 = min(S1, S0);
@@ -693,7 +694,7 @@ prim P_min()
    ( a b -- max )
    Returns the maximum of the top two numbers on the stack.
 */
-prim P_max()
+prim P_max(pez_instance *p)
 {
 	Sl(2);
 	S1 = max(S1, S0);
@@ -704,7 +705,7 @@ prim P_max()
    ( a -- -a )
    Negates the top number on the stack.
 */
-prim P_neg()
+prim P_neg(pez_instance *p)
 {
 	Sl(1);
 	S0 = -S0;
@@ -714,7 +715,7 @@ prim P_neg()
    ( a -- abs(a) )
    Returns the absolute value of the top number on the stack.
 */
-prim P_abs()
+prim P_abs(pez_instance *p)
 {
 	Sl(1);
 	S0 = abs(S0);
@@ -724,7 +725,7 @@ prim P_abs()
    ( a b -- a=b )
    Tests the top two numbers on the stack for equality.
 */
-prim P_equal()
+prim P_equal(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 == S0) ? Truth : Falsity;
@@ -735,7 +736,7 @@ prim P_equal()
    ( a b -- a<>b )
    Returns true iff the top two numbers on the stack are unequal.
 */
-prim P_unequal()
+prim P_unequal(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 != S0) ? Truth : Falsity;
@@ -745,7 +746,7 @@ prim P_unequal()
 /*
    ( a b -- a>b )
 */
-prim P_gtr()
+prim P_gtr(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 > S0) ? Truth : Falsity;
@@ -755,7 +756,7 @@ prim P_gtr()
 /*
    ( a b -- a<b )
 */
-prim P_lss()
+prim P_lss(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 < S0) ? Truth : Falsity;
@@ -765,7 +766,7 @@ prim P_lss()
 /*
    ( a b -- a>=b )
 */
-prim P_geq()
+prim P_geq(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 >= S0) ? Truth : Falsity;
@@ -775,7 +776,7 @@ prim P_geq()
 /*
    ( a b -- a<=b )
 */
-prim P_leq()
+prim P_leq(pez_instance *p)
 {
 	Sl(2);
 	S1 = (S1 <= S0) ? Truth : Falsity;
@@ -786,7 +787,7 @@ prim P_leq()
    ( a b -- a&b )
    Returns the bitwise AND of the top two elements on the stack.
 */
-prim P_and()
+prim P_and(pez_instance *p)
 {
 	Sl(2);
 	S1 &= S0;
@@ -797,7 +798,7 @@ prim P_and()
    ( a b -- a|b )
    Bitwise OR of the top two elements on the stack.
 */
-prim P_or()
+prim P_or(pez_instance *p)
 {
 	Sl(2);
 	S1 |= S0;
@@ -808,7 +809,7 @@ prim P_or()
    ( a b -- a^b )
    Bitwise XOR of the top two elements on the stack.
 */
-prim P_xor()
+prim P_xor(pez_instance *p)
 {
 	Sl(2);
 	S1 ^= S0;
@@ -819,7 +820,7 @@ prim P_xor()
    ( a -- ~a )
    Bitwise negation of the top element on the stack.
 */
-prim P_not()
+prim P_not(pez_instance *p)
 {
 	Sl(1);
 	S0 = ~S0;
@@ -830,7 +831,7 @@ prim P_not()
    Arithmetic shift left of the second item on the stack by number of bits in
    the top item.  Shifts right if the top item is negative.
 */
-prim P_shift()
+prim P_shift(pez_instance *p)
 {
 	Sl(1);
 	S1 = (S0 < 0) ? (((unsigned long)S1) >> (-S0)) :
@@ -838,61 +839,61 @@ prim P_shift()
 	Pop;
 }
 
-prim P_1plus()
+prim P_1plus(pez_instance *p)
 {				/* Add one */
 	Sl(1);
 	S0++;
 }
 
-prim P_2plus()
+prim P_2plus(pez_instance *p)
 {				/* Add two */
 	Sl(1);
 	S0 += 2;
 }
 
-prim P_1minus()
+prim P_1minus(pez_instance *p)
 {				/* Subtract one */
 	Sl(1);
 	S0--;
 }
 
-prim P_2minus()
+prim P_2minus(pez_instance *p)
 {				/* Subtract two */
 	Sl(1);
 	S0 -= 2;
 }
 
-prim P_2times()
+prim P_2times(pez_instance *p)
 {				/* Multiply by two */
 	Sl(1);
 	S0 *= 2;
 }
 
-prim P_2div()
+prim P_2div(pez_instance *p)
 {				/* Divide by two */
 	Sl(1);
 	S0 /= 2;
 }
 
-prim P_0equal()
+prim P_0equal(pez_instance *p)
 {				/* Equal to zero ? */
 	Sl(1);
 	S0 = (S0 == 0) ? Truth : Falsity;
 }
 
-prim P_0notequal()
+prim P_0notequal(pez_instance *p)
 {				/* Not equal to zero ? */
 	Sl(1);
 	S0 = (S0 != 0) ? Truth : Falsity;
 }
 
-prim P_0gtr()
+prim P_0gtr(pez_instance *p)
 {				/* Greater than zero ? */
 	Sl(1);
 	S0 = (S0 > 0) ? Truth : Falsity;
 }
 
-prim P_0lss()
+prim P_0lss(pez_instance *p)
 {				/* Less than zero ? */
 	Sl(1);
 	S0 = (S0 < 0) ? Truth : Falsity;
@@ -903,7 +904,7 @@ prim P_0lss()
 /*
 	Push current heap address
 */
-prim P_here()
+prim P_here(pez_instance *p)
 {
 	So(1);
 	Push = (pez_stackitem)p->hptr;
@@ -912,7 +913,7 @@ prim P_here()
 /*
 	Store value into address
 */
-prim P_bang()
+prim P_bang(pez_instance *p)
 {
 	Sl(2);
 	Hpc(S0);
@@ -923,7 +924,7 @@ prim P_bang()
 /*
 	Fetch value from address
 */
-prim P_at()
+prim P_at(pez_instance *p)
 {
 	Sl(1);
 	Hpc(S0);
@@ -933,7 +934,7 @@ prim P_at()
 /*
 	Add value at specified address
 */
-prim P_plusbang()
+prim P_plusbang(pez_instance *p)
 {
 	Sl(2);
 	Hpc(S0);
@@ -945,7 +946,7 @@ prim P_plusbang()
    ( addr -- )
    Increments (by 1) the variable at the specified address.
 */
-prim P_1plusbang()
+prim P_1plusbang(pez_instance *p)
 {
 	Sl(1);
 	Hpc(S0);
@@ -956,7 +957,7 @@ prim P_1plusbang()
 /*
 	Allocate heap bytes
 */
-prim P_allot()
+prim P_allot(pez_instance *p)
 {
 	pez_stackitem n;
 
@@ -970,7 +971,7 @@ prim P_allot()
 /*
 	Store TOS on heap
 */
-prim P_comma()
+prim P_comma(pez_instance *p)
 {
 	Sl(1);
 	Ho(1);
@@ -981,7 +982,7 @@ prim P_comma()
 /*
 	Store byte value into address
 */
-prim P_cbang()
+prim P_cbang(pez_instance *p)
 {
 	Sl(2);
 	Hpc(S0);
@@ -992,7 +993,7 @@ prim P_cbang()
 /*
 	Fetch byte value from address
 */
-prim P_cat()
+prim P_cat(pez_instance *p)
 {
 	Sl(1);
 	Hpc(S0);
@@ -1002,7 +1003,7 @@ prim P_cat()
 /*
 	Store one byte on heap
 */
-prim P_ccomma()
+prim P_ccomma(pez_instance *p)
 {
 	unsigned char *chp;
 
@@ -1017,7 +1018,7 @@ prim P_ccomma()
 /*
 	Align heap pointer after storing *//* a series of bytes.
 */
-prim P_cequal()
+prim P_cequal(pez_instance *p)
 {
 	pez_stackitem n = (((pez_stackitem)p->hptr) - ((pez_stackitem)p->heap)) %
 		(sizeof(pez_stackitem));
@@ -1032,15 +1033,20 @@ prim P_cequal()
 
 /*  Variable and constant primitives  */
 
-prim P_var()
-{				/* Push body address of current word */
+/*
+   ( -- addr )
+   Pushes the body address of the current word.
+*/
+prim P_var(pez_instance *p)
+{
 	So(1);
 	Push = (pez_stackitem)(((pez_stackitem *)p->curword) + Dictwordl);
 }
+
 /*
 	Create a new word
 */
-Exported void P_create()
+Exported void P_create(pez_instance *p)
 {
 	p->defpend = True;		/* Set definition pending */
 	Ho(Dictwordl);
@@ -1053,7 +1059,7 @@ Exported void P_create()
 /*
 	Forget word
 */
-prim P_forget()
+prim P_forget(pez_instance *p)
 {
 	p->forgetpend = True;	// Mark forget pending
 }
@@ -1061,9 +1067,9 @@ prim P_forget()
 /*
 	Declare variable
 */
-prim P_variable()
+prim P_variable(pez_instance *p)
 {
-	P_create();		// Create dictionary item
+	P_create(p);		// Create dictionary item
 	Ho(1);
 	Hstore = 0;		// Initial value = 0
 }
@@ -1071,7 +1077,7 @@ prim P_variable()
 /*
 	Push value in body
 */
-prim P_con()
+prim P_con(pez_instance *p)
 {
 	So(1);
 	Push = *(((pez_stackitem *)p->curword) + Dictwordl);
@@ -1080,10 +1086,10 @@ prim P_con()
 /*
 	Declare constant
 */
-prim P_constant()
+prim P_constant(pez_instance *p)
 {
 	Sl(1);
-	P_create();		// Create dictionary item
+	P_create(p);		// Create dictionary item
 	p->createword->wcode = P_con;	// Set code to constant push
 	Ho(1);
 	Hstore = S0;		// Store constant value in body
@@ -1094,7 +1100,7 @@ prim P_constant()
    ( -- cellsize )
    Pushes the size of a cell in bytes.
 */
-prim P_cellsize()
+prim P_cellsize(pez_instance *p)
 {
 	So(1);
 	Push = sizeof(long);
@@ -1104,7 +1110,7 @@ prim P_cellsize()
    ( -- floatsize )
    Pushes the size of a float in bytes.
 */
-prim P_floatsize()
+prim P_floatsize(pez_instance *p)
 {
 	So(1);
 	Push = sizeof(double);
@@ -1114,7 +1120,7 @@ prim P_floatsize()
    ( n -- n*cellsize )
    Returns the number of bytes occupied by n cells.
 */
-prim P_cells()
+prim P_cells(pez_instance *p)
 {
 	Sl(1);
 	S0 *= sizeof(pez_stackitem);
@@ -1124,7 +1130,7 @@ prim P_cells()
    ( n -- n*floatsize )
    Returns the number of bytes occupied by n floating point numbers.
 */
-prim P_floats()
+prim P_floats(pez_instance *p)
 {
 	Sl(1);
 	S0 *= sizeof(double);
@@ -1151,7 +1157,7 @@ PUSH_CONSTANT(P_pezconf_build_lib_cmd,
    ( sub1 sub2 ... subn -- addr )
    Array subscript calculation
 */
-prim P_arraysub()
+prim P_arraysub(pez_instance *p)
 {
 	int i, offset, esize, nsubs;
 	pez_stackitem *array, *isp;
@@ -1189,16 +1195,16 @@ prim P_arraysub()
    ( sub1 sub2 ... subn n esize -- array )
    Declares an array and stores its elements.
 */
-prim P_array()
+prim P_array(pez_instance *p)
 {
 	int i, nsubs, asize = 1;
 	pez_stackitem *isp;
 
 	Sl(2);
 	if(S0 <= 0)
-		trouble("Bad array element size");
+		trouble(p, "Bad array element size");
 	if(S1 <= 0)
-		trouble("Bad array subscript count");
+		trouble(p, "Bad array subscript count");
 
 	nsubs = S1;		// Number of subscripts
 	Sl(nsubs + 2);		// Verify that dimensions are present
@@ -1209,13 +1215,13 @@ prim P_array()
 	isp = &S2;
 	for(i = 0; i < nsubs; i++) {
 		if(*isp <= 0)
-			trouble("Bad array dimension");
+			trouble(p, "Bad array dimension");
 		asize *= *isp--;
 	}
 
 	asize = (asize + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
 	Ho(asize + nsubs + 2);	/* Reserve space for array and header */
-	P_create();		// Create variable
+	P_create(p);		// Create variable
 	p->createword->wcode = P_arraysub; // Set method to subscript calculate
 	Hstore = nsubs;		// Header <- Number of subscripts
 	Hstore = S0;		// Header <- Fundamental element size
@@ -1231,7 +1237,7 @@ prim P_array()
 
 /*  String primitives  */
 
-prim P_strlit()
+prim P_strlit(pez_instance *p)
 {				/* Push address of string literal */
 	So(1);
 	Push = (pez_stackitem)(((char *)p->ip) + 1);
@@ -1244,11 +1250,11 @@ prim P_strlit()
 	Skipstring;		/* Advance IP past it */
 }
 
-prim P_string()
+prim P_string(pez_instance *p)
 {				/* Create string buffer */
 	Sl(1);
 	Ho((S0 + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem));
-	P_create();		// Create variable
+	P_create(p);		// Create variable
 	/* Allocate storage for string */
 	p->hptr += (S0 + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem);
 	Pop;
@@ -1258,7 +1264,7 @@ prim P_string()
    ( dst src -- )
    Copies a string from src to dest.
 */
-prim P_strcpy()
+prim P_strcpy(pez_instance *p)
 {				// Copy string to address on stack
 	Sl(2);
 	Hpc(S0);
@@ -1267,7 +1273,7 @@ prim P_strcpy()
 	Pop2;
 }
 
-prim P_strcat()
+prim P_strcat(pez_instance *p)
 {				/* Append string to address on stack */
 	Sl(2);
 	Hpc(S0);
@@ -1276,7 +1282,7 @@ prim P_strcat()
 	Pop2;
 }
 
-prim P_strlen()
+prim P_strlen(pez_instance *p)
 {				/* Take length of string on stack top */
 	Sl(1);
 	Hpc(S0);
@@ -1288,7 +1294,7 @@ prim P_strlen()
    Compares two strings.  If they are equal, the result is zero.  If str1 sorts
    before str2, the result is -1.  Otherwise, the result is 1.
 */
-prim P_strcmp()
+prim P_strcmp(pez_instance *p)
 {
 	int i;
 	Sl(2);
@@ -1303,7 +1309,7 @@ prim P_strcmp()
    ( str1 str2 len -- comp )
    Like strcmp, but only matches up to len characters.
 */
-prim P_strncmp()
+prim P_strncmp(pez_instance *p)
 {
 	int i;
 	Sl(3);
@@ -1314,7 +1320,7 @@ prim P_strncmp()
 	Pop2;
 }
 
-prim P_strchar()
+prim P_strchar(pez_instance *p)
 {				// Find character in string
 	Sl(2);
 	Hpc(S0);
@@ -1327,7 +1333,7 @@ prim P_strchar()
    (source start length/-1 dest -- )
    Extract and store substring
 */
-prim P_substr()
+prim P_substr(pez_instance *p)
 {
 	long sl, sn;
 	char *ss, *sp, *se, *ds;
@@ -1351,7 +1357,7 @@ prim P_substr()
    ( val fmt buf -- )
    Equivalent to sprintf(buf, fmt, val);
 */
-prim P_strform()
+prim P_strform(pez_instance *p)
 {
 	Sl(2);
 	Hpc(S0);
@@ -1364,7 +1370,7 @@ prim P_strform()
    ( f -- str )
    Float->string, using the format "%6.2f"
 */
-prim P_fstrform()
+prim P_fstrform(pez_instance *p)
 {
 	Sl(2 + Realsize);
 	Hpc(S0);
@@ -1378,7 +1384,7 @@ prim P_fstrform()
    Takes a string from the stack, takes an integer from it, and advances the
    string's pointer to the end of that integer.
 */
-prim P_strint()
+prim P_strint(pez_instance *p)
 {
 	pez_stackitem is;
 	char *eptr;
@@ -1391,7 +1397,7 @@ prim P_strint()
 	Push = is;
 }
 
-prim P_strreal()
+prim P_strreal(pez_instance *p)
 {				/* String to real *//* str -- endptr value */
 	int i;
 	union {
@@ -1418,7 +1424,7 @@ prim P_strreal()
    respectively, case-insensitive matching (REG_ICASE) and the newline tweaking
    rules (REG_NEWLINE).  See the man page for regex(3) for more information.
 */
-prim P_regex()
+prim P_regex(pez_instance *p)
 {
 	int flags = REG_EXTENDED, problem;
 
@@ -1445,7 +1451,7 @@ prim P_regex()
    Attempts to match the supplied string against the supplied regular
    expression.
 */
-prim P_rmatch()
+prim P_rmatch(pez_instance *p)
 {
 	int match;
 	Sl(2);
@@ -1465,7 +1471,7 @@ prim P_rmatch()
    will be zero.  (Note, however, that a match can have length zero and still be
    valid; check the offset to be sure if an optional part matched.)
 */
-#define PUSH_RX(fname,n) prim fname() { So(2); \
+#define PUSH_RX(fname,n) prim fname(pez_instance *p) { So(2); \
 	Push = regex_matches[n].rm_eo - regex_matches[n].rm_so;\
 	Push = regex_matches[n].rm_so;\
 	}
@@ -1496,7 +1502,7 @@ PUSH_RX(P_money19, 19)
 /*
    Pushes a float literal from the input stream.
 */
-prim P_flit()
+prim P_flit(pez_instance *p)
 {
 	int i;
 
@@ -1518,7 +1524,7 @@ prim P_flit()
    ( f1 f2 -- f1+f2 )
    Adds the two floats at the top of the stack.
 */
-prim P_fplus()
+prim P_fplus(pez_instance *p)
 {
 	Sl(2 * Realsize);
 	SREAL1(REAL1 + REAL0);
@@ -1529,7 +1535,7 @@ prim P_fplus()
    ( f1 f2 -- f1-f2 )
    Subtracts the float at the top of the stack from the next float.
 */
-prim P_fminus()
+prim P_fminus(pez_instance *p)
 {
 	Sl(2 * Realsize);
 	SREAL1(REAL1 - REAL0);
@@ -1540,7 +1546,7 @@ prim P_fminus()
    ( f1 f2 -- f1*f2 )
    Multiplies the two floats at the top of the stack.
 */
-prim P_ftimes()
+prim P_ftimes(pez_instance *p)
 {
 	Sl(2 * Realsize);
 	SREAL1(REAL1 * REAL0);
@@ -1551,12 +1557,12 @@ prim P_ftimes()
    ( f1 f2 -- f1/f2 )
    Divides the second float on the stack by the first.
 */
-prim P_fdiv()
+prim P_fdiv(pez_instance *p)
 {
 	Sl(2 * Realsize);
 #ifdef MATH_CHECK
 	if(REAL0 == 0.0) {
-		divzero();
+		divzero(p);
 		return;
 	}
 #endif
@@ -1568,7 +1574,7 @@ prim P_fdiv()
    ( f1 f2 -- min )
    Consumes two floats, leaves the lesser of the two on top of the stack.
 */
-prim P_fmin()
+prim P_fmin(pez_instance *p)
 {
 	Sl(2 * Realsize);
 	SREAL1(min(REAL1, REAL0));
@@ -1579,7 +1585,7 @@ prim P_fmin()
    ( f1 f2 -- max )
    Consumes two floats, leaves the greater of the two on top of the stack.
 */
-prim P_fmax()
+prim P_fmax(pez_instance *p)
 {
 	Sl(2 * Realsize);
 	SREAL1(max(REAL1, REAL0));
@@ -1589,7 +1595,7 @@ prim P_fmax()
 /*
    ( f -- -f )
 */
-prim P_fneg()
+prim P_fneg(pez_instance *p)
 {
 	Sl(Realsize);
 	SREAL0(-REAL0);
@@ -1598,7 +1604,7 @@ prim P_fneg()
 /*
    ( f -- abs(f) )
 */
-prim P_fabs()
+prim P_fabs(pez_instance *p)
 {
 	Sl(Realsize);
 	SREAL0(abs(REAL0));
@@ -1607,7 +1613,7 @@ prim P_fabs()
 /*
    ( f1 f2 -- f1=f2 )
 */
-prim P_fequal()
+prim P_fequal(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1620,7 +1626,7 @@ prim P_fequal()
 /*
    ( f1 f2 -- f1<>f2 )
 */
-prim P_funequal()
+prim P_funequal(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1633,7 +1639,7 @@ prim P_funequal()
 /*
    ( f1 f2 -- f1>f2 )
 */
-prim P_fgtr()
+prim P_fgtr(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1646,7 +1652,7 @@ prim P_fgtr()
 /*
    ( f1 f2 -- f1<f2 )
 */
-prim P_flss()
+prim P_flss(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1659,7 +1665,7 @@ prim P_flss()
 /*
    ( f1 f2 -- f1>=f2 )
 */
-prim P_fgeq()
+prim P_fgeq(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1672,7 +1678,7 @@ prim P_fgeq()
 /*
    ( f1 f2 -- f1<=f2 )
 */
-prim P_fleq()
+prim P_fleq(pez_instance *p)
 {
 	pez_stackitem t;
 
@@ -1686,7 +1692,7 @@ prim P_fleq()
    ( f -- )
    Print the float at the top of the stack to the current output stream.
 */
-prim P_fdot()
+prim P_fdot(pez_instance *p)
 {
 	double f;
 	memcpy(&f, p->stk - 1, sizeof(double));
@@ -1700,7 +1706,7 @@ prim P_fdot()
    ( i -- f )
    Convert an integer to a floating-point number.
 */
-prim P_float()
+prim P_float(pez_instance *p)
 {
 	pez_real r;
 
@@ -1715,7 +1721,7 @@ prim P_float()
    ( f -- i )
    Convert a floating-point number to an integer.
 */
-prim P_fix()
+prim P_fix(pez_instance *p)
 {
 	pez_stackitem i;
 
@@ -1730,7 +1736,7 @@ prim P_fix()
    Returns the time as number of seconds since the epoch, as a floating point
    value.
 */
-prim P_ftime()
+prim P_ftime(pez_instance *p)
 {
 	struct timeval tv;
 	double d;
@@ -1745,61 +1751,61 @@ prim P_ftime()
 
 #define Mathfunc(x) do { Sl(Realsize); SREAL0(x(REAL0)); } while(0)
 
-prim P_acos()
+prim P_acos(pez_instance *p)
 {				/* Arc cosine */
 	Mathfunc(acos);
 }
 
-prim P_asin()
+prim P_asin(pez_instance *p)
 {				/* Arc sine */
 	Mathfunc(asin);
 }
 
-prim P_atan()
+prim P_atan(pez_instance *p)
 {				/* Arc tangent */
 	Mathfunc(atan);
 }
 
-prim P_atan2()
+prim P_atan2(pez_instance *p)
 {				/* Arc tangent:  y x -- atan */
 	Sl(2 * Realsize);
 	SREAL1(atan2(REAL1, REAL0));
 	Realpop;
 }
 
-prim P_cos()
+prim P_cos(pez_instance *p)
 {				/* Cosine */
 	Mathfunc(cos);
 }
 
-prim P_exp()
+prim P_exp(pez_instance *p)
 {				/* E ^ x */
 	Mathfunc(exp);
 }
 
-prim P_log()
+prim P_log(pez_instance *p)
 {				/* Natural log */
 	Mathfunc(log);
 }
 
-prim P_pow()
+prim P_pow(pez_instance *p)
 {				/* X ^ Y */
 	Sl(2 * Realsize);
 	SREAL1(pow(REAL1, REAL0));
 	Realpop;
 }
 
-prim P_sin()
+prim P_sin(pez_instance *p)
 {				/* Sine */
 	Mathfunc(sin);
 }
 
-prim P_sqrt()
+prim P_sqrt(pez_instance *p)
 {				/* Square root */
 	Mathfunc(sqrt);
 }
 
-prim P_tan()
+prim P_tan(pez_instance *p)
 {				/* Tangent */
 	Mathfunc(tan);
 }
@@ -1811,17 +1817,17 @@ prim P_tan()
 
 #ifdef CONIO
 
-prim P_hex()
+prim P_hex(pez_instance *p)
 {
 	p->base = 16;
 }
 
-prim P_decimal()
+prim P_decimal(pez_instance *p)
 {
 	p->base = 10;
 }
 
-prim P_argc()
+prim P_argc(pez_instance *p)
 {
 	char **pa;
 	if(!p->argc && p->argv[0]) {
@@ -1833,12 +1839,12 @@ prim P_argc()
 	Push = p->argc;
 }
 
-prim P_argv()
+prim P_argv(pez_instance *p)
 {
 	Push = (pez_stackitem)p->argv;
 }
 
-prim P_dot()
+prim P_dot(pez_instance *p)
 {
 	Sl(1);
 	printf(p->base == 16 ? "%lx " : "%ld ", S0);
@@ -1846,7 +1852,7 @@ prim P_dot()
 	Pop;
 }
 
-prim P_question()
+prim P_question(pez_instance *p)
 {				// Print value at address
 	Sl(1);
 	Hpc(S0);
@@ -1859,7 +1865,7 @@ prim P_question()
    ( -- )
    Prints a newline to the output stream.
 */
-prim P_cr()
+prim P_cr(pez_instance *p)
 {
 	write(output_stream, "\n", 1);
 }
@@ -1868,7 +1874,7 @@ prim P_cr()
    ( ... -- ... )
    Print the entire stack, as cell-sized integers.
 */
-prim P_dots()
+prim P_dots(pez_instance *p)
 {
 	pez_stackitem *tsp;
 
@@ -1889,7 +1895,7 @@ prim P_dots()
 /*
 	Print literal string that follows
 */
-prim P_dotquote()
+prim P_dotquote(pez_instance *p)
 {
 	Compiling;
 	p->stringlit = True;		// Set string literal expected
@@ -1900,7 +1906,7 @@ prim P_dotquote()
    ( -- )
    Prints the following inline string literal.
 */
-prim P_dotparen()
+prim P_dotparen(pez_instance *p)
 {
 	if(p->ip) {
 		write(output_stream, (char *)p->ip + 1,
@@ -1916,7 +1922,7 @@ prim P_dotparen()
    ( string -- )
    Prints the string at the top of the stack.
 */
-prim P_print()
+prim P_print(pez_instance *p)
 {
 	int len;
 
@@ -1933,7 +1939,7 @@ prim P_print()
    already contains it.
    ( string -- )
 */
-prim P_puts()
+prim P_puts(pez_instance *p)
 {
 	int len;
 
@@ -1943,14 +1949,14 @@ prim P_puts()
 	len = strlen((char *)S0);
 	write(output_stream, (char *)S0, len);
 	if(*(char *)(S0 + len - 1) != '\n')
-		P_cr();
+		P_cr(p);
 	Pop;
 }
 
 /*
    ( strbuf maxlen -- len )
 */
-prim P_gets()
+prim P_gets(pez_instance *p)
 {
 	pez_stackitem max;
 	char *buf;
@@ -1979,7 +1985,7 @@ prim P_gets()
    Reads from an input stream up to maxlen bytes, puts them in strbuf, and
    returns the the actual number of bytes read.
 */
-prim P_read()
+prim P_read(pez_instance *p)
 {
 	int len;
 	Sl(2);
@@ -1993,7 +1999,7 @@ prim P_read()
    ( string len -- bytes-written )
    Writes len bytes from string, returning the actual number of bytes written.
 */
-prim P_write()
+prim P_write(pez_instance *p)
 {
 	int len;
 	Sl(2);
@@ -2006,7 +2012,7 @@ prim P_write()
 /*
    ( -- char )
 */
-prim P_getc()
+prim P_getc(pez_instance *p)
 {
 	char c;
 
@@ -2018,7 +2024,7 @@ prim P_getc()
 /*
    ( char -- )
 */
-prim P_putc()
+prim P_putc(pez_instance *p)
 {
 	char c;
 	Sl(1);
@@ -2031,7 +2037,7 @@ prim P_putc()
    ( -- )
    Print the currently defined words to stdout.
 */
-prim P_words()
+prim P_words(pez_instance *p)
 {
 	pez_dictword *dw = p->dict;
 
@@ -2050,7 +2056,7 @@ prim P_words()
    ( fd -- )
    Sets the output stream to the specified file descriptor.
 */
-prim P_tooutput()
+prim P_tooutput(pez_instance *p)
 {
 	Sl(1);
 	output_idx = (output_idx + 1) % MAX_IO_STREAMS;
@@ -2062,7 +2068,7 @@ prim P_tooutput()
    ( fd -- )
    Sets the input stream to the specified file descriptor.
 */
-prim P_toinput()
+prim P_toinput(pez_instance *p)
 {
 	Sl(1);
 	input_idx = (input_idx + 1) % MAX_IO_STREAMS;
@@ -2074,7 +2080,7 @@ prim P_toinput()
    ( -- fd )
    Pushes the current output stream onto the stack.
 */
-prim P_outputto()
+prim P_outputto(pez_instance *p)
 {
 	So(1);
 	Push = output_stream;
@@ -2085,7 +2091,7 @@ prim P_outputto()
    ( -- fd )
    Pushes the current input stream onto the stack.
 */
-prim P_inputto()
+prim P_inputto(pez_instance *p)
 {
 	So(1);
 	Push = input_stream;
@@ -2095,7 +2101,7 @@ prim P_inputto()
 /*
    ( fname flags mode -- fd )
 */
-prim P_open()
+prim P_open(pez_instance *p)
 {
 	char *fname;
 	long flags, mode;
@@ -2123,7 +2129,7 @@ PUSH_CONSTANT(P_o_wronly, O_WRONLY)
 /*
    ( fd -- status )
 */
-prim P_close()
+prim P_close(pez_instance *p)
 {
 	Sl(1);
 	S0 = close(S0);
@@ -2132,7 +2138,7 @@ prim P_close()
 /*
    ( fname -- stat )
 */
-prim P_unlink()
+prim P_unlink(pez_instance *p)
 {
 	Sl(1);
 	S0 = unlink((char *)S0);
@@ -2142,7 +2148,7 @@ prim P_unlink()
    ( fd offset whence -- new-offset )
    Seeks to a given position in a file.
 */
-prim P_seek()
+prim P_seek(pez_instance *p)
 {
 	Sl(3);
 	S2 = lseek(S2, S1, S0);
@@ -2158,7 +2164,7 @@ PUSH_CONSTANT(P_seek_set, SEEK_SET)
    certain types of file descriptors, like sockets, and will only work on some
    platforms for others.  No worries for regular files.
 */
-prim P_tell()
+prim P_tell(pez_instance *p)
 {
 	Sl(1);
 	S0 = (pez_stackitem)lseek(S0, 0, SEEK_CUR);
@@ -2168,7 +2174,7 @@ prim P_tell()
    ( fd -- evalstat )
    Reads a file descriptor, loads the code.
 */
-prim P_load()
+prim P_load(pez_instance *p)
 {
 	FILE *f;
 
@@ -2194,7 +2200,7 @@ PUSH_CONSTANT(P_pathmax, PATH_MAX)
 
 #ifdef EVALUATE
 
-prim P_evaluate()
+prim P_evaluate(pez_instance *p)
 {				/* string -- status */
 	int es = PEZ_SNORM;
 	pez_statemark mk;
@@ -2229,7 +2235,7 @@ prim P_evaluate()
 
 /*  Stack mechanics  */
 
-prim P_depth()
+prim P_depth(pez_instance *p)
 {				// Push stack depth
 	pez_stackitem s = p->stk - p->stack;
 
@@ -2237,12 +2243,12 @@ prim P_depth()
 	Push = s;
 }
 
-prim P_clear()
+prim P_clear(pez_instance *p)
 {				// Clear stack
 	p->stk = p->stack;
 }
 
-prim P_dup()
+prim P_dup(pez_instance *p)
 {				// Duplicate top of stack
 	pez_stackitem s;
 
@@ -2252,13 +2258,13 @@ prim P_dup()
 	Push = s;
 }
 
-prim P_drop()
+prim P_drop(pez_instance *p)
 {				// Drop top item on stack
 	Sl(1);
 	Pop;
 }
 
-prim P_swap()
+prim P_swap(pez_instance *p)
 {				// Exchange two top items on stack
 	pez_stackitem t;
 
@@ -2268,7 +2274,7 @@ prim P_swap()
 	S0 = t;
 }
 
-prim P_over()
+prim P_over(pez_instance *p)
 {				// Push copy of next to top of stack
 	pez_stackitem s;
 
@@ -2278,7 +2284,7 @@ prim P_over()
 	Push = s;
 }
 
-prim P_pick()
+prim P_pick(pez_instance *p)
 {				// Copy indexed item from stack
 	Sl(2);
 	S0 = p->stk[-(2 + S0)];
@@ -2287,14 +2293,14 @@ prim P_pick()
 /*
    ( a b -- b )
 */
-prim P_nip()
+prim P_nip(pez_instance *p)
 {
 	Sl(2);
 	S1 = S0;
 	Pop;
 }
 
-prim P_rot()
+prim P_rot(pez_instance *p)
 {				// Rotate 3 top stack items
 	pez_stackitem t;
 
@@ -2305,7 +2311,7 @@ prim P_rot()
 	S1 = t;
 }
 
-prim P_minusrot()
+prim P_minusrot(pez_instance *p)
 {				// Reverse rotate 3 top stack items
 	pez_stackitem t;
 
@@ -2316,7 +2322,7 @@ prim P_minusrot()
 	S2 = t;
 }
 
-prim P_roll()
+prim P_roll(pez_instance *p)
 {				// Rotate N top stack items
 	pez_stackitem i, j, t;
 
@@ -2330,7 +2336,7 @@ prim P_roll()
 	S0 = t;
 }
 
-prim P_tor()
+prim P_tor(pez_instance *p)
 {				// Transfer stack top to return stack
 	Rso(1);
 	Sl(1);
@@ -2338,7 +2344,7 @@ prim P_tor()
 	Pop;
 }
 
-prim P_rfrom()
+prim P_rfrom(pez_instance *p)
 {				// Transfer return stack top to stack
 	Rsl(1);
 	So(1);
@@ -2346,7 +2352,7 @@ prim P_rfrom()
 	Rpop;
 }
 
-prim P_rfetch()
+prim P_rfetch(pez_instance *p)
 {				// Fetch top item from return stack
 	Rsl(1);
 	So(1);
@@ -2357,7 +2363,7 @@ prim P_rfetch()
    ( -- time )
    Returns time as number of seconds since the epoch.
 */
-prim P_time()
+prim P_time(pez_instance *p)
 {
 	So(1);
 	Push = time(NULL);
@@ -2372,7 +2378,7 @@ prim P_time()
 
 /*  Double stack manipulation items  */
 
-prim P_2dup()
+prim P_2dup(pez_instance *p)
 {				// Duplicate stack top doubleword
 	pez_stackitem s;
 
@@ -2384,13 +2390,13 @@ prim P_2dup()
 	Push = s;
 }
 
-prim P_2drop()
+prim P_2drop(pez_instance *p)
 {				/* Drop top two items from stack */
 	Sl(2);
 	p->stk -= 2;
 }
 
-prim P_2swap()
+prim P_2swap(pez_instance *p)
 {				/* Swap top two double items on stack */
 	pez_stackitem t;
 
@@ -2403,7 +2409,7 @@ prim P_2swap()
 	S1 = t;
 }
 
-prim P_2over()
+prim P_2over(pez_instance *p)
 {				/* Extract second pair from stack */
 	pez_stackitem s;
 
@@ -2415,7 +2421,7 @@ prim P_2over()
 	Push = s;
 }
 
-prim P_2nip()
+prim P_2nip(pez_instance *p)
 {
 	Sl(4);
 	S2 = S0;
@@ -2423,7 +2429,7 @@ prim P_2nip()
 	Pop2;
 }
 
-prim P_2rot()
+prim P_2rot(pez_instance *p)
 {				/* Move third pair to top of stack */
 	pez_stackitem t1, t2;
 
@@ -2438,25 +2444,25 @@ prim P_2rot()
 	S0 = t1;
 }
 
-prim P_2variable()
+prim P_2variable(pez_instance *p)
 {				/* Declare double variable */
-	P_create();		// Create dictionary item
+	P_create(p);		// Create dictionary item
 	Ho(2);
 	Hstore = 0;		// Initial value = 0...
 	Hstore = 0;		// ...in both words
 }
 
-prim P_2con()
+prim P_2con(pez_instance *p)
 {				/* Push double value in body */
 	So(2);
 	Push = *(((pez_stackitem *)p->curword) + Dictwordl);
 	Push = *(((pez_stackitem *)p->curword) + Dictwordl + 1);
 }
 
-prim P_2constant()
+prim P_2constant(pez_instance *p)
 {				/* Declare double word constant */
 	Sl(1);
-	P_create();		/* Create dictionary item */
+	P_create(p);		/* Create dictionary item */
 	p->createword->wcode = P_2con;	// Set code to constant push
 	Ho(2);
 	Hstore = S1;		// Store double word constant value
@@ -2464,7 +2470,7 @@ prim P_2constant()
 	Pop2;
 }
 
-prim P_2bang()
+prim P_2bang(pez_instance *p)
 {				// Store double value into address
 	pez_stackitem *sp;
 
@@ -2476,7 +2482,7 @@ prim P_2bang()
 	Npop(3);
 }
 
-prim P_2at()
+prim P_2at(pez_instance *p)
 {				// Fetch double value from address
 	pez_stackitem *sp;
 
@@ -2488,117 +2494,117 @@ prim P_2at()
 	Push = *sp;
 }
 
-prim P_fover()
+prim P_fover(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_over();
+		P_over(p);
 		break;
 	case 2:
-		P_2over();
+		P_2over(p);
 		break;
 	}
 }
 
-prim P_fdrop()
+prim P_fdrop(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_drop();
+		P_drop(p);
 		break;
 	case 2:
-		P_2drop();
+		P_2drop(p);
 		break;
 	}
 }
 
-prim P_fdup()
+prim P_fdup(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_dup();
+		P_dup(p);
 		break;
 	case 2:
-		P_2dup();
+		P_2dup(p);
 		break;
 	}
 }
 
-prim P_fswap()
+prim P_fswap(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_swap();
+		P_swap(p);
 		break;
 	case 2:
-		P_2swap();
+		P_2swap(p);
 		break;
 	}
 }
 
-prim P_frot()
+prim P_frot(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_rot();
+		P_rot(p);
 		break;
 	case 2:
-		P_2rot();
+		P_2rot(p);
 		break;
 	}
 }
 
-prim P_fvariable()
+prim P_fvariable(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_variable();
+		P_variable(p);
 		break;
 	case 2:
-		P_2variable();
+		P_2variable(p);
 		break;
 	}
 }
 
-prim P_fconstant()
+prim P_fconstant(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_constant();
+		P_constant(p);
 		break;
 	case 2:
-		P_2constant();
+		P_2constant(p);
 		break;
 	}
 }
 
-prim P_fbang()
+prim P_fbang(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_bang();
+		P_bang(p);
 		break;
 	case 2:
-		P_2bang();
+		P_2bang(p);
 		break;
 	}
 }
 
-prim P_fat()
+prim P_fat(pez_instance *p)
 {
 	switch (sizeof(double) / sizeof(long)) {
 	case 1:
-		P_at();
+		P_at(p);
 		break;
 	case 2:
-		P_2at();
+		P_2at(p);
 		break;
 	}
 }
 
 /*  Data transfer primitives  */
 
-prim P_dolit()
+prim P_dolit(pez_instance *p)
 {				/* Push instruction stream literal */
 	So(1);
 	tracing {
@@ -2614,7 +2620,7 @@ prim P_dolit()
 /*
 	Invoke compiled word
 */
-prim P_nest()
+prim P_nest(pez_instance *p)
 {
 	if(p->tail_call_pending) {
 		p->tail_call_pending = False;
@@ -2628,7 +2634,7 @@ prim P_nest()
 	p->ip = (((pez_dictword **)p->curword) + Dictwordl);
 }
 
-prim P_exit()
+prim P_exit(pez_instance *p)
 {				/* Return to top of return stack */
 	Rsl(1);
 #ifdef WALKBACK
@@ -2638,12 +2644,12 @@ prim P_exit()
 	Rpop;
 }
 
-prim P_branch()
+prim P_branch(pez_instance *p)
 {				// Jump to in-line address
 	p->ip += (pez_stackitem) *p->ip;	// Jump addresses are IP-relative
 }
 
-prim P_qbranch()
+prim P_qbranch(pez_instance *p)
 {				// Conditional branch to in-line addr
 	Sl(1);
 	if(S0 == 0)		// If flag is false
@@ -2653,7 +2659,7 @@ prim P_qbranch()
 	Pop;
 }
 
-prim P_if()
+prim P_if(pez_instance *p)
 {				/* Compile IF word */
 	Compiling;
 	Compconst(s_qbranch);	// Compile question branch
@@ -2662,7 +2668,7 @@ prim P_if()
 	Compconst(0);		// Compile place-holder address cell
 }
 
-prim P_else()
+prim P_else(pez_instance *p)
 {				/* Compile ELSE word */
 	pez_stackitem *bp;
 
@@ -2676,7 +2682,7 @@ prim P_else()
 	S0 = (pez_stackitem)(p->hptr - 1);	// Update backpatch for THEN
 }
 
-prim P_then()
+prim P_then(pez_instance *p)
 {				/* Compile THEN word */
 	pez_stackitem *bp;
 
@@ -2688,7 +2694,7 @@ prim P_then()
 	Pop;
 }
 
-prim P_qdup()
+prim P_qdup(pez_instance *p)
 {				/* Duplicate if nonzero */
 	Sl(1);
 	if(S0 != 0) {
@@ -2698,14 +2704,14 @@ prim P_qdup()
 	}
 }
 
-prim P_begin()
+prim P_begin(pez_instance *p)
 {				/* Compile BEGIN */
 	Compiling;
 	So(1);
 	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
-prim P_until()
+prim P_until(pez_instance *p)
 {				/* Compile UNTIL */
 	pez_stackitem off;
 	pez_stackitem *bp;
@@ -2720,7 +2726,7 @@ prim P_until()
 	Pop;
 }
 
-prim P_again()
+prim P_again(pez_instance *p)
 {				/* Compile AGAIN */
 	pez_stackitem off;
 	pez_stackitem *bp;
@@ -2734,7 +2740,7 @@ prim P_again()
 	Pop;
 }
 
-prim P_while()
+prim P_while(pez_instance *p)
 {				/* Compile WHILE */
 	Compiling;
 	So(1);
@@ -2743,7 +2749,7 @@ prim P_while()
 	Push = (pez_stackitem)(p->hptr - 1);	// Queue backpatch for REPEAT
 }
 
-prim P_repeat()
+prim P_repeat(pez_instance *p)
 {				/* Compile REPEAT */
 	pez_stackitem off, *bp1, *bp;
 
@@ -2761,7 +2767,7 @@ prim P_repeat()
 	Pop;
 }
 
-prim P_do()
+prim P_do(pez_instance *p)
 {				/* Compile DO */
 	Compiling;
 	Compconst(s_xdo);	// Compile runtime DO word
@@ -2770,7 +2776,7 @@ prim P_do()
 	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
-prim P_xdo()
+prim P_xdo(pez_instance *p)
 {				/* Execute DO */
 	Sl(2);
 	Rso(3);
@@ -2783,7 +2789,7 @@ prim P_xdo()
 	p->stk -= 2;
 }
 
-prim P_qdo()
+prim P_qdo(pez_instance *p)
 {				/* Compile ?DO */
 	Compiling;
 	Compconst(s_xqdo);	// Compile runtime ?DO word
@@ -2792,7 +2798,7 @@ prim P_qdo()
 	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
-prim P_xqdo()
+prim P_xqdo(pez_instance *p)
 {				/* Execute ?DO */
 	Sl(2);
 	if(S0 == S1) {
@@ -2809,7 +2815,7 @@ prim P_xqdo()
 	p->stk -= 2;
 }
 
-prim P_loop()
+prim P_loop(pez_instance *p)
 {				/* Compile LOOP */
 	pez_stackitem off;
 	pez_stackitem *bp;
@@ -2825,7 +2831,7 @@ prim P_loop()
 	Pop;
 }
 
-prim P_ploop()
+prim P_ploop(pez_instance *p)
 {				/* Compile +LOOP */
 	pez_stackitem off;
 	pez_stackitem *bp;
@@ -2841,7 +2847,7 @@ prim P_ploop()
 	Pop;
 }
 
-prim P_xloop()
+prim P_xloop(pez_instance *p)
 {				/* Execute LOOP */
 	Rsl(3);
 	R0 = (rstackitem)(((pez_stackitem) R0) + 1);
@@ -2853,7 +2859,7 @@ prim P_xloop()
 	}
 }
 
-prim P_xploop()
+prim P_xploop(pez_instance *p)
 {				/* Execute +LOOP */
 	pez_stackitem niter;
 
@@ -2872,21 +2878,21 @@ prim P_xploop()
 	Pop;
 }
 
-prim P_leave()
+prim P_leave(pez_instance *p)
 {				// Compile LEAVE
 	Rsl(3);
 	p->ip = R2;
 	p->rstk -= 3;
 }
 
-prim P_i()
+prim P_i(pez_instance *p)
 {				// Obtain innermost loop index
 	Rsl(3);
 	So(1);
 	Push = (pez_stackitem)R0;	// It's the top item on return stack
 }
 
-prim P_j()
+prim P_j(pez_instance *p)
 {				/* Obtain next-innermost loop index */
 	Rsl(6);
 	So(1);
@@ -2894,7 +2900,7 @@ prim P_j()
 	Push = (pez_stackitem)p->rstk[-4];
 }
 
-prim P_quit()
+prim P_quit(pez_instance *p)
 {				/* Terminate execution */
 	p->rstk = p->rstack;		// Clear return stack
 #ifdef WALKBACK
@@ -2903,13 +2909,13 @@ prim P_quit()
 	p->ip = NULL;		// Stop execution of current word
 }
 
-prim P_abort()
+prim P_abort(pez_instance *p)
 {				/* Abort, clearing data stack */
-	P_clear();		// Clear the data stack
-	P_quit();		// Shut down execution
+	P_clear(p);		// Clear the data stack
+	P_quit(p);		// Shut down execution
 }
 
-prim P_abortq()
+prim P_abortq(pez_instance *p)
 {				/* Abort, printing message */
 	if(state) {
 		p->stringlit = True;	// Set string literal expected
@@ -2918,9 +2924,9 @@ prim P_abortq()
 		// Otherwise, print string literal in in-line code:
 		printf("%s", (char *)p->ip);
 #ifdef WALKBACK
-		pwalkback();
+		pwalkback(p);
 #endif				// WALKBACK
-		P_abort();	// Abort
+		P_abort(p);	// Abort
 		// Reset all interpretation state:
 		p->comment = state = Falsity;
 		p->forgetpend = p->defpend = p->stringlit =
@@ -2931,18 +2937,18 @@ prim P_abortq()
 
 /*  Compilation primitives  */
 
-prim P_immediate()
+prim P_immediate(pez_instance *p)
 {				// Mark most recent word immediate
 	p->dict->wname[0] |= IMMEDIATE;
 }
 
-prim P_lbrack()
+prim P_lbrack(pez_instance *p)
 {				// Set interpret state
 	Compiling;
 	state = Falsity;
 }
 
-prim P_rbrack()
+prim P_rbrack(pez_instance *p)
 {				// Restore compile state
 	state = Truth;
 }
@@ -2950,7 +2956,7 @@ prim P_rbrack()
 /*
 	Execute indirect call on method
 */
-Exported void P_dodoes()
+Exported void P_dodoes(pez_instance *p)
 {
 	Rso(1);
 	So(1);
@@ -2972,7 +2978,7 @@ Exported void P_dodoes()
 /*
 	Specify method for word
 */
-prim P_does()
+prim P_does(pez_instance *p)
 {
 
 	/* O.K., we were compiling our way through this definition and we've
@@ -3032,13 +3038,13 @@ prim P_does()
 /*
 	Begin compiling a word
 */
-prim P_colon()
+prim P_colon(pez_instance *p)
 {
 	state = Truth;	// Set compilation underway
-	P_create();		// Create conventional word
+	P_create(p);		// Create conventional word
 }
 
-prim P_semicolon()
+prim P_semicolon(pez_instance *p)
 {				/* End compilation */
 	Compiling;
 	Ho(1);
@@ -3051,7 +3057,7 @@ prim P_semicolon()
 	p->createword = NULL;	// Flag no word being created
 }
 
-prim P_tick()
+prim P_tick(pez_instance *p)
 {				/* Take address of next word */
 	int token;
 	char token_buffer[TOK_BUF_SZ];
@@ -3061,12 +3067,12 @@ prim P_tick()
 	   report an error.  Since we can't call back to the
 	   calling program for more input, we're stuck. */
 
-	token = lex(&instream, token_buffer);	// Scan for next token
+	token = lex(p, &instream, token_buffer);	// Scan for next token
 	if(token != TokNull) {
 		if(token == TokWord) {
 			pez_dictword *di;
 
-			if((di = lookup(token_buffer)) != NULL) {
+			if((di = lookup(p, token_buffer)) != NULL) {
 				So(1);
 				// Word compile address:
 				Push = (pez_stackitem)di;
@@ -3077,7 +3083,7 @@ prim P_tick()
 		} else {
 			fprintf(stderr,
 				"\nWord not specified when expected.\n");
-			P_abort();
+			P_abort(p);
 		}
 	} else {
 		/* O.K., there was nothing in the input stream.  Set the
@@ -3089,41 +3095,41 @@ prim P_tick()
 		} else {
 			fprintf(stderr, "\nWord requested by ` not "
 					"on same input line.\n");
-			P_abort();
+			P_abort(p);
 		}
 	}
 }
 
-prim P_bracktick()
+prim P_bracktick(pez_instance *p)
 {				/* Compile in-line code address */
 	Compiling;
 	p->ctickpend = True;	/* Force literal treatment of next
 				   word in compile stream */
 }
 
-prim P_execute()
+prim P_execute(pez_instance *p)
 {				/* Execute word pointed to by stack */
 	pez_dictword *wp;
 
 	Sl(1);
 	wp = (pez_dictword *)S0;	// Load word address from stack
 	Pop;			// Pop data stack before execution
-	exword(wp);		/* Recursively call exword() to run
+	exword(p, wp);		/* Recursively call exword() to run
 				   the word. */
 }
 
-prim P_tail_call()
+prim P_tail_call(pez_instance *p)
 {
 	p->tail_call_pending = True;
 }
 
-prim P_body()
+prim P_body(pez_instance *p)
 {				/* Get body address for word */
 	Sl(1);
 	S0 += Dictwordl * sizeof(pez_stackitem);
 }
 
-prim P_state()
+prim P_state(pez_instance *p)
 {				/* Get state of system */
 	So(1);
 	Push = (pez_stackitem) & state;
@@ -3133,7 +3139,7 @@ prim P_state()
 
 #ifdef DEFFIELDS
 
-prim P_find()
+prim P_find(pez_instance *p)
 {				/* Look up word in dictionary */
 	pez_dictword *dw;
 	char buf[128];
@@ -3142,7 +3148,7 @@ prim P_find()
 	So(1);
 	Hpc(S0);
 	strcpy(buf, (char *)S0);	// Use built-in token buffer...
-	dw = lookup(buf);
+	dw = lookup(p, buf);
 	// the token on the stack
 	if(dw != NULL) {
 		S0 = (pez_stackitem)dw;
@@ -3155,7 +3161,7 @@ prim P_find()
 
 #define DfOff(fld)  (((char *)&(p->dict->fld)) - ((char *)p->dict))
 
-prim P_toname()
+prim P_toname(pez_instance *p)
 {				/* Find name field from compile addr */
 	Sl(1);
 	S0 += DfOff(wname);
@@ -3164,7 +3170,7 @@ prim P_toname()
 /*
    Find link field from compile addr
  */
-prim P_tolink()
+prim P_tolink(pez_instance *p)
 {
 	if(DfOff(wnext) != 0)
 		fprintf(stderr, "\n>LINK Foulup--wnext is not at zero!\n");
@@ -3173,13 +3179,13 @@ prim P_tolink()
 	// SO += DfOff(wnext)
 }
 
-prim P_frombody()
+prim P_frombody(pez_instance *p)
 {				/* Get compile address from body */
 	Sl(1);
 	S0 -= Dictwordl * sizeof(pez_stackitem);
 }
 
-prim P_fromname()
+prim P_fromname(pez_instance *p)
 {				/* Get compile address from name */
 	Sl(1);
 	S0 -= DfOff(wname);
@@ -3189,7 +3195,7 @@ prim P_fromname()
    ( link -- compilation-addr )
    Get the compile address.
 */
-prim P_fromlink()
+prim P_fromlink(pez_instance *p)
 {
 	if(DfOff(wnext) != 0)
 		fprintf(stderr, "\nLINK> Foulup--wnext is not at zero!\n");
@@ -3202,7 +3208,7 @@ prim P_fromlink()
 
 #define DfTran(from,to) (((char *)&(dict->to)) - ((char *)&(dict->from)))
 
-prim P_nametolink()
+prim P_nametolink(pez_instance *p)
 {				/* Get from name field to link */
 	char *from, *to;
 
@@ -3215,7 +3221,7 @@ prim P_nametolink()
 	S0 -= (to - from);
 }
 
-prim P_linktoname()
+prim P_linktoname(pez_instance *p)
 {				/* Get from link field to name */
 	char *from, *to;
 
@@ -3228,7 +3234,7 @@ prim P_linktoname()
 	S0 += (to - from);
 }
 
-prim P_fetchname()
+prim P_fetchname(pez_instance *p)
 {				/* Copy word name to string buffer */
 	Sl(2);			// nfa string --
 	Hpc(S0);
@@ -3243,7 +3249,7 @@ prim P_fetchname()
 	Pop2;
 }
 
-prim P_storename()
+prim P_storename(pez_instance *p)
 {				/* Store string buffer in word name */
 	char tflags;
 	char *cp;
@@ -3262,7 +3268,7 @@ prim P_storename()
 #endif				// DEFFIELDS
 
 #ifdef SYSTEM
-prim P_system()
+prim P_system(pez_instance *p)
 {				/* string -- status */
 	Sl(1);
 	Hpc(S0);
@@ -3285,7 +3291,7 @@ prim P_system()
    If the status is false, there has been an error, which can be checked with
    dlerror.
 */
-prim P_ffi_load()
+prim P_ffi_load(pez_instance *p)
 {
 	void *lib;
 	void (*init)();
@@ -3309,14 +3315,14 @@ prim P_ffi_load()
 	if(init)
 		init();
 	if(defs)
-		pez_primdef(defs);
+		pez_primdef(p, defs);
 }
 
 /*
    ( libname flags -- libhandle )
    Just a thin wrapper around the system's dlopen.
 */
-prim P_dlopen()
+prim P_dlopen(pez_instance *p)
 {
 	void *lib;
 	Sl(2);
@@ -3329,7 +3335,7 @@ prim P_dlopen()
    ( -- RTLD_LAZY )
    Pushes the RTLD_LAZY flag onto the stack.
 */
-prim P_rtld_lazy()
+prim P_rtld_lazy(pez_instance *p)
 {
 	So(1);
 	Push = RTLD_LAZY;
@@ -3339,7 +3345,7 @@ prim P_rtld_lazy()
    ( libhandle symname -- function_address )
    Resolves a symbol.
 */
-prim P_dlsym()
+prim P_dlsym(pez_instance *p)
 {
 	void *f;
 	Sl(2);
@@ -3352,7 +3358,7 @@ prim P_dlsym()
    ( -- error_string )
    Returns the last error returned by dlopen/dlsym/dlclose.
 */
-prim P_dlerror()
+prim P_dlerror(pez_instance *p)
 {
 	So(1);
 	Push = (long)dlerror();
@@ -3361,7 +3367,7 @@ prim P_dlerror()
 /*
    Calls a void (*)() from the top of the stack.
 */
-prim P_call_void_0()
+prim P_call_void_0(pez_instance *p)
 {
 	void (*f)() = (void (*)()) S0;
 	So(1);
@@ -3372,7 +3378,7 @@ prim P_call_void_0()
 /*
    Calls a void (*)(word) from the top of the stack.
 */
-prim P_call_void_1w()
+prim P_call_void_1w(pez_instance *p)
 {
 	void (*f)(pez_stackitem) = (void (*)(pez_stackitem))S0;
 	So(2);
@@ -3383,7 +3389,7 @@ prim P_call_void_1w()
 /*
    Calls a word (*)() from the top of the stack.
 */
-prim P_call_word_0()
+prim P_call_word_0(pez_instance *p)
 {
 	pez_stackitem(*f)() = (pez_stackitem(*)())S0;
 	So(1);
@@ -3393,7 +3399,7 @@ prim P_call_word_0()
 /*
    Calls a word (*)(word) from the top of the stack.
 */
-prim P_call_word_1w()
+prim P_call_word_1w(pez_instance *p)
 {
 	pez_stackitem(*f)(pez_stackitem) = (pez_stackitem(*)(pez_stackitem))S0;
 	So(2);
@@ -3414,7 +3420,7 @@ extern char **environ;
    interact with getenv/setenv unless you're iterating over all of the
    environment variables.
 */
-prim P_environ()
+prim P_environ(pez_instance *p)
 {
 	So(1);
 	Push = (pez_stackitem)environ;
@@ -3424,7 +3430,7 @@ prim P_environ()
    ( varname -- envvar|0 )
    Returns the value for the named variable, or NULL if it isn't set.
 */
-prim P_getenv()
+prim P_getenv(pez_instance *p)
 {
 	Sl(1);
 	S0 = (pez_stackitem)getenv((char *)S0);
@@ -3434,7 +3440,7 @@ prim P_getenv()
    ( varname value -- success=Truth|error=falsity )
    Sets an environment variable.
 */
-prim P_setenv()
+prim P_setenv(pez_instance *p)
 {
 	Sl(2);
 	S1 = -setenv((char *)S1, (char *)S0, 1) - 1;
@@ -3445,7 +3451,7 @@ prim P_setenv()
    ( varname -- success=Truth|error=Falsity )
    Removes a variable from the environment.
 */
-prim P_unsetenv()
+prim P_unsetenv(pez_instance *p)
 {
 	Sl(1);
 	S0 = -unsetenv((char *)S0) - 1;
@@ -3455,7 +3461,7 @@ prim P_unsetenv()
    ( message status -- )
    Prints a message to stderr with a \n, and dies with the specified status.
 */
-prim P_diebang()
+prim P_diebang(pez_instance *p)
 {
 	fflush(stdout);
 	// No underflow-checking here.  die! shouldn't fail, ever, even if it
@@ -3469,7 +3475,7 @@ prim P_diebang()
    Forks a new process.  The child process will see a zero on the stack, and the
    parent will see the child's pid.
 */
-prim P_fork()
+prim P_fork(pez_instance *p)
 {
 	So(1);
 	Push = fork();
@@ -3481,7 +3487,7 @@ prim P_fork()
    should be the path to the other executable, and argv should be an array of
    strings, with a NULL after the last string.
 */
-prim P_execv()
+prim P_execv(pez_instance *p)
 {
 	Sl(2);
 	execv((char *)S1, (char **)S0);
@@ -3492,7 +3498,7 @@ prim P_execv()
    Waits for the next child process to exit, returning a pid and the process's
    status.
 */
-prim P_wait()
+prim P_wait(pez_instance *p)
 {
 	So(2);
 	Push = 0;
@@ -3503,7 +3509,7 @@ prim P_wait()
    ( -- pid )
    Returns the pid of the current process.
 */
-prim P_pid()
+prim P_pid(pez_instance *p)
 {
 	So(1);
 	Push = getpid();
@@ -3513,7 +3519,7 @@ prim P_pid()
    ( pid signal -- status )
    Sends a signal to a pid, returning the status.
 */
-prim P_kill()
+prim P_kill(pez_instance *p)
 {
 	Sl(2);
 	S1 = kill(S1, S0);
@@ -3524,7 +3530,7 @@ prim P_kill()
 #endif				// PROCESS
 
 #ifdef TRACE
-prim P_trace()
+prim P_trace(pez_instance *p)
 {				/* Set or clear tracing of execution */
 	Sl(1);
 	p->trace = (S0 == 0) ? Falsity : Truth;
@@ -3533,7 +3539,7 @@ prim P_trace()
 #endif				// TRACE
 
 #ifdef WALKBACK
-prim P_walkback()
+prim P_walkback(pez_instance *p)
 {				/* Set or clear error walkback */
 	Sl(1);
 	p->walkback = (S0 == 0) ? Falsity : Truth;
@@ -3543,7 +3549,7 @@ prim P_walkback()
 
 #ifdef WORDSUSED
 
-prim P_wordsused()
+prim P_wordsused(pez_instance *p)
 {				/* List words used by program */
 	pez_dictword *dw = p->dict;
 
@@ -3562,7 +3568,7 @@ prim P_wordsused()
 	fflush(stdout);
 }
 
-prim P_wordsunused()
+prim P_wordsunused(pez_instance *p)
 {				/* List words not used by program */
 	pez_dictword *dw = p->dict;
 
@@ -3584,13 +3590,13 @@ prim P_wordsunused()
 
 #ifdef COMPILERW
 
-prim P_brackcompile()
+prim P_brackcompile(pez_instance *p)
 {				/* Force compilation of immediate word */
 	Compiling;
 	p->cbrackpend = True;	// Set [COMPILE] pending
 }
 
-prim P_literal()
+prim P_literal(pez_instance *p)
 {				/* Compile top of stack as literal */
 	Compiling;
 	Sl(1);
@@ -3603,7 +3609,7 @@ prim P_literal()
 /*
 	Compile address of next inline word
 */
-prim P_compile()
+prim P_compile(pez_instance *p)
 {
 	Compiling;
 	Ho(1);
@@ -3614,7 +3620,7 @@ prim P_compile()
 /*
 	Mark backward backpatch address
 */
-prim P_backmark()
+prim P_backmark(pez_instance *p)
 {
 	Compiling;
 	So(1);
@@ -3624,7 +3630,7 @@ prim P_backmark()
 /*
 	Emit backward jump offset
 */
-prim P_backresolve()
+prim P_backresolve(pez_instance *p)
 {
 	pez_stackitem offset;
 
@@ -3637,7 +3643,7 @@ prim P_backresolve()
 	Pop;
 }
 
-prim P_fwdmark()
+prim P_fwdmark(pez_instance *p)
 {				/* Mark forward backpatch address */
 	Compiling;
 	Ho(1);
@@ -3648,7 +3654,7 @@ prim P_fwdmark()
 /*
    Emit forward jump offset
 */
-prim P_fwdresolve()
+prim P_fwdresolve(pez_instance *p)
 {
 	pez_stackitem offset;
 
@@ -4075,7 +4081,7 @@ void pez_primdef(pez_instance *p, struct primfcn *pt)
 
 /*  PWALKBACK  --  Print walkback trace.  */
 
-static void pwalkback()
+static void pwalkback(pez_instance *p)
 {
 	if(p->walkback && ((p->curword != NULL) || (p->wbptr > p->wback))) {
 		printf("Walkback:\n");
@@ -4093,16 +4099,15 @@ static void pwalkback()
 
 /*  TROUBLE  --  Common handler for serious errors.  */
 
-static void trouble(kind)
-char *kind;
+static void trouble(pez_instance *p, char *kind)
 {
 #ifdef MEMMESSAGE
 	fprintf(stderr, "\n%s.\n", kind);
 #endif
 #ifdef WALKBACK
-	pwalkback();
+	pwalkback(p);
 #endif				// WALKBACK
-	P_abort();
+	P_abort(p);
 	p->comment = state = Falsity;	// Reset all interpretation state
 	p->forgetpend = p->defpend = p->stringlit =
 		p->tickpend = p->ctickpend =
@@ -4111,10 +4116,9 @@ char *kind;
 
 /*  PEZ_ERROR  --  Handle error detected by user-defined primitive.  */
 
-Exported void pez_error(kind)
-char *kind;
+Exported void pez_error(pez_instance *p, char *kind)
 {
-	trouble(kind);
+	trouble(p, kind);
 	p->evalstat = PEZ_APPLICATION;	// Signify application-detected error
 }
 
@@ -4122,33 +4126,33 @@ char *kind;
 
 /*  STAKOVER  --  Recover from stack overflow.	*/
 
-Exported void stakover()
+Exported void stakover(pez_instance *p)
 {
-	trouble("Stack overflow");
+	trouble(p, "Stack overflow");
 	p->evalstat = PEZ_STACKOVER;
 }
 
 /*  STAKUNDER  --  Recover from stack underflow.  */
 
-Exported void stakunder()
+Exported void stakunder(pez_instance *p)
 {
-	trouble("Stack underflow");
+	trouble(p, "Stack underflow");
 	p->evalstat = PEZ_STACKUNDER;
 }
 
 /*  RSTAKOVER  --  Recover from return stack overflow.	*/
 
-Exported void rstakover()
+Exported void rstakover(pez_instance *p)
 {
-	trouble("Return stack overflow");
+	trouble(p, "Return stack overflow");
 	p->evalstat = PEZ_RSTACKOVER;
 }
 
 /*  RSTAKUNDER	--  Recover from return stack underflow.  */
 
-Exported void rstakunder()
+Exported void rstakunder(pez_instance *p)
 {
-	trouble("Return stack underflow");
+	trouble(p, "Return stack underflow");
 	p->evalstat = PEZ_RSTACKUNDER;
 }
 
@@ -4157,9 +4161,9 @@ Exported void rstakunder()
 		  the user to do this manually with FORGET or
 		  some such. */
 
-Exported void heapover()
+Exported void heapover(pez_instance *p)
 {
-	trouble("Heap overflow");
+	trouble(p, "Heap overflow");
 	p->evalstat = PEZ_HEAPOVER;
 }
 
@@ -4177,7 +4181,7 @@ Exported void badpointer()
 
 #else
 
-Exported void badpointer() { }
+Exported void badpointer(pez_instance *p) { }
 
 #endif				// RESTRICTED_POINTERS
 
@@ -4185,9 +4189,9 @@ Exported void badpointer() { }
 
 #ifdef COMPILATION_SAFETY
 
-static void notcomp()
+static void notcomp(pez_instance *p)
 {
-	trouble("Compiler word outside definition");
+	trouble(p, "Compiler word outside definition");
 	p->evalstat = PEZ_NOTINDEF;
 }
 
@@ -4196,9 +4200,9 @@ static void notcomp()
 #ifdef MATH_CHECK
 
 /*  DIVZERO  --  Attempt to divide by zero.  */
-static void divzero()
+static void divzero(pez_instance *p)
 {
-	trouble("Divide by zero");
+	trouble(p, "Divide by zero");
 	p->evalstat = PEZ_DIVZERO;
 }
 
@@ -4206,7 +4210,7 @@ static void divzero()
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 
-static void exword(pez_dictword *wp)
+static void exword(pez_instance *p, pez_dictword *wp)
 {
 	p->curword = wp;
 	tracing {
@@ -4218,7 +4222,7 @@ static void exword(pez_dictword *wp)
 #ifdef BREAK
 		Keybreak();	// Poll for asynchronous interrupt
 		if(p->broken) {	// Did we receive a break signal
-			trouble("Break signal");
+			trouble(p, "Break signal");
 			p->evalstat = PEZ_BREAK;
 			break;
 		}
@@ -4286,7 +4290,7 @@ extern pez_instance *pez_init()
 	   save their compile addresses in static variables. */
 
 #define Cconst(cell, name)  do {\
-	cell = (pez_stackitem)lookup(name);\
+	cell = (pez_stackitem)lookup(p, name);\
 	if(!cell) abort();\
 	} while(0)
 
@@ -4393,9 +4397,9 @@ extern pez_instance *pez_init()
 		pez_dictword *dw;
 
 		for(i = 0; i < ELEMENTS(stdfiles); i++) {
-			if((dw = pez_vardef(stdfiles[i].sfn,
+			if((dw = pez_vardef(p, stdfiles[i].sfn,
 			                    sizeof(pez_stackitem))) != NULL) {
-				pez_stackitem *si = pez_body(dw);
+				pez_stackitem *si = pez_body(p, dw);
 				*si = stdfiles[i].fd;
 			}
 		}
@@ -4410,17 +4414,17 @@ extern pez_instance *pez_init()
 
 /* Look up a word in the dictionary.  Returns its word item if found or NULL if
    the word isn't in the dictionary. */
-pez_dictword *pez_lookup(char *name)
+pez_dictword *pez_lookup(pez_instance *p, char *name)
 {
 	char buf[TOK_BUF_SZ];
 	strcpy(buf, name);
-	return lookup(buf);	// Now use normal lookup() on it
+	return lookup(p, buf);	// Now use normal lookup() on it
 }
 
 /*  PEZ_BODY  --  Returns the address of the body of a word, given
 		  its dictionary entry. */
 
-stackitem *pez_body(pez_dictword *dw)
+pez_stackitem *pez_body(pez_instance *p, pez_dictword *dw)
 {
 	return ((pez_stackitem *)dw) + Dictwordl;
 }
@@ -4430,8 +4434,7 @@ stackitem *pez_body(pez_dictword *dw)
 		  returned.  The in-progress evaluation status is
 		  preserved. */
 
-int pez_exec(dw)
-dictword *dw;
+int pez_exec(pez_instance *p, pez_dictword *dw)
 {
 	int sestat = p->evalstat, restat;
 
@@ -4444,7 +4447,7 @@ dictword *dw;
 	Rso(1);
 	Rpush = p->ip;		// Push instruction pointer
 	p->ip = NULL;		// Keep exword from running away
-	exword(dw);
+	exword(p, dw);
 	if(p->evalstat == PEZ_SNORM) {	// If word ran to completion
 		Rsl(1);
 		p->ip = R0;	// Pop the return stack
@@ -4463,7 +4466,7 @@ dictword *dw;
  * when invoked.  Returns the dictionary item for the new word, or NULL if the
  * heap overflows.
  */
-dictword *pez_vardef(char *name, int size)
+pez_dictword *pez_vardef(pez_instance *p, char *name, int size)
 {
 	pez_dictword *di;
 	char buf[TOK_BUF_SZ];
@@ -4485,7 +4488,7 @@ dictword *pez_vardef(char *name, int size)
 		isize--;
 	}
 	strcpy(buf, name);	// Use built-in token buffer...
-	enter(buf);		// Make dictionary entry for it
+	enter(p, buf);		// Make dictionary entry for it
 	di = p->createword;	// Save word address
 	p->createword = NULL;	// Mark no word underway
 	return di;		// Return new word
@@ -4561,7 +4564,7 @@ int pez_load(pez_instance *p, FILE *fp)
 	p->errline = 0;	// Reset line number of error
 	pez_mark(p, &mk);
 	p->ip = NULL;		// Fool pez_eval into interp state
-	while(pez_fgetsp(s, 132, fp) != NULL) {
+	while(pez_fgetsp(p, s, 132, fp) != NULL) {
 		lineno++;
 		if((es = pez_eval(p, s)) != PEZ_SNORM) {
 			p->errline = lineno;	// Save line number of error
@@ -4699,16 +4702,16 @@ void pez_stack_real(pez_instance *p, pez_real val)
 	}
 }
 
-void pez_heap_word(pez_dictword *di)
+void pez_heap_word(pez_instance *p, pez_dictword *di)
 {
 	Hsingle((pez_stackitem)di);	// Compile word address
 }
 
-void pez_stack_word(char token_buffer[])
+void pez_stack_word(pez_instance *p, char token_buffer[])
 {
 	pez_dictword *di;
 	p->tickpend = False;
-	if((di = lookup(token_buffer)) != NULL) {
+	if((di = lookup(p, token_buffer)) != NULL) {
 		So(1);
 		Push = (pez_stackitem)di;	// Push word compile address
 	} else {
@@ -4721,11 +4724,11 @@ void pez_stack_word(char token_buffer[])
 }
 
 // FIXME: yes, this is not a good function name.
-void pez_forget_during_eval(char token_buffer[])
+void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 {
 	pez_dictword *di;
 	p->forgetpend = False;
-	if((di = lookup(token_buffer)) != NULL) {
+	if((di = lookup(p, token_buffer)) != NULL) {
 		pez_dictword *dw = p->dict;
 
 		/* Pass 1.  Rip through the dictionary to make sure this word is
@@ -4810,21 +4813,21 @@ int pez_eval(pez_instance *p, char *sp)
 #endif				// PROLOGUE
 
 	while((p->evalstat == PEZ_SNORM) &&
-		(token = lex(&instream, token_buffer)) != TokNull) {
+		(token = lex(p, &instream, token_buffer)) != TokNull) {
 		pez_dictword *di;
 
 		switch (token) {
 		case TokWord:
 			if(p->forgetpend) {
-				pez_forget_during_eval(token_buffer);
+				pez_forget_during_eval(p, token_buffer);
 			} else if(p->tickpend) {
-				pez_stack_word(token_buffer);
+				pez_stack_word(p, token_buffer);
 			} else if(p->defpend) {
 				p->defpend = False;
 				// Define word and enter in the dict:
-				enter(token_buffer);
+				enter(p, token_buffer);
 			} else { // Here's where evaluation actually happens
-				di = lookup(token_buffer);
+				di = lookup(p, token_buffer);
 				if(di != NULL) {
 					/* When interpreting, execute the word
 					 * in all cases.  Otherwise compile the
@@ -4846,9 +4849,9 @@ int pez_eval(pez_instance *p, char *sp)
 						}
 						p->cbrackpend = p->ctickpend =
 							False;
-						pez_heap_word(di);
+						pez_heap_word(p, di);
 					} else {
-						exword(di);	// Execute word
+						exword(p, di);	// Execute word
 					}
 				} else {
 #ifdef MEMMESSAGE
