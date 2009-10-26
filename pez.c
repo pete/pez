@@ -319,7 +319,7 @@ Boolean get_delimited_string(pez_instance *p, char **strbuf,
 		either a double quote or the backslash char.  A backslash causes
 		the very next char to be used as the string delimiter, with
 		support for the usual paired delimiters.
-			"I am string." \{ Hear me roar.} \/LA LA LA/ puts puts puts
+		     "I am string." \{ Hear me roar.} \/LA LA LA/ puts puts puts
 		- If not a string, scan on until whitespace or string end.
 		- Next, we have to decide what to do with the token.  It might
 		be a comment opener, either rest-of-line or open-close flavor.
