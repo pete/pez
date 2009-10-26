@@ -4216,7 +4216,7 @@ static void exword(pez_instance *p, pez_dictword *wp)
 		printf("\nTrace: %s ", p->curword->wname + 1);
 		fflush(stdout);
 	}
-	p->curword->wcode();	 // Execute the first word
+	p->curword->wcode(p);	 // Execute the first word
 	while(p->ip != NULL) {
 #ifdef BREAK
 		Keybreak();	// Poll for asynchronous interrupt
@@ -4236,14 +4236,6 @@ static void exword(pez_instance *p, pez_dictword *wp)
 	p->curword = NULL;
 }
 
-/*  PEZ_INIT  --  Initialise the PEZ system.  The dynamic storage areas
-		  are allocated unless the caller has preallocated buffers
-		  for them and stored the addresses into the respective
-		  pointers.  In either case, the storage management
-		  pointers are initialised to the correct addresses.  If
-		  the caller preallocates the buffers, it's up to him to
-		  ensure that the length allocated agrees with the lengths
-		  given by the pez_... cells.  */
 /*
    This returns a new instance of Pez.
    For now, unless you like leaking memory or you only allocate one instance per

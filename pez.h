@@ -23,7 +23,8 @@ typedef long pez_stackitem;
 
 // External symbols accessible by the calling program.
 
-typedef void (pez_word)();	// Machine code pointer
+typedef void (pez_word)(void *);	// Machine code pointer
+// That void up there is actually a pez_instance.  Don't tell anyone!
 typedef pez_word *pez_wordp;
 
 //  Dictionary word entry

@@ -109,20 +109,8 @@ int main(int argc, char *argv[])
 				defmode = TRUE;
 				break;
 
-			case 'H':
-				p->heaplen = atol(cp + 1);
-				break;
-
 			case 'I':
 				include[in++] = cp + 1;
-				break;
-
-			case 'R':
-				p->rstklen = atol(cp + 1);
-				break;
-
-			case 'S':
-				p->stklen = atol(cp + 1);
 				break;
 
 			case 'T':
