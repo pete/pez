@@ -78,7 +78,7 @@
 
 // Macro for defining primitives that push constant values:
 #define PUSH_CONSTANT(fname, constant) prim fname() { So(1);\
-	Push = (stackitem)constant; }
+	Push = (pez_stackitem)constant; }
 
 /* Implicit functions (work for all numeric types). */
 #ifdef abs
@@ -386,7 +386,6 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 		/* If token is a comment to end of line character, discard
 		 * the rest of the line and return null for this token
 		 * request. */
-
 		if(strcmp(token_buffer, "#") == 0 ||
 				strcmp(token_buffer, "#!") == 0) {
 			while(*scanp)
@@ -398,7 +397,6 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 		/* If this token is a comment open delimiter, set to
 		   ignore all characters until the matching comment close
 		   delimiter. */
-
 		if(strcmp(token_buffer, "(") == 0) {
 			while(*scanp) {
 				if(*scanp == ')')
@@ -420,15 +418,6 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 			char tc;
 			char *tcp;
 
-#ifdef OS2
-			/* Compensate for error in OS/2 sscanf() library function */
-			if((token_buffer[0] == '-') &&
-			   !(isdigit(token_buffer[1]) ||
-				 (((token_buffer[1] == 'x') || (token_buffer[1] == 'X')) &&
-				  isxdigit(token_buffer[2])))) {
-				return TokWord;
-			}
-#endif				/* OS2 */
 #ifdef USE_SSCANF
 			if(sscanf(token_buffer, "%li%c", &tokint, &tc) == 1)
 				return TokInt;
@@ -448,9 +437,9 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 
 /*  LOOKUP  --	Look up token in the dictionary.  */
 
-static dictword *lookup(char *tkname)
+static pez_dictword *lookup(char *tkname)
 {
-	dictword *dw = p->dict;
+	pez_dictword *dw = p->dict;
 
 	while(dw != NULL) {
 		if(!(dw->wname[0] & WORDHIDDEN) &&
@@ -595,7 +584,7 @@ static void print_regex_error(int code, regex_t *rx)
 #else
 #define Compiling if (state == Falsity) {notcomp(); return;}
 #endif
-#define Compconst(x) Ho(1); Hstore = (stackitem)(x)
+#define Compconst(x) Ho(1); Hstore = (pez_stackitem)(x)
 #define Skipstring p->ip += *((char *)p->ip)
 
 /*
@@ -673,7 +662,7 @@ prim P_mod()
 */
 prim P_divmod()
 {
-	stackitem quot;
+	pez_stackitem quot;
 
 	Sl(2);
 #ifdef MATH_CHECK
@@ -915,7 +904,7 @@ prim P_0lss()
 prim P_here()
 {
 	So(1);
-	Push = (stackitem)p->hptr;
+	Push = (pez_stackitem)p->hptr;
 }
 
 /*
@@ -925,7 +914,7 @@ prim P_bang()
 {
 	Sl(2);
 	Hpc(S0);
-	*((stackitem *)S0) = S1;
+	*((pez_stackitem *)S0) = S1;
 	Pop2;
 }
 
@@ -936,7 +925,7 @@ prim P_at()
 {
 	Sl(1);
 	Hpc(S0);
-	S0 = *((stackitem *)S0);
+	S0 = *((pez_stackitem *)S0);
 }
 
 /*
@@ -946,7 +935,7 @@ prim P_plusbang()
 {
 	Sl(2);
 	Hpc(S0);
-	*((stackitem *)S0) += S1;
+	*((pez_stackitem *)S0) += S1;
 	Pop2;
 }
 
@@ -958,7 +947,7 @@ prim P_1plusbang()
 {
 	Sl(1);
 	Hpc(S0);
-	(*((stackitem *)S0))++;
+	(*((pez_stackitem *)S0))++;
 	Pop;
 }
 
@@ -967,10 +956,10 @@ prim P_1plusbang()
 */
 prim P_allot()
 {
-	stackitem n;
+	pez_stackitem n;
 
 	Sl(1);
-	n = (S0 + (sizeof(stackitem) - 1)) / sizeof(stackitem);
+	n = (S0 + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
 	Pop;
 	Ho(n);
 	p->hptr += n;
@@ -1019,7 +1008,7 @@ prim P_ccomma()
 	Ho(1);
 	chp = ((unsigned char *)p->hptr);
 	*chp++ = S0;
-	p->hptr = (stackitem *)chp;
+	p->hptr = (pez_stackitem *)chp;
 	Pop;
 }
 
@@ -1028,14 +1017,14 @@ prim P_ccomma()
 */
 prim P_cequal()
 {
-	stackitem n = (((stackitem)p->hptr) - ((stackitem)p->heap)) %
-		(sizeof(stackitem));
+	pez_stackitem n = (((pez_stackitem)p->hptr) - ((pez_stackitem)p->heap)) %
+		(sizeof(pez_stackitem));
 
 	if(n != 0) {
 		char *chp = ((char *)p->hptr);
 
-		chp += sizeof(stackitem) - n;
-		p->hptr = ((stackitem *)chp);
+		chp += sizeof(pez_stackitem) - n;
+		p->hptr = ((pez_stackitem *)chp);
 	}
 }
 
@@ -1044,7 +1033,7 @@ prim P_cequal()
 prim P_var()
 {				/* Push body address of current word */
 	So(1);
-	Push = (stackitem)(((stackitem *)p->curword) + Dictwordl);
+	Push = (pez_stackitem)(((pez_stackitem *)p->curword) + Dictwordl);
 }
 /*
 	Create a new word
@@ -1053,7 +1042,7 @@ Exported void P_create()
 {
 	p->defpend = True;		/* Set definition pending */
 	Ho(Dictwordl);
-	p->createword = (dictword *)p->hptr;	// Develop address of word
+	p->createword = (pez_dictword *)p->hptr;// Develop address of word
 	p->createword->wname = NULL;		// Clear pointer to name string
 	p->createword->wcode = P_var;		// Store default code
 	p->hptr += Dictwordl;	// Allocate heap space for word
@@ -1083,7 +1072,7 @@ prim P_variable()
 prim P_con()
 {
 	So(1);
-	Push = *(((stackitem *)p->curword) + Dictwordl);
+	Push = *(((pez_stackitem *)p->curword) + Dictwordl);
 }
 
 /*
@@ -1126,7 +1115,7 @@ prim P_floatsize()
 prim P_cells()
 {
 	Sl(1);
-	S0 *= sizeof(stackitem);
+	S0 *= sizeof(pez_stackitem);
 }
 
 /*
@@ -1163,18 +1152,17 @@ PUSH_CONSTANT(P_pezconf_build_lib_cmd,
 prim P_arraysub()
 {
 	int i, offset, esize, nsubs;
-	stackitem *array;
-	stackitem *isp;
+	pez_stackitem *array, *isp;
 
 	Sl(1);
-	array = (((stackitem *)p->curword) + Dictwordl);
+	array = (((pez_stackitem *)p->curword) + Dictwordl);
 	Hpc(array);
 	nsubs = *array++;	// Load number of subscripts
 	esize = *array++;	// Load element size
 #ifndef BOUNDS_CHECK
 	isp = &S0;
 	for(i = 0; i < nsubs; i++) {
-		stackitem subn = *isp--;
+		pez_stackitem subn = *isp--;
 
 		if(subn < 0 || subn >= array[i])
 			trouble("Subscript out of range");
@@ -1190,7 +1178,7 @@ prim P_arraysub()
 	   and the fundamental element size, then skip the subscript bounds
 	   words (as many as there are subscripts).  Then, finally, we
 	   can add the calculated offset into the array. */
-	S0 = (stackitem)(((char *)(((stackitem *)p->curword) +
+	S0 = (pez_stackitem)(((char *)(((pez_stackitem *)p->curword) +
 					 Dictwordl + 2 + nsubs)) +
 			  (esize * offset));
 }
@@ -1202,7 +1190,7 @@ prim P_arraysub()
 prim P_array()
 {
 	int i, nsubs, asize = 1;
-	stackitem *isp;
+	pez_stackitem *isp;
 
 	Sl(2);
 	if(S0 <= 0)
@@ -1223,7 +1211,7 @@ prim P_array()
 		asize *= *isp--;
 	}
 
-	asize = (asize + (sizeof(stackitem) - 1)) / sizeof(stackitem);
+	asize = (asize + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
 	Ho(asize + nsubs + 2);	/* Reserve space for array and header */
 	P_create();		// Create variable
 	p->createword->wcode = P_arraysub; // Set method to subscript calculate
@@ -1244,7 +1232,7 @@ prim P_array()
 prim P_strlit()
 {				/* Push address of string literal */
 	So(1);
-	Push = (stackitem)(((char *)p->ip) + 1);
+	Push = (pez_stackitem)(((char *)p->ip) + 1);
 
 	tracing {
 		printf("\"%s\" ", (((char *)p->ip) + 1));
@@ -1257,10 +1245,10 @@ prim P_strlit()
 prim P_string()
 {				/* Create string buffer */
 	Sl(1);
-	Ho((S0 + 1 + sizeof(stackitem)) / sizeof(stackitem));
+	Ho((S0 + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem));
 	P_create();		// Create variable
 	/* Allocate storage for string */
-	p->hptr += (S0 + 1 + sizeof(stackitem)) / sizeof(stackitem);
+	p->hptr += (S0 + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem);
 	Pop;
 }
 
@@ -1329,7 +1317,7 @@ prim P_strchar()
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	S1 = (stackitem)strchr((char *)S1, *((char *)S0));
+	S1 = (pez_stackitem)strchr((char *)S1, *((char *)S0));
 	Pop;
 }
 
@@ -1390,14 +1378,14 @@ prim P_fstrform()
 */
 prim P_strint()
 {
-	stackitem is;
+	pez_stackitem is;
 	char *eptr;
 
 	Sl(1);
 	So(1);
 	Hpc(S0);
 	is = strtoul((char *)S0, &eptr, 0);
-	S0 = (stackitem)eptr;
+	S0 = (pez_stackitem)eptr;
 	Push = is;
 }
 
@@ -1406,7 +1394,7 @@ prim P_strreal()
 	int i;
 	union {
 		pez_real fs;
-		stackitem fss[Realsize];
+		pez_stackitem fss[Realsize];
 	} fsu;
 	char *eptr;
 
@@ -1414,7 +1402,7 @@ prim P_strreal()
 	So(Realsize);
 	Hpc(S0);
 	fsu.fs = strtod((char *)S0, &eptr);
-	S0 = (stackitem)eptr;
+	S0 = (pez_stackitem)eptr;
 	for(i = 0; i < Realsize; i++) {
 		Push = fsu.fss[i];
 	}
@@ -1445,7 +1433,7 @@ prim P_regex()
 	}
 
 	problem = regcomp(regexes + regex_idx, (char *)S1, flags);
-	S1 = problem ? 0 : (stackitem)(regexes + regex_idx);
+	S1 = problem ? 0 : (pez_stackitem)(regexes + regex_idx);
 	Pop;
 	return;
 }
@@ -1520,7 +1508,7 @@ prim P_flit()
 	}
 
 	for(i = 0; i < Realsize; i++) {
-		Push = (stackitem) *p->ip++;
+		Push = (pez_stackitem) *p->ip++;
 	}
 }
 
@@ -1619,7 +1607,7 @@ prim P_fabs()
 */
 prim P_fequal()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 == REAL0) ? Truth : Falsity;
@@ -1632,7 +1620,7 @@ prim P_fequal()
 */
 prim P_funequal()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 != REAL0) ? Truth : Falsity;
@@ -1645,7 +1633,7 @@ prim P_funequal()
 */
 prim P_fgtr()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 > REAL0) ? Truth : Falsity;
@@ -1658,7 +1646,7 @@ prim P_fgtr()
 */
 prim P_flss()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 < REAL0) ? Truth : Falsity;
@@ -1671,7 +1659,7 @@ prim P_flss()
 */
 prim P_fgeq()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 >= REAL0) ? Truth : Falsity;
@@ -1684,7 +1672,7 @@ prim P_fgeq()
 */
 prim P_fleq()
 {
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2 * Realsize);
 	t = (REAL1 <= REAL0) ? Truth : Falsity;
@@ -1727,7 +1715,7 @@ prim P_float()
 */
 prim P_fix()
 {
-	stackitem i;
+	pez_stackitem i;
 
 	Sl(Realsize);
 	i = (int)REAL0;
@@ -1845,7 +1833,7 @@ prim P_argc()
 
 prim P_argv()
 {
-	Push = (stackitem)p->argv;
+	Push = (pez_stackitem)p->argv;
 }
 
 prim P_dot()
@@ -1860,7 +1848,7 @@ prim P_question()
 {				// Print value at address
 	Sl(1);
 	Hpc(S0);
-	printf(p->base == 16 ? "%lx " : "%ld ", *((stackitem *)S0));
+	printf(p->base == 16 ? "%lx " : "%ld ", *((pez_stackitem *)S0));
 	fflush(stdout);
 	Pop;
 }
@@ -1880,7 +1868,7 @@ prim P_cr()
 */
 prim P_dots()
 {
-	stackitem *tsp;
+	pez_stackitem *tsp;
 
 	printf("Stack: ");
 
@@ -1962,7 +1950,7 @@ prim P_puts()
 */
 prim P_gets()
 {
-	stackitem max;
+	pez_stackitem max;
 	char *buf;
 
 	Sl(2);
@@ -2022,7 +2010,7 @@ prim P_getc()
 
 	So(1);
 	read(input_stream, &c, 1);
-	Push = (stackitem)c;
+	Push = (pez_stackitem)c;
 }
 
 /*
@@ -2043,7 +2031,7 @@ prim P_putc()
 */
 prim P_words()
 {
-	dictword *dw = p->dict;
+	pez_dictword *dw = p->dict;
 
 	while(dw != NULL) {
 		printf("\n%s", dw->wname + 1);
@@ -2171,7 +2159,7 @@ PUSH_CONSTANT(P_seek_set, SEEK_SET)
 prim P_tell()
 {
 	Sl(1);
-	S0 = (stackitem)lseek(S0, 0, SEEK_CUR);
+	S0 = (pez_stackitem)lseek(S0, 0, SEEK_CUR);
 }
 
 /*
@@ -2209,7 +2197,7 @@ prim P_evaluate()
 	int es = PEZ_SNORM;
 	pez_statemark mk;
 	pez_int scomm = p->comment;	// Stack comment pending state
-	dictword **sip = p->ip;		// Stack instruction pointer
+	pez_dictword **sip = p->ip;		// Stack instruction pointer
 	char *sinstr = instream;	// Stack input stream
 	char *estring;
 
@@ -2241,7 +2229,7 @@ prim P_evaluate()
 
 prim P_depth()
 {				// Push stack depth
-	stackitem s = p->stk - p->stack;
+	pez_stackitem s = p->stk - p->stack;
 
 	So(1);
 	Push = s;
@@ -2254,7 +2242,7 @@ prim P_clear()
 
 prim P_dup()
 {				// Duplicate top of stack
-	stackitem s;
+	pez_stackitem s;
 
 	Sl(1);
 	So(1);
@@ -2270,7 +2258,7 @@ prim P_drop()
 
 prim P_swap()
 {				// Exchange two top items on stack
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(2);
 	t = S1;
@@ -2280,7 +2268,7 @@ prim P_swap()
 
 prim P_over()
 {				// Push copy of next to top of stack
-	stackitem s;
+	pez_stackitem s;
 
 	Sl(2);
 	So(1);
@@ -2306,7 +2294,7 @@ prim P_nip()
 
 prim P_rot()
 {				// Rotate 3 top stack items
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(3);
 	t = S0;
@@ -2317,7 +2305,7 @@ prim P_rot()
 
 prim P_minusrot()
 {				// Reverse rotate 3 top stack items
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(3);
 	t = S0;
@@ -2328,7 +2316,7 @@ prim P_minusrot()
 
 prim P_roll()
 {				// Rotate N top stack items
-	stackitem i, j, t;
+	pez_stackitem i, j, t;
 
 	Sl(1);
 	i = S0;
@@ -2352,7 +2340,7 @@ prim P_rfrom()
 {				// Transfer return stack top to stack
 	Rsl(1);
 	So(1);
-	Push = (stackitem)R0;
+	Push = (pez_stackitem)R0;
 	Rpop;
 }
 
@@ -2360,7 +2348,7 @@ prim P_rfetch()
 {				// Fetch top item from return stack
 	Rsl(1);
 	So(1);
-	Push = (stackitem)R0;
+	Push = (pez_stackitem)R0;
 }
 
 /*
@@ -2384,7 +2372,7 @@ prim P_time()
 
 prim P_2dup()
 {				// Duplicate stack top doubleword
-	stackitem s;
+	pez_stackitem s;
 
 	Sl(2);
 	So(2);
@@ -2402,7 +2390,7 @@ prim P_2drop()
 
 prim P_2swap()
 {				/* Swap top two double items on stack */
-	stackitem t;
+	pez_stackitem t;
 
 	Sl(4);
 	t = S2;
@@ -2415,7 +2403,7 @@ prim P_2swap()
 
 prim P_2over()
 {				/* Extract second pair from stack */
-	stackitem s;
+	pez_stackitem s;
 
 	Sl(4);
 	So(2);
@@ -2435,7 +2423,7 @@ prim P_2nip()
 
 prim P_2rot()
 {				/* Move third pair to top of stack */
-	stackitem t1, t2;
+	pez_stackitem t1, t2;
 
 	Sl(6);
 	t2 = S5;
@@ -2459,8 +2447,8 @@ prim P_2variable()
 prim P_2con()
 {				/* Push double value in body */
 	So(2);
-	Push = *(((stackitem *)p->curword) + Dictwordl);
-	Push = *(((stackitem *)p->curword) + Dictwordl + 1);
+	Push = *(((pez_stackitem *)p->curword) + Dictwordl);
+	Push = *(((pez_stackitem *)p->curword) + Dictwordl + 1);
 }
 
 prim P_2constant()
@@ -2476,11 +2464,11 @@ prim P_2constant()
 
 prim P_2bang()
 {				// Store double value into address
-	stackitem *sp;
+	pez_stackitem *sp;
 
 	Sl(2);
 	Hpc(S0);
-	sp = (stackitem *)S0;
+	sp = (pez_stackitem *)S0;
 	*sp++ = S2;
 	*sp = S1;
 	Npop(3);
@@ -2488,12 +2476,12 @@ prim P_2bang()
 
 prim P_2at()
 {				// Fetch double value from address
-	stackitem *sp;
+	pez_stackitem *sp;
 
 	Sl(1);
 	So(1);
 	Hpc(S0);
-	sp = (stackitem *)S0;
+	sp = (pez_stackitem *)S0;
 	S0 = *sp++;
 	Push = *sp;
 }
@@ -2615,7 +2603,7 @@ prim P_dolit()
 		printf("%ld ", (long)*p->ip);
 		fflush(stdout);
 	}
-	Push = (stackitem) *p->ip++;	/* Push the next datum from the
+	Push = (pez_stackitem) *p->ip++;	/* Push the next datum from the
 					   instruction stream. */
 }
 
@@ -2635,7 +2623,7 @@ prim P_nest()
 #endif
 		Rpush = p->ip;
 	}
-	p->ip = (((dictword **)p->curword) + Dictwordl);
+	p->ip = (((pez_dictword **)p->curword) + Dictwordl);
 }
 
 prim P_exit()
@@ -2650,14 +2638,14 @@ prim P_exit()
 
 prim P_branch()
 {				// Jump to in-line address
-	p->ip += (stackitem) *p->ip;	// Jump addresses are IP-relative
+	p->ip += (pez_stackitem) *p->ip;	// Jump addresses are IP-relative
 }
 
 prim P_qbranch()
 {				// Conditional branch to in-line addr
 	Sl(1);
 	if(S0 == 0)		// If flag is false
-		p->ip += (stackitem) *p->ip;	// then branch.
+		p->ip += (pez_stackitem) *p->ip;	// then branch.
 	else			// Otherwise
 		p->ip++;		// skip the in-line address.
 	Pop;
@@ -2668,32 +2656,32 @@ prim P_if()
 	Compiling;
 	Compconst(s_qbranch);	// Compile question branch
 	So(1);
-	Push = (stackitem)p->hptr;	// Save backpatch address on stack
+	Push = (pez_stackitem)p->hptr;	// Save backpatch address on stack
 	Compconst(0);		// Compile place-holder address cell
 }
 
 prim P_else()
 {				/* Compile ELSE word */
-	stackitem *bp;
+	pez_stackitem *bp;
 
 	Compiling;
 	Sl(1);
 	Compconst(s_branch);	// Compile branch around other clause
 	Compconst(0);		// Compile place-holder address cell
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get IF backpatch address
+	bp = (pez_stackitem *)S0;	// Get IF backpatch address
 	*bp = p->hptr - bp;
-	S0 = (stackitem)(p->hptr - 1);	// Update backpatch for THEN
+	S0 = (pez_stackitem)(p->hptr - 1);	// Update backpatch for THEN
 }
 
 prim P_then()
 {				/* Compile THEN word */
-	stackitem *bp;
+	pez_stackitem *bp;
 
 	Compiling;
 	Sl(1);
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get IF/ELSE backpatch address
+	bp = (pez_stackitem *)S0;	// Get IF/ELSE backpatch address
 	*bp = p->hptr - bp;
 	Pop;
 }
@@ -2702,7 +2690,7 @@ prim P_qdup()
 {				/* Duplicate if nonzero */
 	Sl(1);
 	if(S0 != 0) {
-		stackitem s = S0;
+		pez_stackitem s = S0;
 		So(1);
 		Push = s;
 	}
@@ -2712,19 +2700,19 @@ prim P_begin()
 {				/* Compile BEGIN */
 	Compiling;
 	So(1);
-	Push = (stackitem)p->hptr;	// Save jump back address on stack
+	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
 prim P_until()
 {				/* Compile UNTIL */
-	stackitem off;
-	stackitem *bp;
+	pez_stackitem off;
+	pez_stackitem *bp;
 
 	Compiling;
 	Sl(1);
 	Compconst(s_qbranch);	// Compile question branch
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get BEGIN address
+	bp = (pez_stackitem *)S0;	// Get BEGIN address
 	off = -(p->hptr - bp);
 	Compconst(off);		// Compile negative jumpback address
 	Pop;
@@ -2732,13 +2720,13 @@ prim P_until()
 
 prim P_again()
 {				/* Compile AGAIN */
-	stackitem off;
-	stackitem *bp;
+	pez_stackitem off;
+	pez_stackitem *bp;
 
 	Compiling;
 	Compconst(s_branch);	// Compile unconditional branch
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get BEGIN address
+	bp = (pez_stackitem *)S0;	// Get BEGIN address
 	off = -(p->hptr - bp);
 	Compconst(off);		// Compile negative jumpback address
 	Pop;
@@ -2750,22 +2738,21 @@ prim P_while()
 	So(1);
 	Compconst(s_qbranch);	// Compile question branch
 	Compconst(0);		// Compile place-holder address cell
-	Push = (stackitem)(p->hptr - 1);	// Queue backpatch for REPEAT
+	Push = (pez_stackitem)(p->hptr - 1);	// Queue backpatch for REPEAT
 }
 
 prim P_repeat()
 {				/* Compile REPEAT */
-	stackitem off;
-	stackitem *bp1, *bp;
+	pez_stackitem off, *bp1, *bp;
 
 	Compiling;
 	Sl(2);
 	Hpc(S0);
-	bp1 = (stackitem *)S0;	// Get WHILE backpatch address
+	bp1 = (pez_stackitem *)S0;	// Get WHILE backpatch address
 	Pop;
 	Compconst(s_branch);	// Compile unconditional branch
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get BEGIN address
+	bp = (pez_stackitem *)S0;	// Get BEGIN address
 	off = -(p->hptr - bp);
 	Compconst(off);		// Compile negative jumpback address
 	*bp1 = p->hptr - bp1;	// Backpatch REPEAT's jump out of loop
@@ -2778,14 +2765,14 @@ prim P_do()
 	Compconst(s_xdo);	// Compile runtime DO word
 	So(1);
 	Compconst(0);		// Reserve cell for LEAVE-taking
-	Push = (stackitem)p->hptr;	// Save jump back address on stack
+	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
 prim P_xdo()
 {				/* Execute DO */
 	Sl(2);
 	Rso(3);
-	Rpush = p->ip + ((stackitem) *p->ip);	// Push exit address from loop
+	Rpush = p->ip + ((pez_stackitem) *p->ip);	// Push exit address from loop
 	p->ip++;			// Increment past exit address word
 	Rpush = (rstackitem)S1;	// Push loop limit on return stack
 	Rpush = (rstackitem)S0;	/* Iteration variable initial value to
@@ -2799,18 +2786,18 @@ prim P_qdo()
 	Compconst(s_xqdo);	// Compile runtime ?DO word
 	So(1);
 	Compconst(0);		// Reserve cell for LEAVE-taking
-	Push = (stackitem)p->hptr;	// Save jump back address on stack
+	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
 prim P_xqdo()
 {				/* Execute ?DO */
 	Sl(2);
 	if(S0 == S1) {
-		p->ip += (stackitem) *p->ip;
+		p->ip += (pez_stackitem) *p->ip;
 	} else {
 		Rso(3);
 		// Push exit address from loop:
-		Rpush = p->ip + ((stackitem) *p->ip);
+		Rpush = p->ip + ((pez_stackitem) *p->ip);
 		p->ip++;		// Increment past exit address word
 		Rpush = (rstackitem)S1;	// Push loop limit on return stack
 		Rpush = (rstackitem)S0;	/* Iteration variable initial value to
@@ -2821,14 +2808,14 @@ prim P_xqdo()
 
 prim P_loop()
 {				/* Compile LOOP */
-	stackitem off;
-	stackitem *bp;
+	pez_stackitem off;
+	pez_stackitem *bp;
 
 	Compiling;
 	Sl(1);
 	Compconst(s_xloop);	// Compile runtime loop
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get DO address
+	bp = (pez_stackitem *)S0;	// Get DO address
 	off = -(p->hptr - bp);
 	Compconst(off);		// Compile negative jumpback address
 	*(bp - 1) = (p->hptr - bp) + 1;	// Backpatch exit address offset
@@ -2837,14 +2824,14 @@ prim P_loop()
 
 prim P_ploop()
 {				/* Compile +LOOP */
-	stackitem off;
-	stackitem *bp;
+	pez_stackitem off;
+	pez_stackitem *bp;
 
 	Compiling;
 	Sl(1);
 	Compconst(s_pxloop);	// Compile runtime +loop
 	Hpc(S0);
-	bp = (stackitem *)S0;	// Get DO address
+	bp = (pez_stackitem *)S0;	// Get DO address
 	off = -(p->hptr - bp);
 	Compconst(off);		// Compile negative jumpback address
 	*(bp - 1) = (p->hptr - bp) + 1;	// Backpatch exit address offset
@@ -2854,29 +2841,29 @@ prim P_ploop()
 prim P_xloop()
 {				/* Execute LOOP */
 	Rsl(3);
-	R0 = (rstackitem)(((stackitem) R0) + 1);
-	if(((stackitem)R0) == ((stackitem)R1)) {
+	R0 = (rstackitem)(((pez_stackitem) R0) + 1);
+	if(((pez_stackitem)R0) == ((pez_stackitem)R1)) {
 		p->rstk -= 3;	// Pop iteration variable and limit
 		p->ip++;		// Skip the jump address
 	} else {
-		p->ip += (stackitem) * p->ip;
+		p->ip += (pez_stackitem) * p->ip;
 	}
 }
 
 prim P_xploop()
 {				/* Execute +LOOP */
-	stackitem niter;
+	pez_stackitem niter;
 
 	Sl(1);
 	Rsl(3);
 
-	niter = ((stackitem)R0) + S0;
-	if(niter == (stackitem)R1
-	   || abs(S0) > abs((stackitem)R0 - (stackitem)R1)) {
+	niter = ((pez_stackitem)R0) + S0;
+	if(niter == (pez_stackitem)R1
+	   || abs(S0) > abs((pez_stackitem)R0 - (pez_stackitem)R1)) {
 		p->rstk -= 3;	// Pop iteration variable and limit
 		p->ip++;		// Skip the jump address
 	} else {
-		p->ip += (stackitem) * p->ip;
+		p->ip += (pez_stackitem) * p->ip;
 		R0 = (rstackitem)niter;
 	}
 	Pop;
@@ -2893,14 +2880,14 @@ prim P_i()
 {				// Obtain innermost loop index
 	Rsl(3);
 	So(1);
-	Push = (stackitem)R0;	// It's the top item on return stack
+	Push = (pez_stackitem)R0;	// It's the top item on return stack
 }
 
 prim P_j()
 {				/* Obtain next-innermost loop index */
 	Rsl(6);
 	So(1);
-	Push = (stackitem)p->rstk[-4];	// It's the 4th item on return stack
+	Push = (pez_stackitem)p->rstk[-4];	// It's the 4th item on return stack
 }
 
 prim P_quit()
@@ -2970,11 +2957,11 @@ Exported void P_dodoes()
 	   address before the word definition on the heap, we back up to
 	   the heap cell before the current word and load the pointer from
 	   there.  This is an ABSOLUTE heap address, not a relative offset. */
-	p->ip = *((dictword ***)(((stackitem *)p->curword) - 1));
+	p->ip = *((pez_dictword ***)(((pez_stackitem *)p->curword) - 1));
 
 	/* Push the address of this word's body as the argument to the
 	   DOES> clause. */
-	Push = (stackitem)(((stackitem *)p->curword) + Dictwordl);
+	Push = (pez_stackitem)(((pez_stackitem *)p->curword) + Dictwordl);
 }
 
 /*
@@ -3007,7 +2994,7 @@ prim P_does()
 	   DOES>-defined word is deleted.  */
 
 	if(p->createword != NULL) {
-		stackitem *sp = ((stackitem *)p->createword), *hp;
+		pez_stackitem *sp = ((pez_stackitem *)p->createword), *hp;
 
 		Rsl(1);
 		Ho(1);
@@ -3018,10 +3005,13 @@ prim P_does()
 		for(hp = p->hptr - 1; hp >= sp; hp--)
 			*(hp + 1) = *hp;
 		p->hptr++;		// Expand allocated length of word
-		*sp++ = (stackitem)p->ip;	/* Store DOES> clause address before
-					   word's definition structure. */
-		p->createword = (dictword *)sp;	// Move word definition down 1 item
-		p->createword->wcode = P_dodoes;	// Set code field to indirect jump
+		// Store DOES> clause address before word's definition
+		// structure:
+		*sp++ = (pez_stackitem)p->ip;
+		// Move word definition down 1 item:
+		p->createword = (pez_dictword *)sp;
+		// Set code field to indirect jump:
+		p->createword->wcode = P_dodoes;
 
 		/* Now simulate an EXIT to bail out of the definition without
 		   executing the DOES> clause at definition time. */
@@ -3069,12 +3059,12 @@ prim P_tick()
 	token = lex(&instream, token_buffer);	// Scan for next token
 	if(token != TokNull) {
 		if(token == TokWord) {
-			dictword *di;
+			pez_dictword *di;
 
 			if((di = lookup(token_buffer)) != NULL) {
 				So(1);
 				// Word compile address:
-				Push = (stackitem)di;
+				Push = (pez_stackitem)di;
 			} else {
 				fprintf(stderr, " '%s' undefined ",
 					token_buffer);
@@ -3108,10 +3098,10 @@ prim P_bracktick()
 
 prim P_execute()
 {				/* Execute word pointed to by stack */
-	dictword *wp;
+	pez_dictword *wp;
 
 	Sl(1);
-	wp = (dictword *)S0;	// Load word address from stack
+	wp = (pez_dictword *)S0;	// Load word address from stack
 	Pop;			// Pop data stack before execution
 	exword(wp);		/* Recursively call exword() to run
 				   the word. */
@@ -3125,13 +3115,13 @@ prim P_tail_call()
 prim P_body()
 {				/* Get body address for word */
 	Sl(1);
-	S0 += Dictwordl * sizeof(stackitem);
+	S0 += Dictwordl * sizeof(pez_stackitem);
 }
 
 prim P_state()
 {				/* Get state of system */
 	So(1);
-	Push = (stackitem) & state;
+	Push = (pez_stackitem) & state;
 }
 
 /*  Definition field access primitives	*/
@@ -3140,7 +3130,7 @@ prim P_state()
 
 prim P_find()
 {				/* Look up word in dictionary */
-	dictword *dw;
+	pez_dictword *dw;
 	char buf[128];
 
 	Sl(1);
@@ -3150,7 +3140,7 @@ prim P_find()
 	dw = lookup(buf);
 	// the token on the stack
 	if(dw != NULL) {
-		S0 = (stackitem)dw;
+		S0 = (pez_stackitem)dw;
 		// Push immediate flag
 		Push = (dw->wname[0] & IMMEDIATE) ? 1 : -1;
 	} else {
@@ -3181,7 +3171,7 @@ prim P_tolink()
 prim P_frombody()
 {				/* Get compile address from body */
 	Sl(1);
-	S0 -= Dictwordl * sizeof(stackitem);
+	S0 -= Dictwordl * sizeof(pez_stackitem);
 }
 
 prim P_fromname()
@@ -3190,12 +3180,17 @@ prim P_fromname()
 	S0 -= DfOff(wname);
 }
 
+/*
+   ( link -- compilation-addr )
+   Get the compile address.
+*/
 prim P_fromlink()
-{				/* Get compile address from link */
+{
 	if(DfOff(wnext) != 0)
 		fprintf(stderr, "\nLINK> Foulup--wnext is not at zero!\n");
-/*  Sl(1);
-					S0 -= DfOff(wnext);  */// Null operation.  Wnext is first
+	// Essentially a no-op; link is the first item.
+	// Sl(1);
+	// S0 -= DfOff(wnext);// Null operation.  Wnext is first
 }
 
 #undef DfOff
@@ -3374,7 +3369,7 @@ prim P_call_void_0()
 */
 prim P_call_void_1w()
 {
-	void (*f)(stackitem) = (void (*)(stackitem))S0;
+	void (*f)(pez_stackitem) = (void (*)(pez_stackitem))S0;
 	So(2);
 	f(S1);
 	Pop2;
@@ -3385,7 +3380,7 @@ prim P_call_void_1w()
 */
 prim P_call_word_0()
 {
-	stackitem(*f)() = (stackitem(*)())S0;
+	pez_stackitem(*f)() = (pez_stackitem(*)())S0;
 	So(1);
 	S0 = f();
 }
@@ -3395,7 +3390,7 @@ prim P_call_word_0()
 */
 prim P_call_word_1w()
 {
-	stackitem(*f)(stackitem) = (stackitem(*)(stackitem))S0;
+	pez_stackitem(*f)(pez_stackitem) = (pez_stackitem(*)(pez_stackitem))S0;
 	So(2);
 	Pop;
 	S0 = f(S0);
@@ -3417,7 +3412,7 @@ extern char **environ;
 prim P_environ()
 {
 	So(1);
-	Push = (stackitem)environ;
+	Push = (pez_stackitem)environ;
 }
 
 /*
@@ -3427,7 +3422,7 @@ prim P_environ()
 prim P_getenv()
 {
 	Sl(1);
-	S0 = (stackitem)getenv((char *)S0);
+	S0 = (pez_stackitem)getenv((char *)S0);
 }
 
 /*
@@ -3545,7 +3540,7 @@ prim P_walkback()
 
 prim P_wordsused()
 {				/* List words used by program */
-	dictword *dw = p->dict;
+	pez_dictword *dw = p->dict;
 
 	while(dw != NULL) {
 		if(*(dw->wname) & WORDUSED) {
@@ -3564,7 +3559,7 @@ prim P_wordsused()
 
 prim P_wordsunused()
 {				/* List words not used by program */
-	dictword *dw = p->dict;
+	pez_dictword *dw = p->dict;
 
 	while(dw != NULL) {
 		if(!(*(dw->wname) & WORDUSED)) {
@@ -3607,7 +3602,8 @@ prim P_compile()
 {
 	Compiling;
 	Ho(1);
-	Hstore = (stackitem) * p->ip++;	// Compile next datum from instruction stream.
+	// Compile next datum from instruction stream:
+	Hstore = (pez_stackitem) * p->ip++;
 }
 
 /*
@@ -3617,7 +3613,7 @@ prim P_backmark()
 {
 	Compiling;
 	So(1);
-	Push = (stackitem)p->hptr;	// Push heap address onto stack
+	Push = (pez_stackitem)p->hptr;	// Push heap address onto stack
 }
 
 /*
@@ -3625,13 +3621,13 @@ prim P_backmark()
 */
 prim P_backresolve()
 {
-	stackitem offset;
+	pez_stackitem offset;
 
 	Compiling;
 	Sl(1);
 	Ho(1);
 	Hpc(S0);
-	offset = -(p->hptr - (stackitem *)S0);
+	offset = -(p->hptr - (pez_stackitem *)S0);
 	Hstore = offset;
 	Pop;
 }
@@ -3640,7 +3636,7 @@ prim P_fwdmark()
 {				/* Mark forward backpatch address */
 	Compiling;
 	Ho(1);
-	Push = (stackitem)p->hptr;	// Push heap address onto stack
+	Push = (pez_stackitem)p->hptr;	// Push heap address onto stack
 	Hstore = 0;
 }
 
@@ -3649,13 +3645,13 @@ prim P_fwdmark()
 */
 prim P_fwdresolve()
 {
-	stackitem offset;
+	pez_stackitem offset;
 
 	Compiling;
 	Sl(1);
 	Hpc(S0);
-	offset = (p->hptr - (stackitem *)S0);
-	*((stackitem *)S0) = offset;
+	offset = (p->hptr - (pez_stackitem *)S0);
+	*((pez_stackitem *)S0) = offset;
 	Pop;
 }
 
@@ -4019,7 +4015,7 @@ static struct primfcn primt[] = {
 void pez_primdef(pez_instance *p, struct primfcn *pt)
 {
 	struct primfcn *pf = pt;
-	dictword *nw;
+	pez_dictword *nw;
 	int i, n = 0;
 #ifdef WORDSUSED
 #ifdef READONLYSTRINGS
@@ -4049,7 +4045,7 @@ void pez_primdef(pez_instance *p, struct primfcn *pt)
 #endif	// READONLYSTRINGS
 #endif	// WORDSUSED
 
-	nw = (dictword *)alloc((unsigned int)(n * sizeof(dictword)));
+	nw = (pez_dictword *)alloc((unsigned int)(n * sizeof(pez_dictword)));
 
 	nw[n - 1].wnext = p->dict;
 	p->dict = nw;
@@ -4082,7 +4078,7 @@ static void pwalkback()
 			printf("   %s\n", p->curword->wname + 1);
 		}
 		while(p->wbptr > p->wback) {
-			dictword *wb = *(--p->wbptr);
+			pez_dictword *wb = *(--p->wbptr);
 			printf("   %s\n", wb->wname + 1);
 			fflush(stdout);
 		}
@@ -4205,7 +4201,7 @@ static void divzero()
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 
-static void exword(dictword *wp)
+static void exword(pez_dictword *wp)
 {
 	p->curword = wp;
 	tracing {
@@ -4284,7 +4280,7 @@ extern pez_instance *pez_init()
 	/* Look up compiler-referenced words in the new dictionary and
 	   save their compile addresses in static variables. */
 
-#define Cconst(cell, name)  cell = (stackitem)lookup(name); if(cell==0)abort()
+#define Cconst(cell, name)  cell = (pez_stackitem)lookup(name); if(cell==0)abort()
 	Cconst(s_exit, "EXIT");
 	Cconst(s_lit, "(LIT)");
 	Cconst(s_flit, "(FLIT)");
@@ -4300,8 +4296,8 @@ extern pez_instance *pez_init()
 #undef Cconst
 
 	if(p->stack == NULL) {	// Allocate stack if needed
-		p->stack = (stackitem *)
-			alloc(((unsigned int)p->stklen) * sizeof(stackitem));
+		p->stack = (pez_stackitem *)
+			alloc(((unsigned int)p->stklen) * sizeof(pez_stackitem));
 	}
 	p->stk = p->stackbot = p->stack;
 #ifdef MEMSTAT
@@ -4309,9 +4305,9 @@ extern pez_instance *pez_init()
 #endif
 	p->stacktop = p->stack + p->stklen;
 	if(p->rstack == NULL) {	// Allocate return stack if needed
-		p->rstack = (dictword ***)
+		p->rstack = (pez_dictword ***)
 			alloc(((unsigned int)p->rstklen) *
-					sizeof(dictword **));
+					sizeof(pez_dictword **));
 	}
 	p->rstk = p->rstackbot = p->rstack;
 #ifdef MEMSTAT
@@ -4320,8 +4316,8 @@ extern pez_instance *pez_init()
 	p->rstacktop = p->rstack + p->rstklen;
 #ifdef WALKBACK
 	if(p->wback == NULL) {
-		p->wback = (dictword **)alloc(((unsigned int)p->rstklen) *
-				sizeof(dictword *));
+		p->wback = (pez_dictword **)alloc(((unsigned int)p->rstklen) *
+				sizeof(pez_dictword *));
 	}
 	p->wbptr = p->wback;
 #endif
@@ -4339,11 +4335,11 @@ extern pez_instance *pez_init()
 
 		/* Force length of temporary strings to even number of
 		   stackitems. */
-		p->ltempstr += sizeof(stackitem) -
-			(p->ltempstr % sizeof(stackitem));
-		cp = alloc((p->heaplen * sizeof(stackitem)) +
+		p->ltempstr += sizeof(pez_stackitem) -
+			(p->ltempstr % sizeof(pez_stackitem));
+		cp = alloc((p->heaplen * sizeof(pez_stackitem)) +
 				((p->ntempstr * p->ltempstr)));
-		p->heapbot = (stackitem *)cp;
+		p->heapbot = (pez_stackitem *)cp;
 		p->strbuf = (char **)alloc(p->ntempstr * sizeof(char *));
 		for(i = 0; i < p->ntempstr; i++) {
 			p->strbuf[i] = cp;
@@ -4351,7 +4347,7 @@ extern pez_instance *pez_init()
 		}
 		p->cstrbuf = 0;
 		// Available heap memory starts after the temp strings:
-		p->heap = (stackitem *)cp;
+		p->heap = (pez_stackitem *)cp;
 	}
 	/* The system state word is kept in the first word of the heap
 	   so that pointer checking doesn't bounce references to it.
@@ -4379,19 +4375,19 @@ extern pez_instance *pez_init()
 	{
 		static struct {
 			char *sfn;
-			stackitem fd;
+			pez_stackitem fd;
 		} stdfiles[] = {
 			{"STDIN", 0},
 			{"STDOUT", 1},
 			{"STDERR", 2},
 		};
-		dictword *dw;
+		pez_dictword *dw;
 
 		for(i = 0; i < ELEMENTS(stdfiles); i++) {
 			if((dw =
 						pez_vardef(stdfiles[i].sfn,
-							sizeof(stackitem))) != NULL) {
-				stackitem *si = pez_body(dw);
+							sizeof(pez_stackitem))) != NULL) {
+				pez_stackitem *si = pez_body(dw);
 				*si = stdfiles[i].fd;
 			}
 		}
@@ -4406,8 +4402,7 @@ extern pez_instance *pez_init()
 
 /* Look up a word in the dictionary.  Returns its word item if found or NULL if
    the word isn't in the dictionary. */
-dictword *pez_lookup(name)
-char *name;
+pez_dictword *pez_lookup(char *name)
 {
 	char buf[TOK_BUF_SZ];
 	strcpy(buf, name);
@@ -4417,10 +4412,9 @@ char *name;
 /*  PEZ_BODY  --  Returns the address of the body of a word, given
 		  its dictionary entry. */
 
-stackitem *pez_body(dw)
-dictword *dw;
+stackitem *pez_body(pez_dictword *dw)
 {
-	return ((stackitem *)dw) + Dictwordl;
+	return ((pez_stackitem *)dw) + Dictwordl;
 }
 
 /*  PEZ_EXEC  --  Execute a word, given its dictionary address.  The
@@ -4463,9 +4457,9 @@ dictword *dw;
  */
 dictword *pez_vardef(char *name, int size)
 {
-	dictword *di;
+	pez_dictword *di;
 	char buf[TOK_BUF_SZ];
-	int isize = (size + (sizeof(stackitem) - 1)) / sizeof(stackitem);
+	int isize = (size + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
 
 #undef Memerrs
 #define Memerrs NULL
@@ -4475,7 +4469,7 @@ dictword *pez_vardef(char *name, int size)
 #define Memerrs
 	if(p->evalstat != PEZ_SNORM)	// Did the heap overflow
 		return NULL;	// Yes.  Return NULL
-	p->createword = (dictword *)p->hptr;	// Develop address of word
+	p->createword = (pez_dictword *)p->hptr;	// Develop address of word
 	p->createword->wcode = P_var;	// Store default code
 	p->hptr += Dictwordl;	// Allocate heap space for word
 	while(isize > 0) {
@@ -4552,7 +4546,7 @@ int pez_load(pez_instance *p, FILE *fp)
 	char s[134];
 	pez_statemark mk;
 	pez_int scomm = p->comment;	// Stack comment pending state
-	dictword **sip = p->ip;	// Stack instruction pointer
+	pez_dictword **sip = p->ip;	// Stack instruction pointer
 	char *sinstr = instream;	// Stack input stream
 	int lineno = 0;		// Current line number
 
@@ -4629,7 +4623,7 @@ int pez_prologue(pez_instance *p, char *sp)
 
 void pez_heap_string(pez_instance *p, char* str)
 {
-	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
+	int l = (strlen(str) + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem);
 	Ho(l);
 	*((char *)p->hptr) = l;	 // Store in-line skip length
 	strcpy(((char *)p->hptr) + 1, str);
@@ -4643,7 +4637,7 @@ void pez_stack_string(pez_instance *p, char *str)
 {
 	So(1);
 	strncpy(p->strbuf[p->cstrbuf], str, p->ltempstr - 1);
-	Push = (stackitem)p->strbuf[p->cstrbuf];
+	Push = (pez_stackitem)p->strbuf[p->cstrbuf];
 	p->cstrbuf = (p->cstrbuf + 1) % ((int)p->ntempstr);
 }
 
@@ -4665,7 +4659,7 @@ void pez_heap_real(pez_instance *p, pez_real val)
 	int i;
 	union {
 		pez_real r;
-		stackitem s[Realsize];
+		pez_stackitem s[Realsize];
 	} tru;
 
 	Ho(Realsize + 1);
@@ -4684,7 +4678,7 @@ void pez_stack_real(pez_instance *p, pez_real val)
 	int i;
 	union {
 		pez_real r;
-		stackitem s[Realsize];
+		pez_stackitem s[Realsize];
 	} tru;
 
 	fflush(stderr);
@@ -4696,18 +4690,18 @@ void pez_stack_real(pez_instance *p, pez_real val)
 	}
 }
 
-void pez_heap_word(dictword *di)
+void pez_heap_word(pez_dictword *di)
 {
-	Hsingle((stackitem)di);	// Compile word address
+	Hsingle((pez_stackitem)di);	// Compile word address
 }
 
 void pez_stack_word(char token_buffer[])
 {
-	dictword *di;
+	pez_dictword *di;
 	p->tickpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
 		So(1);
-		Push = (stackitem)di;	// Push word compile address
+		Push = (pez_stackitem)di;	// Push word compile address
 	} else {
 #ifdef MEMMESSAGE
 		fprintf(stderr, " '%s' undefined ", token_buffer);
@@ -4720,10 +4714,10 @@ void pez_stack_word(char token_buffer[])
 // FIXME: yes, this is not a good function name.
 void pez_forget_during_eval(char token_buffer[])
 {
-	dictword *di;
+	pez_dictword *di;
 	p->forgetpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
-		dictword *dw = p->dict;
+		pez_dictword *dw = p->dict;
 
 		/* Pass 1.  Rip through the dictionary to make sure this word is not
 		past the marker that guards against forgetting too much.  */
@@ -4754,7 +4748,7 @@ void pez_forget_during_eval(char token_buffer[])
 			} while(dw != di);
 			/* Finally, back the heap allocation pointer up to the
 			  start of the last item forgotten. */
-			p->hptr = (stackitem *)di;
+			p->hptr = (pez_stackitem *)di;
 			/* Uhhhh, just one more thing. If this word was defined with
 			  DOES>, there's a link to the method address hidden before
 			  its wnext field.  See if it's a DOES> by testing the wcode
@@ -4808,7 +4802,7 @@ int pez_eval(pez_instance *p, char *sp)
 
 	while((p->evalstat == PEZ_SNORM) &&
 		(token = lex(&instream, token_buffer)) != TokNull) {
-		dictword *di;
+		pez_dictword *di;
 
 		switch (token) {
 		case TokWord:
