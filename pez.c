@@ -72,15 +72,6 @@
 
 #include "pezdef.h"
 
-// I'm going to do some awful things for a few commits here.  Don't expect the
-// code to work.
-// MAGIC{
-static pez_instance pinst;
-static pez_instance *p = &pinst;
-// }
-#define dictword pez_dictword
-#define stackitem pez_stackitem
-
 #ifdef MATH
 #include <math.h>
 #endif
@@ -204,7 +195,8 @@ static char *alloc(unsigned long size)
 	Given the input stream, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
 */
-Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
+Boolean get_quoted_string(pez_instance *p, char **strbuf, char token_buffer[])
+{
 	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
@@ -268,7 +260,9 @@ Boolean get_quoted_string(char **strbuf, char token_buffer[]) {
 	in the token buffer.
 	These strings don't give no never mind about no escapes
 */
-Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
+Boolean get_delimited_string(pez_instance *p, char **strbuf,
+		char token_buffer[])
+{
 	Boolean valid_string = True;
 	int toklen = 0;
 	char *sp = *strbuf;
@@ -334,7 +328,8 @@ Boolean get_delimited_string(char **strbuf, char token_buffer[]) {
 		TokReal.
 		- If not otherwise identified, we have a word.
 */
-static int lex(char **cp, char token_buffer[]) {
+static int lex(pez_instance *p, char **cp, char token_buffer[])
+{
 	char *scanp = *cp;
 
 	while(True) {
@@ -358,11 +353,13 @@ static int lex(char **cp, char token_buffer[]) {
 			scanp++;
 
 		if(*scanp == '"') {
-			Boolean valid_string = get_quoted_string(&scanp, token_buffer);
+			Boolean valid_string =
+				get_quoted_string(p, &scanp, token_buffer);
 			*cp = --scanp;
 			return valid_string ? TokString : TokNull;
 		} else if(*scanp == '\\') { // Arbitrary string delimitation
-			Boolean valid_string = get_delimited_string(&scanp, token_buffer);
+			Boolean valid_string =
+				get_delimited_string(p, &scanp, token_buffer);
 			*cp = --scanp;
 			return valid_string ? TokString : TokNull;
 		} else {
@@ -451,7 +448,8 @@ static int lex(char **cp, char token_buffer[]) {
 
 /*  LOOKUP  --	Look up token in the dictionary.  */
 
-static dictword *lookup(char *tkname) {
+static dictword *lookup(char *tkname)
+{
 	dictword *dw = p->dict;
 
 	while(dw != NULL) {
@@ -604,7 +602,7 @@ static void print_regex_error(int code, regex_t *rx)
    ( a b -- a+b )
    Adds the two numbers at the top of the stack.
 */
-prim P_plus()
+prim P_plus(pez_instance *p)
 {
 	Sl(2);
 	S1 += S0;
@@ -4207,7 +4205,8 @@ static void divzero()
 
 /*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
 
-static void exword(dictword *wp) {
+static void exword(dictword *wp)
+{
 	p->curword = wp;
 	tracing {
 		printf("\nTrace: %s ", p->curword->wname + 1);
@@ -4462,7 +4461,8 @@ dictword *dw;
  * when invoked.  Returns the dictionary item for the new word, or NULL if the
  * heap overflows.
  */
-dictword *pez_vardef(char *name, int size) {
+dictword *pez_vardef(char *name, int size)
+{
 	dictword *di;
 	char buf[TOK_BUF_SZ];
 	int isize = (size + (sizeof(stackitem) - 1)) / sizeof(stackitem);
@@ -4546,7 +4546,8 @@ void pez_break(pez_instance *p)
 
 /*  PEZ_LOAD  --  Load a file into the system.	*/
 
-int pez_load(pez_instance *p, FILE *fp) {
+int pez_load(pez_instance *p, FILE *fp)
+{
 	int es = PEZ_SNORM;
 	char s[134];
 	pez_statemark mk;
@@ -4626,7 +4627,8 @@ int pez_prologue(pez_instance *p, char *sp)
 	The string, you fling upon the heap.
 */
 
-void pez_heap_string(pez_instance *p, char* str) {
+void pez_heap_string(pez_instance *p, char* str)
+{
 	int l = (strlen(str) + 1 + sizeof(stackitem)) / sizeof(stackitem);
 	Ho(l);
 	*((char *)p->hptr) = l;	 // Store in-line skip length
@@ -4694,11 +4696,13 @@ void pez_stack_real(pez_instance *p, pez_real val)
 	}
 }
 
-void pez_heap_word(dictword *di) {
+void pez_heap_word(dictword *di)
+{
 	Hsingle((stackitem)di);	// Compile word address
 }
 
-void pez_stack_word(char token_buffer[]) {
+void pez_stack_word(char token_buffer[])
+{
 	dictword *di;
 	p->tickpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
@@ -4714,7 +4718,8 @@ void pez_stack_word(char token_buffer[]) {
 }
 
 // FIXME: yes, this is not a good function name.
-void pez_forget_during_eval(char token_buffer[]) {
+void pez_forget_during_eval(char token_buffer[])
+{
 	dictword *di;
 	p->forgetpend = False;
 	if((di = lookup(token_buffer)) != NULL) {
@@ -4774,7 +4779,8 @@ void pez_forget_during_eval(char token_buffer[]) {
 
 /*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
 
-int pez_eval(pez_instance *p, char *sp) {
+int pez_eval(pez_instance *p, char *sp)
+{
 	int token;
 	char token_buffer[TOK_BUF_SZ];
 
