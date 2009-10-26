@@ -21,9 +21,9 @@ typedef long pez_int;		// Stack integer type
 typedef double pez_real;	// Real number type
 typedef long pez_stackitem;
 
+typedef struct pez_inst pez_instance;
 // External symbols accessible by the calling program.
-
-typedef void (pez_word)(void *);	// Machine code pointer
+typedef void (pez_word)(pez_instance *);	// Machine code pointer
 // That void up there is actually a pez_instance.  Don't tell anyone!
 typedef pez_word *pez_wordp;
 
@@ -46,7 +46,7 @@ typedef struct {
 	pez_dictword *mdict;	// Dictionary marker
 } pez_statemark;
 
-typedef struct pez_inst {
+struct pez_inst {
 	pez_int ltempstr;	// Temporary string buffer length
 	pez_int ntempstr;	// Number of temporary string buffers
 
@@ -115,7 +115,7 @@ typedef struct pez_inst {
 
 	pez_int argc;
 	char **argv;	// The argv that the pez program sees.
-} pez_instance;
+};
 
 //  PEZ_EVAL return status codes
 

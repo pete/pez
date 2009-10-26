@@ -4231,7 +4231,7 @@ static void exword(pez_instance *p, pez_dictword *wp)
 			printf("\nTrace: %s ", p->curword->wname + 1);
 			fflush(stdout);
 		}
-		p->curword->wcode();	// Execute the next word
+		p->curword->wcode(p);	// Execute the next word
 	}
 	p->curword = NULL;
 }
