@@ -131,8 +131,10 @@ Exported pez_real rbuf0, rbuf1, rbuf2;	// Real temporary buffers
 
 // Circular buffer.
 #define MAX_IO_STREAMS 10
-static pez_stackitem output_stk[MAX_IO_STREAMS] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-static pez_stackitem input_stk[MAX_IO_STREAMS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static pez_stackitem output_stk[MAX_IO_STREAMS] =
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+static pez_stackitem input_stk[MAX_IO_STREAMS] =
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static int output_idx = 0;
 static int input_idx = 0;
 #define output_stream output_stk[output_idx]
@@ -2772,7 +2774,8 @@ prim P_xdo()
 {				/* Execute DO */
 	Sl(2);
 	Rso(3);
-	Rpush = p->ip + ((pez_stackitem) *p->ip);	// Push exit address from loop
+	// Push exit address from loop:
+	Rpush = p->ip + ((pez_stackitem) *p->ip);
 	p->ip++;			// Increment past exit address word
 	Rpush = (rstackitem)S1;	// Push loop limit on return stack
 	Rpush = (rstackitem)S0;	/* Iteration variable initial value to
@@ -2800,8 +2803,8 @@ prim P_xqdo()
 		Rpush = p->ip + ((pez_stackitem) *p->ip);
 		p->ip++;		// Increment past exit address word
 		Rpush = (rstackitem)S1;	// Push loop limit on return stack
-		Rpush = (rstackitem)S0;	/* Iteration variable initial value to
-						   return stack */
+		// Iteration variable initial value to return stack:
+		Rpush = (rstackitem)S0;
 	}
 	p->stk -= 2;
 }
@@ -2887,7 +2890,8 @@ prim P_j()
 {				/* Obtain next-innermost loop index */
 	Rsl(6);
 	So(1);
-	Push = (pez_stackitem)p->rstk[-4];	// It's the 4th item on return stack
+	// It's the 4th item on return stack:
+	Push = (pez_stackitem)p->rstk[-4];
 }
 
 prim P_quit()
@@ -2911,13 +2915,14 @@ prim P_abortq()
 		p->stringlit = True;	// Set string literal expected
 		Compconst(s_abortq);	// Compile ourselves
 	} else {
-		printf("%s", (char *)p->ip);	/* Otherwise, print string literal
-						   in in-line code. */
+		// Otherwise, print string literal in in-line code:
+		printf("%s", (char *)p->ip);
 #ifdef WALKBACK
 		pwalkback();
 #endif				// WALKBACK
 		P_abort();	// Abort
-		p->comment = state = Falsity;	// Reset all interpretation state
+		// Reset all interpretation state:
+		p->comment = state = Falsity;
 		p->forgetpend = p->defpend = p->stringlit =
 			p->tickpend = p->ctickpend =
 			False;
@@ -4280,7 +4285,11 @@ extern pez_instance *pez_init()
 	/* Look up compiler-referenced words in the new dictionary and
 	   save their compile addresses in static variables. */
 
-#define Cconst(cell, name)  cell = (pez_stackitem)lookup(name); if(cell==0)abort()
+#define Cconst(cell, name)  do {\
+	cell = (pez_stackitem)lookup(name);\
+	if(!cell) abort();\
+	} while(0)
+
 	Cconst(s_exit, "EXIT");
 	Cconst(s_lit, "(LIT)");
 	Cconst(s_flit, "(FLIT)");
@@ -4384,9 +4393,8 @@ extern pez_instance *pez_init()
 		pez_dictword *dw;
 
 		for(i = 0; i < ELEMENTS(stdfiles); i++) {
-			if((dw =
-						pez_vardef(stdfiles[i].sfn,
-							sizeof(pez_stackitem))) != NULL) {
+			if((dw = pez_vardef(stdfiles[i].sfn,
+			                    sizeof(pez_stackitem))) != NULL) {
 				pez_stackitem *si = pez_body(dw);
 				*si = stdfiles[i].fd;
 			}
@@ -4623,7 +4631,8 @@ int pez_prologue(pez_instance *p, char *sp)
 
 void pez_heap_string(pez_instance *p, char* str)
 {
-	int l = (strlen(str) + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem);
+	int l =
+	      (strlen(str) + 1 + sizeof(pez_stackitem)) / sizeof(pez_stackitem);
 	Ho(l);
 	*((char *)p->hptr) = l;	 // Store in-line skip length
 	strcpy(((char *)p->hptr) + 1, str);
@@ -4719,8 +4728,9 @@ void pez_forget_during_eval(char token_buffer[])
 	if((di = lookup(token_buffer)) != NULL) {
 		pez_dictword *dw = p->dict;
 
-		/* Pass 1.  Rip through the dictionary to make sure this word is not
-		past the marker that guards against forgetting too much.  */
+		/* Pass 1.  Rip through the dictionary to make sure this word is
+		 * not past the marker that guards against forgetting too much.
+		 */
 
 		while(dw != NULL) {
 			if(dw == p->dictprot) {
@@ -4735,10 +4745,9 @@ void pez_forget_during_eval(char token_buffer[])
 			dw = dw->wnext;
 		}
 
-		/* Pass 2.  Walk back through the dictionary items until we encounter
-		the target of the FORGET.  Release each item's name buffer and dechain
-		it from the dictionary list. */
-
+		/* Pass 2.  Walk back through the dictionary items until we
+		 * encounter the target of the FORGET.  Release each item's name
+		 * buffer and dechain it from the dictionary list. */
 		if(di != NULL) {
 			do {
 				dw = p->dict;
@@ -4812,7 +4821,8 @@ int pez_eval(pez_instance *p, char *sp)
 				pez_stack_word(token_buffer);
 			} else if(p->defpend) {
 				p->defpend = False;
-				enter(token_buffer); // Define word and enter in the dict.
+				// Define word and enter in the dict:
+				enter(token_buffer);
 			} else { // Here's where evaluation actually happens
 				di = lookup(token_buffer);
 				if(di != NULL) {

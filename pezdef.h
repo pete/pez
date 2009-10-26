@@ -113,7 +113,10 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 #ifdef ADS                            /* Definitions if we're an ADS app */
 #define printf ads_printf	      /* Print through ADS */
-#define Keybreak() {static int n=0; if ((n=(n+1)&127)==0) {UbI(); broken=ads_usrbrk();}}
+#define Keybreak() do {\
+	static int n=0;\
+	if ((n=(n+1)&127)==0) {UbI(); broken=ads_usrbrk();}\
+} while(0)
 #endif
 
 #ifndef Keybreak

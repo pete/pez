@@ -1,4 +1,5 @@
-/* file: minunit.h (modified from: http://www.jera.com/techinfo/jtns/jtn002.html) */
+/* file: minunit.h (modified from:
+ * http://www.jera.com/techinfo/jtns/jtn002.html) */
 
 #define mu_assert(message, test) \
         do { if (!(test)) { \

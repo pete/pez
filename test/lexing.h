@@ -16,7 +16,8 @@ static char* test_quoted_string() {
 	char token_buffer[128];
 	valid = get_quoted_string(input, token_buffer);
 	mu_assert("String should be valid", valid);
-	mu_assert("String different?", strcmp(token_buffer, "John Bigboote") == 0);
+	mu_assert("String different?",
+			strcmp(token_buffer, "John Bigboote") == 0);
 	
 	*input = "\"\"";
 	valid = get_quoted_string(input, token_buffer);
