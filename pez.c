@@ -113,42 +113,8 @@ typedef enum { False = 0, True = 1 } Boolean;
 
 #define ELEMENTS(array) (sizeof(array)/sizeof((array)[0]))
 
-// TODO:  Bascially all of these globals are going into the struct that
-// represents an instance of a Pez interpreter.  Furthermore, most are going
-// away when we add the GC.
-
-// This is the big global state area.  I'm preparing to wrap it all in a struct.
-// {
-
-/*  Local variables  */
-
-static char *instream = NULL;	// Current input stream line
-static long tokint;		// Scanned integer
-static pez_real tokreal;	// Scanned real number
-#ifdef ALIGNMENT
-Exported pez_real rbuf0, rbuf1, rbuf2;	// Real temporary buffers
-#endif
-
-// Circular buffer.
-#define MAX_IO_STREAMS 10
-static pez_stackitem output_stk[MAX_IO_STREAMS] =
-	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-static pez_stackitem input_stk[MAX_IO_STREAMS] =
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static int output_idx = 0;
-static int input_idx = 0;
-#define output_stream output_stk[output_idx]
-#define input_stream input_stk[input_idx]
-
-// Like above...
-#define MAX_REGEXES 10
-static regex_t regexes[MAX_REGEXES];
-#define MAX_REGEX_MATCHES 20 // Hey, they're small.
-static regmatch_t regex_matches[MAX_REGEX_MATCHES];
-static int regex_idx = 0;
-
-// }
-// And that's the end of the wacky global state...I hope.
+#define output_stream p->output_stk[p->output_idx]
+#define input_stream p->input_stk[p->input_idx]
 
 #ifdef COPYRIGHT
 #ifndef HIGHC
@@ -425,12 +391,13 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 			if(sscanf(token_buffer, "%li%c", &tokint, &tc) == 1)
 				return TokInt;
 #else
-			tokint = strtoul(token_buffer, &tcp, 0);
+			p->tokint = strtoul(token_buffer, &tcp, 0);
 			if(*tcp == 0) {
 				return TokInt;
 			}
 #endif
-			if(sscanf(token_buffer, "%lf%c", &tokreal, &tc) == 1) {
+			if(sscanf(token_buffer, "%lf%c",
+						&p->tokreal, &tc) == 1) {
 				return TokReal;
 			}
 		}
@@ -1430,8 +1397,8 @@ prim P_regex(pez_instance *p)
 
 	Sl(2);
 
-	regfree(regexes + regex_idx);
-	regex_idx = (regex_idx + 1) % MAX_REGEXES;
+	regfree(p->regexes + p->regex_idx);
+	p->regex_idx = (p->regex_idx + 1) % MAX_REGEXES;
 
 	if(S0) {
 		if(strchr((char *)S0, 'i'))
@@ -1440,8 +1407,8 @@ prim P_regex(pez_instance *p)
 			flags |= REG_NEWLINE;
 	}
 
-	problem = regcomp(regexes + regex_idx, (char *)S1, flags);
-	S1 = problem ? 0 : (pez_stackitem)(regexes + regex_idx);
+	problem = regcomp(p->regexes + p->regex_idx, (char *)S1, flags);
+	S1 = problem ? 0 : (pez_stackitem)(p->regexes + p->regex_idx);
 	Pop;
 	return;
 }
@@ -1457,7 +1424,7 @@ prim P_rmatch(pez_instance *p)
 	Sl(2);
 
 	match = !regexec((regex_t *)S0, (char *)S1,
-			MAX_REGEX_MATCHES, regex_matches, 0);
+			MAX_REGEX_MATCHES, p->regex_matches, 0);
 	S1 = match ? Truth : Falsity;
 	Pop;
 }
@@ -1472,8 +1439,8 @@ prim P_rmatch(pez_instance *p)
    valid; check the offset to be sure if an optional part matched.)
 */
 #define PUSH_RX(fname,n) prim fname(pez_instance *p) { So(2); \
-	Push = regex_matches[n].rm_eo - regex_matches[n].rm_so;\
-	Push = regex_matches[n].rm_so;\
+		Push = p->regex_matches[n].rm_eo - p->regex_matches[n].rm_so;\
+		Push = p->regex_matches[n].rm_so;\
 	}
 PUSH_RX(P_money0, 0)
 PUSH_RX(P_money1, 1)
@@ -2059,7 +2026,7 @@ prim P_words(pez_instance *p)
 prim P_tooutput(pez_instance *p)
 {
 	Sl(1);
-	output_idx = (output_idx + 1) % MAX_IO_STREAMS;
+	p->output_idx = (p->output_idx + 1) % MAX_IO_STREAMS;
 	output_stream = S0;
 	Pop;
 }
@@ -2071,7 +2038,7 @@ prim P_tooutput(pez_instance *p)
 prim P_toinput(pez_instance *p)
 {
 	Sl(1);
-	input_idx = (input_idx + 1) % MAX_IO_STREAMS;
+	p->input_idx = (p->input_idx + 1) % MAX_IO_STREAMS;
 	input_stream = S0;
 	Pop;
 }
@@ -2084,7 +2051,7 @@ prim P_outputto(pez_instance *p)
 {
 	So(1);
 	Push = output_stream;
-	output_idx = (output_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
+	p->output_idx = (p->output_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
 }
 
 /*
@@ -2095,7 +2062,7 @@ prim P_inputto(pez_instance *p)
 {
 	So(1);
 	Push = input_stream;
-	input_idx = (input_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
+	p->input_idx = (p->input_idx + MAX_IO_STREAMS - 1) % MAX_IO_STREAMS;
 }
 
 /*
@@ -2206,7 +2173,7 @@ prim P_evaluate(pez_instance *p)
 	pez_statemark mk;
 	pez_int scomm = p->comment;	// Stack comment pending state
 	pez_dictword **sip = p->ip;		// Stack instruction pointer
-	char *sinstr = instream;	// Stack input stream
+	char *sinstr = p->instream;	// Stack input stream
 	char *estring;
 
 	Sl(1);
@@ -2227,7 +2194,7 @@ prim P_evaluate(pez_instance *p)
 	}
 	p->comment = scomm;	// Unstack comment pending status
 	p->ip = sip;		// Unstack instruction pointer
-	instream = sinstr;	// Unstack input stream
+	p->instream = sinstr;	// Unstack input stream
 	So(1);
 	Push = es;		// Return eval status on top of stack
 }
@@ -3067,7 +3034,7 @@ prim P_tick(pez_instance *p)
 	   report an error.  Since we can't call back to the
 	   calling program for more input, we're stuck. */
 
-	token = lex(p, &instream, token_buffer);	// Scan for next token
+	token = lex(p, &p->instream, token_buffer);	// Scan for next token
 	if(token != TokNull) {
 		if(token == TokWord) {
 			pez_dictword *di;
@@ -4272,6 +4239,15 @@ extern pez_instance *pez_init()
 	p->ltempstr = max(PATH_MAX, 4096);// Temporary string buffer length
 	p->base = 10;
 	p->broken = Falsity;
+	p->instream = NULL;
+
+	for(i = 0; i < MAX_IO_STREAMS; i++) {
+		p->output_stk[i] = 1;
+		p->input_stk[i] = 0;
+	}
+	p->output_idx = 0;
+	p->input_idx = 0;
+	p->regex_idx = 0;
 
 	pez_primdef(p, primt);  // Define primitive words
 	p->dictprot = p->dict;  // Set protected mark in dictionary, now that we
@@ -4373,7 +4349,7 @@ extern pez_instance *pez_init()
 	// going away when interpreter instances are implemented and
 	// memory management gets overhauled.  Until then:  hackery.
 	for(i = 0; i < MAX_REGEXES; i++)
-		regcomp(regexes + i, "", REG_EXTENDED);
+		regcomp(p->regexes + i, ".*", REG_EXTENDED);
 
 #ifdef FILEIO
 	{
@@ -4549,7 +4525,7 @@ int pez_load(pez_instance *p, FILE *fp)
 	pez_statemark mk;
 	pez_int scomm = p->comment;	// Stack comment pending state
 	pez_dictword **sip = p->ip;	// Stack instruction pointer
-	char *sinstr = instream;	// Stack input stream
+	char *sinstr = p->instream;	// Stack input stream
 	int lineno = 0;		// Current line number
 
 	p->errline = 0;	// Reset line number of error
@@ -4575,7 +4551,7 @@ int pez_load(pez_instance *p, FILE *fp)
 	}
 	p->comment = scomm;	// Unstack comment pending status
 	p->ip = sip;		// Unstack instruction pointer
-	instream = sinstr;	// Unstack input stream
+	p->instream = sinstr;	// Unstack input stream
 	return es;
 }
 
@@ -4783,7 +4759,7 @@ int pez_eval(pez_instance *p, char *sp)
 
 #undef Memerrs
 #define Memerrs p->evalstat
-	instream = sp;
+	p->instream = sp;
 	p->evalstat = PEZ_SNORM;	 // Set normal evaluation status
 #ifdef BREAK
 	p->broken = False;		 // Reset asynchronous break
@@ -4804,7 +4780,7 @@ int pez_eval(pez_instance *p, char *sp)
 #endif				// PROLOGUE
 
 	while((p->evalstat == PEZ_SNORM) &&
-		(token = lex(p, &instream, token_buffer)) != TokNull) {
+		(token = lex(p, &p->instream, token_buffer)) != TokNull) {
 		pez_dictword *di;
 
 		switch (token) {
@@ -4857,16 +4833,16 @@ int pez_eval(pez_instance *p, char *sp)
 
 		case TokInt:
 			if(state)
-				pez_heap_int(p, tokint);
+				pez_heap_int(p, p->tokint);
 			else
-				pez_stack_int(p, tokint);
+				pez_stack_int(p, p->tokint);
 			break;
 
 		case TokReal:
 			if(state)
-				pez_heap_real(p, tokreal);
+				pez_heap_real(p, p->tokreal);
 			else
-				pez_stack_real(p, tokreal);
+				pez_stack_real(p, p->tokreal);
 			break;
 
 		case TokString:

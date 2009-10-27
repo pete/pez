@@ -17,6 +17,12 @@
 
 #include <config.h>
 
+#include <regex.h>
+
+#define MAX_IO_STREAMS 10
+#define MAX_REGEXES 10
+#define MAX_REGEX_MATCHES 20 // Hey, they're small.
+
 typedef long pez_int;		// Stack integer type
 typedef double pez_real;	// Real number type
 typedef long pez_stackitem;
@@ -76,6 +82,11 @@ struct pez_inst {
 	pez_int ctickpend;	// Waiting for the object of a [']?
 	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
 
+	// Lexing:
+	char *instream;		// Current input stream line
+	pez_int tokint;		// Scanned integer
+	pez_real tokreal;	// Scanned real number
+
 	// Running code:
 	pez_dictword *curword;	// Current word being executed
 	pez_dictword **ip;	// Instruction pointer
@@ -112,6 +123,26 @@ struct pez_inst {
 	// The walkback trace stack:
 	pez_dictword **wback;	// Walkback trace buffer
 	pez_dictword **wbptr;	// Walkback trace pointer
+
+	// I/O, as code running in Pez sees it:
+	pez_stackitem output_stk[MAX_IO_STREAMS];
+	pez_stackitem input_stk[MAX_IO_STREAMS];
+	int output_idx;
+	int input_idx;
+
+	// Regexes:
+	regex_t regexes[MAX_REGEXES];
+	regmatch_t regex_matches[MAX_REGEX_MATCHES];
+	int regex_idx;
+
+	/* 
+	   These are temporary buffers, for the case where an architecture 
+	   1.  requires floats to be aligned
+	   2.  has floats that are larger than longs (as everything on the stack
+	       is long-aligned)
+	   We memcpy floats from the stack into the buffers before using them.
+	*/
+	pez_real rbuf0, rbuf1, rbuf2;	
 
 	pez_int argc;
 	char **argv;	// The argv that the pez program sees.
