@@ -552,7 +552,7 @@ static void print_regex_error(int code, regex_t *rx)
 #ifdef COMPILATION_SAFETY
 #define Compiling
 #else
-#define Compiling if (state == Falsity) {notcomp(); return;}
+#define Compiling if (state == Falsity) {notcomp(p); return;}
 #endif
 #define Compconst(x) Ho(1); Hstore = (pez_stackitem)(x)
 #define Skipstring p->ip += *((char *)p->ip)
