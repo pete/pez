@@ -167,6 +167,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 POW_LIB = @POW_LIB@
@@ -811,7 +812,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES
 
 # I swear, the docs say this works:
-# libpez_la_LIBTOOLFLAGS = -version-info 1:4:3
+# libpez_la_LIBTOOLFLAGS = -version-info 1:5:0
 
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez$(EXEEXT)
