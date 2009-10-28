@@ -679,10 +679,10 @@ variable k
         1.0 e f/ log -1.0 fok?
 
     "POW" tests:
-        2.0 4.0 pow 16.0 fok?
-        2.0 -1.0 pow 0.5 fok?
-        8.0 1.0 3.0 f/ pow 2.0 fok?
-        e pi log pow pi fok?
+        2.0 4.0 f^ 16.0 fok?
+        2.0 -1.0 f^ 0.5 fok?
+        8.0 1.0 3.0 f/ f^ 2.0 fok?
+        e pi log f^ pi fok?
 
     "SIN" tests:
         0.0 sin 0.0 fok?

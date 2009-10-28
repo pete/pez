@@ -1755,6 +1755,19 @@ prim P_log(pez_instance *p)
 	Mathfunc(log);
 }
 
+prim P_ipow(pez_instance *p)
+{
+	pez_stackitem  i, n;
+	Sl(2);
+
+	// A somewhat naive implementation:
+	n = S1;
+	for(i = 0; i < S0; i++)
+		S1 *= n;
+
+	Pop;
+}
+
 prim P_pow(pez_instance *p)
 {				/* X ^ Y */
 	Sl(2 * Realsize);
@@ -3807,7 +3820,8 @@ static struct primfcn primt[] = {
 	{"0COS", P_cos},
 	{"0EXP", P_exp},
 	{"0LOG", P_log},
-	{"0POW", P_pow},
+	{"0^", P_ipow},
+	{"0F^", P_pow},
 	{"0SIN", P_sin},
 	{"0SQRT", P_sqrt},
 	{"0TAN", P_tan},
