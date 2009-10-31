@@ -21,13 +21,10 @@
 #include <sys/time.h>
 #include <regex.h>
 #include <limits.h>
+#include <gc/gc.h>
 
 #ifdef ALIGNMENT
-#ifdef __TURBOC__
-#include <mem.h>
-#else
 #include <memory.h>
-#endif
 #endif
 
 #ifdef Macintosh
