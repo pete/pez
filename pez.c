@@ -1780,7 +1780,7 @@ prim P_ipow(pez_instance *p)
 
 	// A somewhat naive implementation:
 	n = S1;
-	for(i = 0; i < S0; i++)
+	for(i = 1; i < S0; i++)
 		S1 *= n;
 
 	Pop;
