@@ -1,0 +1,13 @@
+#! /usr/bin/env pez
+
+: 1MB 2 20 ^ malloc ;
+: waste 0xdeadbeef 1MB ! ;
+: wastes 1 do waste loop ;
+
+# This will waste a full gig of RAM:
+2 10 ^ wastes
+
+"We've wasted a gig of RAM, 1 meg at a time." puts
+"Have a look at your favorite memory monitor to see if it was collected," puts
+"and then hit return to exit." puts
+1MB 2 20 ^ gets
