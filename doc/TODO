@@ -13,7 +13,6 @@ This is a sort of unordered roadmap for Pez.
 
 * Autotools tweaks.  Specifically, I'm incompetent with that build
   system, and a few things need to happen:
-  	* pez.h really badly needs to be installed.
 	* The standard collection of FFI libraries (most of which are
 	  yet to be written, except for a minimal SDL proof-of-concept)
 	  need to be built and installed in /usr/lib/pez/ (or wherever
@@ -22,15 +21,6 @@ This is a sort of unordered roadmap for Pez.
 	  can see it, so that it can install and load libraries.
 	* The various compile-time options need to be settable by
 	  configure rather than CFLAGS.
-
-* Enable multiple instances within a single process.  This is both nice to have
-  and necessary for the concurrency model I want to implement (a stack-based
-  language works best as shared-nothing, I think), or to instantiate sandboxed
-  interpreters from inside Pez programs.  It's going to be kind of tedious,
-  though, as it will require moving all of the static variables into a struct
-  (representing the interpreter; each with its own stack, return stack, input
-  stream, heap, etc.), then changing all of the primitives to take a pointer to
-  the interpreter as an argument.  So I'm sort of lazily putting it off for now.
 
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
@@ -46,8 +36,6 @@ This is a sort of unordered roadmap for Pez.
   depends on how much of a pain that turns out to be.
 
 * Misc cleanup
-	* Make my own idioms conform a little more to the Atlast codebase, where
-	  it makes sense.
 	* Fix up some of Atlast's quirks, where it makes sense.  (e.g., change
 	  'Push = x' to 'Push(x)'.)
 
@@ -55,5 +43,5 @@ This is a sort of unordered roadmap for Pez.
   intermediate language for Roboto.
 
 * Along those lines, there are a few Roboto features that may be pushed down to
-  Pez, like garbage collection, although this will only happen where it does not
-  interfere with Pez as a standalone language or embedded scripting language.
+  Pez, although this will only happen where it does not interfere with Pez as a
+  standalone language or embedded scripting language.
