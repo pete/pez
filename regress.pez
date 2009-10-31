@@ -639,6 +639,11 @@ variable k
 2.7182818284590452354 fconstant e
 
 : testmath
+    "^" tests:
+        1 1000 ^ 1 ok?
+	2 10 ^ 1024 ok?
+	3 14 ^ 4782969 ok?
+
     "ACOS" tests:
         0.0 acos pi 2.0 f/ fok?
         1.0 acos 0.0 fok?
