@@ -46,15 +46,6 @@ struct primfcn {
 #ifdef EXPORT
 #define Exported
 
-#ifdef ALIGNMENT
-extern pez_real rbuf0, rbuf1, rbuf2;  /* Real temporaries for alignment */
-#endif
-
-#define FmodeR	    1		      /* Read mode */
-#define FmodeW	    2		      /* Write mode */
-#define FmodeB	    4		      /* Binary file mode */
-#define FmodeCre    8		      /* Create new file */
-
 extern void P_create(pez_instance *p), P_dodoes(pez_instance *p);
 #else  /* EXPORT */
 #define Exported static
@@ -132,17 +123,17 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 
 /*  Stack access definitions  */
 
-#define S0  p->stk[-1]		      /* Top of stack */
-#define S1  p->stk[-2]		      /* Next on stack */
-#define S2  p->stk[-3]		      /* Third on stack */
-#define S3  p->stk[-4]		      /* Fourth on stack */
-#define S4  p->stk[-5]		      /* Fifth on stack */
-#define S5  p->stk[-6]		      /* Sixth on stack */
-#define Pop p->stk--		      /* Pop the top item off the stack */
-#define Pop2 p->stk -= 2		      /* Pop two items off the stack */
-#define Npop(n) p->stk -= (n)	      /* Pop N items off the stack */
+#define S0  p->stk[-1]		// Top of stack
+#define S1  p->stk[-2]		// Next on stack
+#define S2  p->stk[-3]		// Third on stack
+#define S3  p->stk[-4]		// Fourth on stack
+#define S4  p->stk[-5]		// Fifth on stack
+#define S5  p->stk[-6]		// Sixth on stack
+#define Pop p->stk--		// Pop the top item off the stack
+#define Pop2 p->stk -= 2	// Pop two items off the stack
+#define Npop(n) p->stk -= (n)	// Pop N items off the stack
 // TODO:  See Realpush().
-#define Push *p->stk++		      /* Push item onto stack */
+#define Push *p->stk++		// Push item onto stack
 
 #ifdef MEMSTAT
 #define Mss(n) if ((p->stk+(n))>p->stack) p->stackmax = p->stk+(n);
