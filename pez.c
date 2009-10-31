@@ -147,7 +147,7 @@ STATIC void pwalkback(pez_instance *p);
 /*  ALLOC  --  Allocate memory and error upon exhaustion.  */
 static char *alloc(unsigned long size)
 {
-	char *cp = (char *)malloc(size);
+	char *cp = (char *)GC_MALLOC(size);
 
 	if(cp == NULL) {
 		fprintf(stderr, "\n\nOut of memory!  %lu bytes requested.\n",
@@ -863,10 +863,21 @@ prim P_0lss(pez_instance *p)
 	S0 = (S0 < 0) ? Truth : Falsity;
 }
 
-/*  Storage allocation (heap) primitives  */
+/*  Storage allocation (mostly heap) primitives  */
 
 /*
-	Push current heap address
+   ( n -- addr )
+   Allocate n bytes of garbage-collected memory.
+*/
+prim P_malloc(pez_instance *p)
+{
+	So(1);
+	S0 = (pez_stackitem)GC_MALLOC(S0);
+}
+
+/*
+   ( -- heap )
+   Push current heap address
 */
 prim P_here(pez_instance *p)
 {
@@ -875,7 +886,8 @@ prim P_here(pez_instance *p)
 }
 
 /*
-	Store value into address
+   ( val addr -- )
+   Store value into address
 */
 prim P_bang(pez_instance *p)
 {
@@ -886,7 +898,8 @@ prim P_bang(pez_instance *p)
 }
 
 /*
-	Fetch value from address
+   ( addr -- *addr )
+   Fetch value from address
 */
 prim P_at(pez_instance *p)
 {
@@ -896,7 +909,8 @@ prim P_at(pez_instance *p)
 }
 
 /*
-	Add value at specified address
+   ( n addr -- )
+   Add top of stack to value at specified address
 */
 prim P_plusbang(pez_instance *p)
 {
@@ -919,7 +933,8 @@ prim P_1plusbang(pez_instance *p)
 }
 
 /*
-	Allocate heap bytes
+   ( n -- )
+   Allocate heap bytes
 */
 prim P_allot(pez_instance *p)
 {
@@ -933,7 +948,8 @@ prim P_allot(pez_instance *p)
 }
 
 /*
-	Store TOS on heap
+   ( x -- )
+   Store top of stack on heap
 */
 prim P_comma(pez_instance *p)
 {
@@ -944,7 +960,8 @@ prim P_comma(pez_instance *p)
 }
 
 /*
-	Store byte value into address
+   ( byte addr -- )
+   Store byte value into address
 */
 prim P_cbang(pez_instance *p)
 {
@@ -955,7 +972,8 @@ prim P_cbang(pez_instance *p)
 }
 
 /*
-	Fetch byte value from address
+   ( addr -- *(char *)addr )
+   Fetch byte value from address
 */
 prim P_cat(pez_instance *p)
 {
@@ -965,7 +983,8 @@ prim P_cat(pez_instance *p)
 }
 
 /*
-	Store one byte on heap
+   ( byte -- )
+   Store one byte on heap
 */
 prim P_ccomma(pez_instance *p)
 {
@@ -980,7 +999,9 @@ prim P_ccomma(pez_instance *p)
 }
 
 /*
-	Align heap pointer after storing *//* a series of bytes.
+   ( -- )
+   Align heap pointer to stackitem size; useful (if not required for
+   portability reasons) after storing a series of bytes.
 */
 prim P_cequal(pez_instance *p)
 {
@@ -3235,7 +3256,6 @@ prim P_storename(pez_instance *p)
 	Hpc(S0);		// See comments in P_fetchname above
 	Hpc(S1);		// checking name pointers
 	tflags = **((char **)S0);
-	free(*((char **)S0));
 	*((char **)S0) = cp = alloc((unsigned int)(strlen((char *)S1) + 2));
 	strcpy(cp + 1, (char *)S1);
 	*cp = tflags;
@@ -3732,6 +3752,7 @@ static struct primfcn primt[] = {
 	{"0C@", P_cat},
 	{"0C,", P_ccomma},
 	{"0C=", P_cequal},
+	{"0MALLOC", P_malloc},
 	{"0HERE", P_here},
 	{"0CELLSIZE", P_cellsize},
 	{"0FLOATSIZE", P_floatsize},
@@ -4216,15 +4237,17 @@ static void exword(pez_instance *p, pez_dictword *wp)
 
 /*
    This returns a new instance of Pez.
-   For now, unless you like leaking memory or you only allocate one instance per
-   process, you'll also have to call pez_free() when you're done with it.
-
-   (Garbage collection is pending.)
 */
 extern pez_instance *pez_init()
 {
+	static int gc_already_inited = 0;
 	pez_instance *p;
 	int i;
+
+	if(!gc_already_inited) {
+		GC_INIT();
+		gc_already_inited = 1;
+	}
 
 	p = (pez_instance *)alloc(sizeof(pez_instance));
 	p->evalstat = PEZ_SNORM;
@@ -4508,7 +4531,6 @@ void pez_unwind(pez_instance *p, pez_statemark *mp)
 
 	while(p->dict != NULL && p->dict != p->dictprot &&
 			p->dict != mp->mdict) {
-		free(p->dict->wname);	// Release name string for item
 		p->dict = p->dict->wnext;	// Link to previous item
 	}
 }
@@ -4732,8 +4754,6 @@ void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 		if(di != NULL) {
 			do {
 				dw = p->dict;
-				if(dw->wname != NULL)
-					free(dw->wname);
 				p->dict = dw->wnext;
 			} while(dw != di);
 			/* Finally, back the heap allocation pointer up to the

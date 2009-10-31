@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <gc/gc.h>
 
 #include <signal.h>
 #include "pezdef.h"
@@ -56,7 +57,7 @@ int print_usage(FILE * s, char *pname)
 static void init_pez_argv(int argc)
 {
 	int size = sizeof(char *) *argc;
-	p->argv = malloc(size);
+	p->argv = GC_MALLOC(size);
 	if(!p->argv) {
 		fprintf(stderr, "Couldn't allocate enough memory to duplicate "
 			"argv (%d bytes).\n"
