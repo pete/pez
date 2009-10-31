@@ -8,7 +8,7 @@ AC_CONFIG_HEADERS([config.h:config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([pez.c])
 
-# AM_INIT_AUTOMAKE(pez, 1.4.3)
+# AM_INIT_AUTOMAKE(pez, 1.5.0)
 AM_INIT_AUTOMAKE
 
 AC_PROG_LIBTOOL
@@ -23,15 +23,19 @@ AC_CHECK_PROG([RUBY], [ruby], 1, 0)
 AC_CHECK_PROG([RLWRAP], [rlwrap], rlwrap,)
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-ldl':
-AC_CHECK_LIB([dl], [dlopen])
-# FIXME: Replace `main' with a function in `-lm':
-AC_CHECK_LIB([m], [log])
+AC_CHECK_LIB([m], [log], [],
+	     [echo "Missing the standard C math library, -lm" >&2; exit 1])
+AC_CHECK_LIB([dl], [dlopen], [],
+	     [echo "Missing the dynamic library loading library, -ldl" >&2;
+	      exit 1])
+AC_CHECK_LIB([gc], [GC_malloc], [],
+	     [echo "Missing the Boehm GC library, -lgc" >&2; exit 1])
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h])
+AC_CHECK_HEADERS(
+	[memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
