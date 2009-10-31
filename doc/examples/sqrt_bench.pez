@@ -39,4 +39,4 @@ fvariable y
 ;
 
 : cbenchmark 1600000 0 do 2.0 csqrt fdrop loop ." "Done\n" ;
-: sbenchmark 16000000 0 do 2.0 sqrt fdrop loop ." "Done\n" ;
+: sbenchmark 1600000 0 do 2.0 sqrt fdrop loop ." "Done\n" ;
