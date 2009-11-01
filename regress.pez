@@ -941,21 +941,21 @@ variable fd1
 		$4 0 -1  2 nok?
 ;
 
-# Will do this when I add GC.  I don't want to ever free memory manually in Pez
-# again.
-(
 variable sub-pez
-: instantiation
+: testinstantiation
 	"INSTANTIATION" tests:
 		0 new-pez dup sub-pez ! 0= 0 ok?
 	
 	"EVALUATION" tests:
 		"2 2 +" sub-pez @ send-eval 0 ok?
-
+		sub-pez @ stack> @ 4 ok?
+	
+	"SELF-REFERENCE" tests:
+		this-pez 0= 0 ok?
+		"2" this-pez send-eval  2 0  2 nok?
+		"this-pez" sub-pez @ send-eval 0 ok?
+		sub-pez @ stack> @ sub-pez @ ok?
 ;
-)
-
-		
 
 #   Run all the regression subtests
 
@@ -991,8 +991,8 @@ testeval
 testprocess
 "regexes" puts
 testregexes
-# "instantiation" puts
-# testinstantiation
+"instantiation" puts
+testinstantiation
 
 #   Low-level control structure primitives
 
