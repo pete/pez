@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 	FILE *ifp;
 	char *include[20];
 	char *cp, opt;
-	int in = 0, status = PEZ_SNORM;
+	int in = 0, status = PEZ_SNORM, interactive;
 	char **pez_argv_current;
 
 	p = pez_init();
@@ -185,16 +185,21 @@ int main(int argc, char *argv[])
 	/* Now that all the preliminaries are out of the way, fall into
 	   the main PEZ execution loop. */
 
+	interactive = !fname && isatty(0);
+
 #ifndef HIGHC
 	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
-	while(status == PEZ_SNORM || !fname) {
+	while(status == PEZ_SNORM || interactive) {
 		char t[132];
 
-		if(!fname) {
-			printf(p->comment ? "(  " :	// Show pending comment
-			       // Show compiling state */
-			       (((p->heap != NULL) && state) ? ":> " : "-> "));
+		if(interactive) {
+			if(p->comment)
+				printf("(  ");
+			else if(p->heap != NULL && state)
+				printf(":> ");
+			else
+				printf("-> ");
 			fflush(stdout);
 		}
 		if(fgets(t, 132, ifp) == NULL) {
@@ -207,7 +212,7 @@ int main(int argc, char *argv[])
 		}
 		status = pez_eval(p, t);
 	}
-	if(!fname)
+	if(interactive)
 		printf("\n");
 	return 0;
 }
