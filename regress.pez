@@ -941,6 +941,7 @@ variable fd1
 		$4 0 -1  2 nok?
 ;
 
+(
 variable sub-pez
 : testinstantiation
 	"INSTANTIATION" tests:
@@ -956,6 +957,7 @@ variable sub-pez
 		"this-pez" sub-pez @ send-eval 0 ok?
 		sub-pez @ stack> @ sub-pez @ ok?
 ;
+)
 
 #   Run all the regression subtests
 
@@ -991,8 +993,8 @@ testeval
 testprocess
 "regexes" puts
 testregexes
-"instantiation" puts
-testinstantiation
+# "instantiation" puts
+# testinstantiation
 
 #   Low-level control structure primitives
 
