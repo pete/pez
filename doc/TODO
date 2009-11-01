@@ -3,6 +3,17 @@ This is a sort of unordered roadmap for Pez.
 * Fix the bug with undefined words being referenced in definitions.  (A
   segfault, oh my!)
 
+* Add support for sockets.
+
+* Use flags in the interpreter struct instead of #define's for features
+  to support or disallow.  For example, you may want to instantiate an
+  interpreter that has no permissions for network or file operations and
+  restricts pointers, while allowing the main interpreter to do those
+  things.
+
+* Finalize the API for a Pez interpreter instantiated by another Pez
+  program, so that the above-mentioned jailing of sub-pez's makes sense.
+
 * Autotools tweaks.  Specifically, I'm incompetent with that build
   system, and a few things need to happen:
 	* The standard collection of FFI libraries (most of which are
@@ -11,8 +22,8 @@ This is a sort of unordered roadmap for Pez.
 	  autotools and the runner of ./configure decide is
 	  appropriate) and the path to this library defined where Pez
 	  can see it, so that it can install and load libraries.
-	* The various compile-time options need to be settable by
-	  configure rather than CFLAGS.
+
+* The various compile-time options need to mostly go away.
 
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
