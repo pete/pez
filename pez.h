@@ -63,25 +63,6 @@ struct pez_inst {
 	// Compiling:
 	pez_dictword *createword;	// Address of word pending creation
 
-	// Status, bookkeeping:
-	// TODO:  Most of these are booleans; make a flags field and add some
-	// support macros.
-	pez_int evalstat;	// Evaluation status
-	pez_int forgetpend;	// Is a "forget" pending?
-	pez_int defpend;	// Definition pending?
-	pez_int trace;		// Tracing?
-	pez_int walkback;	// Walkback enabled?
-	pez_int comment;	// Ignoring a comment?
-	pez_int redef;		// Allow redefinition without issuing
-				// the "not unique" message?
-	pez_int errline;	// Line where last pez_load failed
-	pez_int broken;		// Break?
-	pez_int stringlit;	// Waiting for a string literal?
-	pez_int tail_call_pending;	// Did we get a tail-call?
-	pez_int tickpend;	// Waiting for the object of a '?
-	pez_int ctickpend;	// Waiting for the object of a [']?
-	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
-
 	// Lexing:
 	char *instream;		// Current input stream line
 	pez_int tokint;		// Scanned integer
@@ -123,6 +104,25 @@ struct pez_inst {
 	// The walkback trace stack:
 	pez_dictword **wback;	// Walkback trace buffer
 	pez_dictword **wbptr;	// Walkback trace pointer
+
+	// Status, bookkeeping:
+	// TODO:  Most of these are booleans; make a flags field and add some
+	// support macros.
+	pez_int evalstat;	// Evaluation status
+	pez_int forgetpend;	// Is a "forget" pending?
+	pez_int defpend;	// Definition pending?
+	pez_int trace;		// Tracing?
+	pez_int walkback;	// Walkback enabled?
+	pez_int comment;	// Ignoring a comment?
+	pez_int redef;		// Allow redefinition without issuing
+				// the "not unique" message?
+	pez_int errline;	// Line where last pez_load failed
+	pez_int broken;		// Break?
+	pez_int stringlit;	// Waiting for a string literal?
+	pez_int tail_call_pending;	// Did we get a tail-call?
+	pez_int tickpend;	// Waiting for the object of a '?
+	pez_int ctickpend;	// Waiting for the object of a [']?
+	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
 
 	// I/O, as code running in Pez sees it:
 	pez_stackitem output_stk[MAX_IO_STREAMS];
