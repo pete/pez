@@ -124,6 +124,9 @@ struct pez_inst {
 	pez_int ctickpend;	// Waiting for the object of a [']?
 	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
 
+	pez_int argc;
+	char **argv;	// The argv that the pez program sees.
+
 	// I/O, as code running in Pez sees it:
 	pez_stackitem output_stk[MAX_IO_STREAMS];
 	pez_stackitem input_stk[MAX_IO_STREAMS];
@@ -143,9 +146,6 @@ struct pez_inst {
 	   We memcpy floats from the stack into the buffers before using them.
 	*/
 	pez_real rbuf0, rbuf1, rbuf2;	
-
-	pez_int argc;
-	char **argv;	// The argv that the pez program sees.
 };
 
 //  PEZ_EVAL return status codes
