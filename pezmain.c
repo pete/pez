@@ -1,11 +1,8 @@
-/*			      PEZMAIN.C
+/*
+   pezmain.c provides a read-eval-print loop executable for Pez.
 
-	      Main driver program for interactive PEZ
-
-     Designed and implemented in January of 1990 by John Walker.
-
-		This program is in the public domain.
-
+   See doc/CREDITS for information about the authors.
+   This program is in the public domain.
 */
 
 #include <stdio.h>
