@@ -3232,9 +3232,13 @@ prim P_linktoname(pez_instance *p)
 	S0 += (to - from);
 }
 
+/*
+   ( nfa string -- )
+   Copy word name to string buffer
+*/
 prim P_fetchname(pez_instance *p)
-{				/* Copy word name to string buffer */
-	Sl(2);			// nfa string --
+{
+	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
 	/* Since the name buffers aren't in the system heap, but
