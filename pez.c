@@ -4720,7 +4720,7 @@ void pez_stack_word(pez_instance *p, char token_buffer[])
 		Push = (pez_stackitem)di;	// Push word compile address
 	} else {
 #ifdef MEMMESSAGE
-		fprintf(stderr, " '%s' undefined ", token_buffer);
+		fprintf(stderr, " '%s' undefined\n", token_buffer);
 #endif
 		p->evalstat = PEZ_UNDEFINED;
 	}
@@ -4777,7 +4777,7 @@ void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 		}
 	} else {
 #ifdef MEMMESSAGE
-		printf(" '%s' undefined ", token_buffer);
+		printf(" '%s' undefined\n", token_buffer);
 #endif
 		p->evalstat = PEZ_UNDEFINED;
 	}
