@@ -3,14 +3,6 @@ This is a sort of unordered roadmap for Pez.
 * Fix the bug with undefined words being referenced in definitions.  (A
   segfault, oh my!)
 
-* Change error behavior from "keep going starting at the next word" to
-  "discard the rest of the input stream, return to toplevel".  This
-  seems to be a better plan for both embedded code and for running as a
-  standalone script.  Especially if an error is encountered in a
-  definition, the current behavior is to keep going, but in interpret
-  mode rather than compile mode, so the word that was getting defined
-  *starts*running* in the middle!  Seems like a bad plan.
-
 * Autotools tweaks.  Specifically, I'm incompetent with that build
   system, and a few things need to happen:
 	* The standard collection of FFI libraries (most of which are
