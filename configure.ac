@@ -3,12 +3,12 @@
 
 AC_PREREQ(2.61)
 
-AC_INIT([pez],[1.5.0],[pete.elmore@gmail.com])
+AC_INIT([pez],[1.5.1],[pete.elmore@gmail.com])
 AC_CONFIG_HEADERS([config.h:config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([pez.c])
 
-# AM_INIT_AUTOMAKE(pez, 1.5.0)
+# AM_INIT_AUTOMAKE(pez, 1.5.1)
 AM_INIT_AUTOMAKE
 
 AC_PROG_LIBTOOL

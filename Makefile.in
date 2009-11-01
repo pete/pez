@@ -811,7 +811,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES
 
 # I swear, the docs say this works:
-# libpez_la_LIBTOOLFLAGS = -version-info 1:5:0
+# libpez_la_LIBTOOLFLAGS = -version-info 1:5:1
 
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez$(EXEEXT)
