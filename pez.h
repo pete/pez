@@ -21,7 +21,6 @@
 #include <regex.h>
 
 #define MAX_IO_STREAMS 10
-#define MAX_REGEXES 10
 #define MAX_REGEX_MATCHES 20 // Hey, they're small.
 
 typedef long pez_int;		// Stack integer type
