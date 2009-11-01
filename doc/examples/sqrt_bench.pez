@@ -38,5 +38,14 @@ fvariable y
         then
 ;
 
-: cbenchmark 1600000 0 do 2.0 csqrt fdrop loop ." "Done\n" ;
-: sbenchmark 1600000 0 do 2.0 sqrt fdrop loop ." "Done\n" ;
+: cbenchmark 1600000 0 do 2.0 csqrt fdrop loop ;
+: sbenchmark 1600000 0 do 2.0 sqrt fdrop loop ;
+
+fvariable bstart
+: bench ( word -- running-time )
+	ftime bstart f!
+	execute
+	ftime bstart f@ f- ;
+
+"C version:    " print ' sbenchmark bench f. cr
+"Pez version:  " print ' cbenchmark bench f. cr
