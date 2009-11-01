@@ -1,8 +1,8 @@
 Pez is a small, lightweight, 100% C (for now), embeddable or standalone,
-public domain, portable dialect of Forth.  It was originally based on
-the Atlast system (see doc/CREDITS for more information), but the
-feature set has been expanded significantly and there are flagrant
-breaks with Forth compatibility.
+public domain, portable, highly nonstandard dialect of Forth.  It was
+originally based on the Atlast system (see doc/CREDITS for more
+information), but the feature set has been expanded significantly and
+there are flagrant breaks with Forth compatibility.
 
 The primary goal of the Pez project, much like the goal of the Atlast
 project, is to bring dead-simple scriptability and dynamism to otherwise
@@ -13,9 +13,9 @@ OS-level facilities both added and planned.  Pez is also designed to
 work well as a stand-alone language for general-purpose coding.  And
 it's designed to be fun.
 
-I highly recommend having a look at doc/atlast.pdf, written by Mr.
-Walker in 1990, especially the introduction which is still shockingly
-relevant now, about 20 years later.
+I highly recommend having a look at doc/historic/atlast.pdf, written by
+Mr.  Walker in 1990, especially the introduction which is still
+shockingly relevant now, about 20 years later.
 
 There are a number of benefits to adding user-level scripting to an
 application.  You get a free doman-specific language to expose to users
@@ -29,13 +29,14 @@ of memory for the REPL for a full system.
 
 Pez has added to the Atlast system a number of features:
 * Portability to 64-bit platforms
-* A Foreign Function Interface, for dynamically loading libraries to interface
-  with system libraries.
+* A Foreign Function Interface, for dynamically loading libraries to
+  interface with system libraries.
 * More complete access to standard system calls, such as fork(), exec(),
   etc.
+* Regular expression support.
+* Garbage collection.
 * Numerous small improvements, and more large improvements on the way.  See
   doc/TODO.
-* Regular expression support.
 
 I certainly hope that you find this codebase to be as useful and as much
 fun as I have.
