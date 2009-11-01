@@ -1411,12 +1411,12 @@ prim P_strreal(pez_instance *p)
 */
 prim P_regex(pez_instance *p)
 {
+	regex_t *rx;
 	int flags = REG_EXTENDED, problem;
 
 	Sl(2);
 
-	regfree(p->regexes + p->regex_idx);
-	p->regex_idx = (p->regex_idx + 1) % MAX_REGEXES;
+	rx = (regex_t *)alloc(sizeof(regex_t));
 
 	if(S0) {
 		if(strchr((char *)S0, 'i'))
@@ -1425,8 +1425,8 @@ prim P_regex(pez_instance *p)
 			flags |= REG_NEWLINE;
 	}
 
-	problem = regcomp(p->regexes + p->regex_idx, (char *)S1, flags);
-	S1 = problem ? 0 : (pez_stackitem)(p->regexes + p->regex_idx);
+	problem = regcomp(rx, (char *)S1, flags);
+	S1 = problem ? 0 : (pez_stackitem)(rx);
 	Pop;
 	return;
 }
@@ -4281,7 +4281,6 @@ extern pez_instance *pez_init()
 	}
 	p->output_idx = 0;
 	p->input_idx = 0;
-	p->regex_idx = 0;
 
 	pez_primdef(p, primt);  // Define primitive words
 	p->dictprot = p->dict;  // Set protected mark in dictionary, now that we
@@ -4377,13 +4376,6 @@ extern pez_instance *pez_init()
 
 	/* Now that dynamic memory is up and running, allocate constants
 	   and variables built into the system.  */
-
-	// This is some hackery, so that we can free regexes without
-	// keeping track of which have been allocated so far.  Again,
-	// going away when interpreter instances are implemented and
-	// memory management gets overhauled.  Until then:  hackery.
-	for(i = 0; i < MAX_REGEXES; i++)
-		regcomp(p->regexes + i, ".*", REG_EXTENDED);
 
 #ifdef FILEIO
 	{

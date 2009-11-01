@@ -17,6 +17,7 @@
 
 #include <config.h>
 
+#include <stdio.h>
 #include <regex.h>
 
 #define MAX_IO_STREAMS 10
@@ -134,9 +135,7 @@ struct pez_inst {
 	int input_idx;
 
 	// Regexes:
-	regex_t regexes[MAX_REGEXES];
 	regmatch_t regex_matches[MAX_REGEX_MATCHES];
-	int regex_idx;
 
 	/* 
 	   These are temporary buffers, for the case where an architecture 
