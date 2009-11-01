@@ -2898,8 +2898,11 @@ prim P_j(pez_instance *p)
 	Push = (pez_stackitem)p->rstk[-4];
 }
 
+/*
+   Terminate execution
+*/
 prim P_quit(pez_instance *p)
-{				/* Terminate execution */
+{
 	p->rstk = p->rstack;		// Clear return stack
 #ifdef WALKBACK
 	p->wbptr = p->wback;
@@ -2907,8 +2910,11 @@ prim P_quit(pez_instance *p)
 	p->ip = NULL;		// Stop execution of current word
 }
 
+/*
+   Abort, clearing data stack.
+*/
 prim P_abort(pez_instance *p)
-{				/* Abort, clearing data stack */
+{
 	P_clear(p);		// Clear the data stack
 	P_quit(p);		// Shut down execution
 }
@@ -3075,8 +3081,10 @@ prim P_tick(pez_instance *p)
 				// Word compile address:
 				Push = (pez_stackitem)di;
 			} else {
-				fprintf(stderr, " '%s' undefined ",
+				fprintf(stderr, " '%s' undefined\n",
 					token_buffer);
+				p->instream = NULL;
+				P_abort(p);
 			}
 		} else {
 			fprintf(stderr,
@@ -3089,7 +3097,7 @@ prim P_tick(pez_instance *p)
 		   token to be pushed when it's supplied on a subsequent input
 		   line. */
 		if(p->ip == NULL) {
-			p->tickpend = True;	// Set tick pending
+			p->tickpend = True;
 		} else {
 			fprintf(stderr, "\nWord requested by ` not "
 					"on same input line.\n");
@@ -4849,11 +4857,13 @@ int pez_eval(pez_instance *p, char *sp)
 					}
 				} else {
 #ifdef MEMMESSAGE
-					fprintf(stderr, " '%s' undefined ",
+					fprintf(stderr, " '%s' undefined\n",
 						token_buffer);
 #endif
 					p->evalstat = PEZ_UNDEFINED;
+					p->instream = NULL;
 					state = Falsity;
+					return(p->evalstat);
 				}
 			}
 			break;

@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 	FILE *ifp;
 	char *include[20];
 	char *cp, opt;
-	int in = 0;
+	int in = 0, status = PEZ_SNORM;
 	char **pez_argv_current;
 
 	p = pez_init();
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 #ifndef HIGHC
 	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
-	while(TRUE) {
+	while(status == PEZ_SNORM || !fname) {
 		char t[132];
 
 		if(!fname) {
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		}
-		pez_eval(p, t);
+		status = pez_eval(p, t);
 	}
 	if(!fname)
 		printf("\n");
