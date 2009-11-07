@@ -1082,44 +1082,21 @@ prim P_constant(pez_instance *p)
 }
 
 /*
-   ( -- cellsize )
-   Pushes the size of a cell in bytes.
+   A series of very small functions for portably figuring out sizes and offsets
+   from within Pez.
 */
-prim P_cellsize(pez_instance *p)
-{
-	So(1);
-	Push = sizeof(long);
-}
-
-/*
-   ( -- floatsize )
-   Pushes the size of a float in bytes.
-*/
-prim P_floatsize(pez_instance *p)
-{
-	So(1);
-	Push = sizeof(double);
-}
-
-/*
-   ( n -- n*cellsize )
-   Returns the number of bytes occupied by n cells.
-*/
-prim P_cells(pez_instance *p)
-{
-	Sl(1);
-	S0 *= sizeof(pez_stackitem);
-}
-
-/*
-   ( n -- n*floatsize )
-   Returns the number of bytes occupied by n floating point numbers.
-*/
-prim P_floats(pez_instance *p)
-{
-	Sl(1);
-	S0 *= sizeof(double);
-}
+#define SIZE_FUNCS(typename, size_fname, plural_fname) \
+	prim size_fname(pez_instance *p) { So(1); Push = sizeof(typename); } \
+	prim plural_fname(pez_instance *p) { Sl(1); S0 *= sizeof(typename); }
+SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells)
+SIZE_FUNCS(pez_real, P_float_size, P_floats)
+SIZE_FUNCS(void *, P_c_pointer_size, P_c_pointers)
+SIZE_FUNCS(short, P_c_short_size, P_c_shorts)
+SIZE_FUNCS(long, P_c_long_size, P_c_longs)
+SIZE_FUNCS(int, P_c_int_size, P_c_ints)
+SIZE_FUNCS(float, P_c_float_size, P_c_floats)
+SIZE_FUNCS(double, P_c_double_size, P_c_doubles)
+#undef SIZE_FUNCS
 
 /*  Reflection for Pez's compile-time options, for building libs from Pez: */
 
@@ -3766,10 +3743,23 @@ static struct primfcn primt[] = {
 	{"0C=", P_cequal},
 	{"0MALLOC", P_malloc},
 	{"0HERE", P_here},
-	{"0CELLSIZE", P_cellsize},
-	{"0FLOATSIZE", P_floatsize},
+
+	{"0CELL-SIZE", P_cell_size},
 	{"0CELLS", P_cells},
+	{"0FLOAT-SIZE", P_float_size},
 	{"0FLOATS", P_floats},
+	{"0c-pointer-size", P_c_pointer_size},
+	{"0c-pointers", P_c_pointers},
+	{"0c-short-size", P_c_short_size},
+	{"0c-shorts", P_c_shorts},
+	{"0c-long-size", P_c_long_size},
+	{"0c-longs", P_c_longs},
+	{"0c-int-size", P_c_int_size},
+	{"0c-ints", P_c_ints},
+	{"0c-float-size", P_c_float_size},
+	{"0c-floats", P_c_floats},
+	{"0c-double-size", P_c_double_size},
+	{"0c-doubles", P_c_doubles},
 
 	{"0PEZ-BINDIR", P_pezconf_bindir},
 	{"0PEZ-LIBDIR", P_pezconf_libdir},
