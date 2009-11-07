@@ -1,15 +1,21 @@
 This is a sort of unordered roadmap for Pez.
 
-* Fix the bug with undefined words being referenced in definitions.  (A
-  segfault, oh my!)
-
 * Add support for sockets.
+
+* Fix up the FFI, probably using Lightning.
+
+* Data structures.
+
+* Add support for hashes, via st_hash (public domain).
 
 * Use flags in the interpreter struct instead of #define's for features
   to support or disallow.  For example, you may want to instantiate an
   interpreter that has no permissions for network or file operations and
   restricts pointers, while allowing the main interpreter to do those
   things.
+
+* Restructure the dictionary, so that flags are no longer stored in the
+  first byte of the name field.
 
 * Finalize the API for a Pez interpreter instantiated by another Pez
   program, so that the above-mentioned jailing of sub-pez's makes sense.
