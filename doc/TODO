@@ -2,17 +2,21 @@ This is a sort of unordered roadmap for Pez.
 
 * Add support for sockets.
 
-* Fix up the FFI, probably using Lightning.
+* Supplement the FFI, probably using Lightning.
+
+* Add examples for the FFI, and write a couple of libraries.
+
+* Set up something like $LIBDIR/pez, to make it a little more easy to distribute
+  a standard library (both FFI .so files and regular .pez files) with Pez and
+  load files from it.
 
 * Data structures.
 
 * Add support for hashes, via st_hash (public domain).
 
 * Use flags in the interpreter struct instead of #define's for features
-  to support or disallow.  For example, you may want to instantiate an
-  interpreter that has no permissions for network or file operations and
-  restricts pointers, while allowing the main interpreter to do those
-  things.
+  to support or disallow.  The basics have been set up, but are not
+  implemented.
 
 * Restructure the dictionary, so that flags are no longer stored in the
   first byte of the name field.
@@ -34,12 +38,6 @@ This is a sort of unordered roadmap for Pez.
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
 	* Also, do both if possible.
-
-* Add examples for the FFI, and write a couple of libraries.
-
-* Set up something like $LIBDIR/pez, to make it a little more easy to distribute
-  a standard library (both FFI .so files and regular .pez files) with Pez and
-  load files from it.
 
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
   depends on how much of a pain that turns out to be.
