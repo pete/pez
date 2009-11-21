@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
 		char t[132];
 
 		if(interactive) {
+			pez_eval(p, "10 n.s");
 			if(p->comment)
 				printf("(  ");
 			else if(p->heap != NULL && state)

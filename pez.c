@@ -1846,25 +1846,47 @@ prim P_cr(pez_instance *p)
 }
 
 /*
+   ( ... n -- ... )
+   Prints the top max(n,depth) items on the stack, and ellipses at the beginning
+   if there are more than n items.  Like .s, this is mostly useful in
+   interactive modes.
+*/
+prim P_ndots(pez_instance *p)
+{
+	pez_stackitem *tsp, n;
+	long depth = p->stk - p->stack - 1;
+
+	Sl(1);
+	n = S0;
+	Pop;
+
+	if(depth == 0) {
+		printf("Stack is empty.\n");
+		return;
+	} else {
+		if(n >= depth) {
+			n = depth;
+		} else {
+			printf("... ");
+		}
+	}
+
+	for(tsp = p->stk - n; tsp < p->stk; tsp++) {
+		printf(p->base == 16 ? "%lx " : "%ld ", *tsp);
+	}
+	printf("\n");
+	fflush(stdout);
+}
+
+/*
    ( ... -- ... )
    Print the entire stack, as cell-sized integers.
 */
 prim P_dots(pez_instance *p)
 {
-	pez_stackitem *tsp;
-
-	printf("Stack: ");
-
-	if(p->stk == p->stackbot) {
-		puts("Empty.");
-		return;
-	}
-
-	for(tsp = p->stack; tsp < p->stk; tsp++) {
-		printf(p->base == 16 ? "%lx " : "%ld ", *tsp);
-	}
-	printf("\n");
-	fflush(stdout);
+	So(1);
+	Push = p->stk - p->stack;
+	P_ndots(p);
 }
 
 /*
@@ -4048,6 +4070,7 @@ static struct primfcn primt[] = {
 	{"0?", P_question},
 	{"0CR", P_cr},
 	{"0.S", P_dots},
+	{"0n.s", P_ndots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
 	{"0PRINT", P_print},
