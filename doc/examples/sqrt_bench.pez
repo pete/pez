@@ -1,5 +1,9 @@
 #! /usr/bin/env pez
 
+# This is slightly less a "benchmark" than the name and structure of this code
+# imply, as libc's algorithm for calculating the square root of a number is
+# unlikely to be the same as the one we're using.
+
 fvariable x
 fvariable y
 
