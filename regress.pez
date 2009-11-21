@@ -941,7 +941,6 @@ variable fd1
 		$4 0 -1  2 nok?
 ;
 
-(
 variable sub-pez
 : testinstantiation
 	"INSTANTIATION" tests:
@@ -949,15 +948,14 @@ variable sub-pez
 	
 	"EVALUATION" tests:
 		"2 2 +" sub-pez @ send-eval 0 ok?
-		sub-pez @ stack> @ 4 ok?
+		sub-pez @ stack> drop @ 4 ok?
 	
 	"SELF-REFERENCE" tests:
 		this-pez 0= 0 ok?
 		"2" this-pez send-eval  2 0  2 nok?
 		"this-pez" sub-pez @ send-eval 0 ok?
-		sub-pez @ stack> @ sub-pez @ ok?
+		sub-pez @ stack> drop @ sub-pez @ ok?
 ;
-)
 
 #   Run all the regression subtests
 

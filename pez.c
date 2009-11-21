@@ -2180,7 +2180,7 @@ prim P_evaluate(pez_instance *p)
 	int es = PEZ_SNORM;
 	pez_statemark mk;
 	pez_int scomm = p->comment;	// Stack comment pending state
-	pez_dictword **sip = p->ip;		// Stack instruction pointer
+	pez_dictword **sip = p->ip;	// Stack instruction pointer
 	char *sinstr = p->instream;	// Stack input stream
 	char *estring;
 
@@ -2206,6 +2206,79 @@ prim P_evaluate(pez_instance *p)
 	So(1);
 	Push = es;		// Return eval status on top of stack
 }
+
+PUSH_CONSTANT(P_permissions_io, PEZ_A_IO)
+PUSH_CONSTANT(P_permissions_files, PEZ_A_FILES)
+PUSH_CONSTANT(P_permissions_system, PEZ_A_SYSTEM)
+PUSH_CONSTANT(P_permissions_sig, PEZ_A_SIG)
+PUSH_CONSTANT(P_permissions_process, PEZ_A_PROCESS)
+PUSH_CONSTANT(P_permissions_pointers, PEZ_A_POINTERS)
+PUSH_CONSTANT(P_permissions_ffi, PEZ_A_FFI)
+PUSH_CONSTANT(P_permissions_socket, PEZ_A_SOCKET)
+PUSH_CONSTANT(P_permissions_everything, PEZ_A_EVERYTHING)
+
+/*
+   ( init-flags -- sub-pez )
+   Instantiates a new Pez, with the restrictions specified in the init-flags.
+   See pez_init() for details on the flags.  Note that (of course) an instance
+   of Pez is restricted from creating instances with higher permissions than it
+   has.
+
+   (See comments for P_this_pez for security concerns.)
+*/
+prim P_new_pez(pez_instance *p)
+{
+	Sl(1);
+	S0 = (pez_stackitem)pez_init((long)S0 & p->permissions);
+}
+
+/*
+   ( string sub-pez -- evalstat )
+   Feeds the input string to the specified sub-pez, and waits for execution to
+   finish, returning the status of the sub-pez.
+
+   (See comments for P_this_pez for security concerns.)
+*/
+prim P_send_eval(pez_instance *p)
+{
+	Sl(2);
+	S1 = pez_eval((pez_instance *)S0, (char *)S1);
+	Pop;
+}
+
+/*
+   ( pez-instance -- stack-pointer depth )
+   Returns the depth and a pointer to the top of the stack for the given
+   pez-instance.
+*/
+prim P_stack_to(pez_instance *p)
+{
+	pez_instance *sub;
+
+	Sl(1);
+	So(1);
+
+	sub = (pez_instance *)S0;
+	S0 = (pez_stackitem)sub->stk;
+	Push = sub->stk - sub->stack;
+}
+
+/*
+   ( -- current-pez-instance )
+   Returns a reference to the calling instance of Pez.
+   TODO:  This totally messes up the security scheme for the time being, so we
+   require PEZ_A_EVERYTHING.  I'm not sure of a way to give access to this
+   struct without allowing the permissions flags to be rewritten, and it's a bit
+   cumbersome (not to mention slow) to save/restore permissions flags of
+   currrent instances on calls to '!'.  The same issue applies to new-pez and
+   send-eval.
+*/
+prim P_this_pez(pez_instance *p)
+{
+	Sl(1);
+	Push = (pez_stackitem)p;
+}
+
 #endif				// EVALUATE
 
 /*  Stack mechanics  */
@@ -3655,7 +3728,8 @@ prim P_fwdresolve(pez_instance *p)
 #endif				// COMPILERW
 
 /*  Table of primitive words  */
-
+// TODO:  Add a member to primfcn giving permissions required, and don't add
+// words to the dictionary when Pez doesn't have permissions.
 static struct primfcn primt[] = {
 	{"0+", P_plus},
 	{"0-", P_minus},
@@ -4014,6 +4088,10 @@ static struct primfcn primt[] = {
 
 #ifdef EVALUATE
 	{"0EVALUATE", P_evaluate},
+	{"0new-pez", P_new_pez},
+	{"0send-eval", P_send_eval},
+	{"0stack>", P_stack_to},
+	{"0this-pez", P_this_pez},
 #endif				// EVALUATE
 
 	{NULL, (pez_wordp)0}
@@ -4238,9 +4316,24 @@ static void exword(pez_instance *p, pez_dictword *wp)
 }
 
 /*
-   This returns a new instance of Pez.
+   This returns a new instance of Pez.  The flags argument is a bitwise OR of
+   the PEZ_A_* flags, for preventing the new instance from doing things that you
+   may not want it to do.  The flags are as follows:
+   	PEZ_A_EVERYTHING	Special flag:  no restrictions, allow everything
+
+	PEZ_A_IO		Allow I/O
+	PEZ_A_FILES		Allow files to be opened and closed.
+	PEZ_A_SYSTEM		Allow the instance to run commands via system()
+	PEZ_A_SIG		Allow signal handlers to be set
+	PEZ_A_PROCESS		Allow the instance to create and kill processes
+	PEZ_A_POINTERS		Allow unrestricted pointers
+	PEZ_A_FFI		Allow C functions to be added to the dictionary
+	PEZ_A_SOCKET		Allow the socket library
+
+   These flags are documented a bit more in-depth in pez.h, where they are
+   defined.
 */
-extern pez_instance *pez_init()
+extern pez_instance *pez_init(long flags)
 {
 	static int gc_already_inited = 0;
 	pez_instance *p;
@@ -4797,11 +4890,8 @@ int pez_eval(pez_instance *p, char *sp)
 	   currently operative.
 	*/
 #ifdef PROLOGUE
-	if(p->dict == NULL) {
-		if(pez_prologue(p, sp))
-			return p->evalstat;
-		p = pez_init();
-	}
+	if(!p->dict && pez_prologue(p, sp))
+		return p->evalstat;
 #endif				// PROLOGUE
 
 	while((p->evalstat == PEZ_SNORM) &&

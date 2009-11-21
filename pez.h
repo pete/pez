@@ -51,13 +51,59 @@ typedef struct {
 	pez_dictword *mdict;	// Dictionary marker
 } pez_statemark;
 
+/* Permissions for instances of Pez: */
+
+// Allow I/O operations:
+#define PEZ_A_IO (1 << 0)
+// Allow the FD manipulation words, like open, close, >output, etc.  Necessarily
+// implies I/O permissions.
+#define PEZ_A_FILES ((1 << 1) | PEZ_A_IO)
+// Allow the manipulation of sighandlers for the current process.
+#define PEZ_A_SIG (1 << 2)
+// Allow Pez to fork(), wait(), send signals to processes, etc.
+#define PEZ_A_PROCESS (1 << 3)
+// Allow new FFI functions to be declared.  
+#define PEZ_A_FFI (1 << 4)
+// Allow Pez to open/close sockets and send data across the network.
+#define PEZ_A_SOCKET (1 << 5)
+// Allow use of the system() command.  Implies everything but pointers.
+#define PEZ_A_SYSTEM (1 << 6)
+// Unrestricted pointers (i.e., not pointing to memory allocated by Pez.).  This
+// one's a little more complicated, and is only loosely enforced for now.  It
+// precludes the use of several libc calls, like getenv/setenv.
+#define PEZ_A_POINTERS (1 << 7)
+// Initialize *everything*.  No restrictions on Pez.  This is how the Pez
+// executable runs, and is required if you want to create more instances of Pez,
+// for security reasons.
+#define PEZ_A_EVERYTHING (\
+		(1 << 8) |\
+		PEZ_A_IO |\
+		PEZ_A_FILES |\
+		PEZ_A_SIG |\
+		PEZ_A_PROCESS |\
+		PEZ_A_FFI |\
+		PEZ_A_SOCKET |\
+		PEZ_A_SYSTEM |\
+		PEZ_A_POINTERS |\
+0)
+
 struct pez_inst {
+	// The evaluation stack:
+	pez_stackitem *stk;		// Pointer to the current position
+	pez_stackitem *stack;		// Beginning of the stack
+	pez_stackitem *stackbot;	// Stack bottom
+	pez_stackitem *stacktop;	// Stack top
+	pez_stackitem *stackmax;	// Max stack growth
+	pez_int stklen;			// Evaluation stack length
+
+	pez_int permissions;	// The Pez instance's permissions.
+
 	pez_int ltempstr;	// Temporary string buffer length
 	pez_int ntempstr;	// Number of temporary string buffers
 
 	// The dictionary:
 	pez_dictword *dict;		// Dictionary chain head
-	pez_dictword *dictprot;	// First protected item in dictionary
+	pez_dictword *dictprot;		// First protected item in dictionary
 
 	// Compiling:
 	pez_dictword *createword;	// Address of word pending creation
@@ -71,14 +117,6 @@ struct pez_inst {
 	pez_dictword *curword;	// Current word being executed
 	pez_dictword **ip;	// Instruction pointer
 	pez_int base;
-
-	// The evaluation stack:
-	pez_int stklen;		// Evaluation stack length
-	pez_stackitem *stack;
-	pez_stackitem *stk;		// Pointer to the current position
-	pez_stackitem *stackbot;	// Stack bottom
-	pez_stackitem *stacktop;	// Stack top
-	pez_stackitem *stackmax;	// Max stack growth
 
 	// The return stack:
 	pez_int rstklen;	// Initial/current return stack length
