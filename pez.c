@@ -2250,7 +2250,7 @@ PUSH_CONSTANT(P_permissions_everything, PEZ_A_EVERYTHING)
 */
 prim P_new_pez(pez_instance *p)
 {
-	Sl(1);
+	So(1);
 	S0 = (pez_stackitem)pez_init((long)S0 & p->permissions);
 }
 
