@@ -142,7 +142,8 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
    function is called.
 
    Conventions (because this can get confusing and comments inside macros are
-   bad enough):  r is a useful register, sr is a swap register.
+   bad enough):  r is a useful register, sr is a swap register.  Swap registers
+   come last, after the non-register arguments.
 */
 
 // Loads cell n into register r.

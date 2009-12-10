@@ -1823,7 +1823,7 @@ prim P_argv(pez_instance *p)
 prim P_dot(pez_instance *p)
 {
 	Sl(1);
-	printf(p->base == 16 ? "%lx " : "%ld ", S0);
+	printf(p->base == 16 ? "0x%lx " : "%ld ", S0);
 	fflush(stdout);
 	Pop;
 }
@@ -1832,7 +1832,7 @@ prim P_question(pez_instance *p)
 {				// Print value at address
 	Sl(1);
 	Hpc(S0);
-	printf(p->base == 16 ? "%lx " : "%ld ", *((pez_stackitem *)S0));
+	printf(p->base == 16 ? "0x%lx " : "%ld ", *((pez_stackitem *)S0));
 	fflush(stdout);
 	Pop;
 }
@@ -1873,7 +1873,7 @@ prim P_ndots(pez_instance *p)
 	}
 
 	for(tsp = p->stk - n; tsp < p->stk; tsp++) {
-		printf(p->base == 16 ? "%lx " : "%ld ", *tsp);
+		printf(p->base == 16 ? "0x%lx " : "%ld ", *tsp);
 	}
 	printf("\n");
 	fflush(stdout);
@@ -3464,7 +3464,6 @@ prim P_ffi_colon(pez_instance *p)
 	fname = (char *)S1;
 	lib = (char *)S0;
 	f = dlsym(lib, fname);
-	arglen = strlen(args);
 	Npop(4);
 
 	if(!f) {
@@ -3475,16 +3474,18 @@ prim P_ffi_colon(pez_instance *p)
 	P_create(p);
 	p->createword->wcode =
 		(void (*)(pez_instance *p))(jit_set_ip(codebuf).vptr);
-	fprintf(stderr, "Function at 0x%lx\n", p->createword->wcode);
 
 	// The generated code:
 	jit_prolog(1); // We take one arg, although we ignore it.
 
 	// Write the call:
 	if(args) {
+		arglen = strlen(args);
 		jit_prepare(arglen);
 		for(i = 0; i < arglen; i++) {
 			switch(args[i]) {
+				// TODO:  I think these should probably work
+				// differently...maybe?
 				case 'p':
 				case 'l':
 				case 'i':
@@ -3492,20 +3493,46 @@ prim P_ffi_colon(pez_instance *p)
 				case 'c':
 					jit_ld_S0(JIT_R0);
 					jit_pusharg_l(JIT_R0);
-					jit_Pop(JIT_R0, JIT_R1);
+					jit_Pop(JIT_R0);
 					break;
 				case 'f':
+					// TODO
 					break;
 				case 'd':
+					// TODO
 					break;
 				default:
+					// TODO:  Error handling?  Bueller?
 					fprintf(stderr, "iono?\n");
 			}
 		}
 	}
 	jit_finish(f);
 
-	// TODO:  Handle return value.
+	if(ret && ret[0]) {
+		switch(ret[0]) {
+			// TODO:  I think these should probably work
+			// differently...maybe?
+			case 'p':
+			case 'l':
+			case 'i':
+			case 's':
+			case 'c':
+				jit_retval(JIT_R0);
+				jit_Pushr(JIT_R0, JIT_R1);
+				break;
+			case 'f':
+				// TODO
+				break;
+			case 'd':
+				// TODO
+				break;
+			default:
+				// TODO:  Error handling?  Bueller?
+				fprintf(stderr, "what *will* it return?\n");
+
+		}
+	}
 	jit_ret();
 
 	jit_flush_code(codebuf, jit_get_ip().ptr);
