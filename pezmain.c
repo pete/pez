@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
 	while(status == PEZ_SNORM || interactive) {
-		char t[132];
+		char t[TOK_BUF_SZ];	
 
 		if(interactive) {
 			pez_eval(p, "10 n.s");
@@ -203,9 +203,10 @@ int main(int argc, char *argv[])
 				printf("-> ");
 			fflush(stdout);
 		}
-		if(fgets(t, 132, ifp) == NULL) {
+		if(fgets(t, TOK_BUF_SZ, ifp) == NULL) {
 			if(fname && defmode) {
 				fname = defmode = FALSE;
+				interactive = TRUE;
 				ifp = stdin;
 				continue;
 			}

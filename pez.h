@@ -23,6 +23,9 @@
 #define MAX_IO_STREAMS 10
 #define MAX_REGEX_MATCHES 20 // Hey, they're small.
 
+#define TOK_BUF_SZ 4096
+
+
 typedef long pez_int;		// Stack integer type
 typedef double pez_real;	// Real number type
 typedef long pez_stackitem;
