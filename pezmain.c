@@ -29,8 +29,7 @@ pez_instance *p;
 	       just turn this code off or, better still, replace it
 	       with the equivalent on your system.  */
 
-static void ctrlc(sig)
-int sig;
+static void ctrlc(int sig)
 {
 	if(sig == SIGINT)
 		pez_break(p);
@@ -64,6 +63,54 @@ static void init_pez_argv(int argc)
 	memset(p->argv, 0, size);
 }
 
+void pezmain_load(char *fname, FILE *fp)
+{
+	int stat;
+	if(fp == NULL) {
+		fprintf(stderr, "Unable to open include file %s\n", fname);
+		exit(1);
+	}
+	stat = pez_load(p, fp);
+	fclose(fp);
+	if(stat != PEZ_SNORM) {
+		printf("\nError %d in include file %s\n", stat, fname);
+	}
+}
+
+void include_file(char *fname)
+{
+	int stat;
+	FILE *fp;
+
+	fp = fopen(fname,
+#ifdef FBmode
+		   "rb"
+#else
+		   "r"
+#endif
+	    );
+	pezmain_load(fname, fp);
+}
+
+void load_rc()
+{
+	char path[256];
+	FILE *fd;
+	sprintf (path, "%s/.pezrc", getenv ("HOME"));
+	
+	fd = fopen(path,
+#ifdef FBmode
+		   "rb"
+#else
+		   "r"
+#endif
+	    );
+	if(fd != NULL) {
+		pezmain_load(path, fd);
+	}
+	
+}
+
 
 /*  MAIN  --  Main program.  */
 
@@ -88,7 +135,8 @@ int main(int argc, char *argv[])
 	pez_argv_current = p->argv;
 
 	ifp = stdin;
-
+	load_rc();
+	
 	for(i = 1; i < argc; i++) {
 		cp = argv[i];
 		if(*cp == '-') {
@@ -141,7 +189,7 @@ int main(int argc, char *argv[])
 			(*(pez_argv_current++)) = cp;
 		} else {
 			fname = TRUE;
-			strcpy(fn, cp);
+			strncpy(fn, cp, sizeof(fn));
 			ifp = fopen(fn, "r");
 			if(ifp == NULL) {
 				fprintf(stderr, "Unable to open file %s\n", fn);
@@ -159,27 +207,10 @@ int main(int argc, char *argv[])
 		char fn[132];
 		FILE *fp;
 
-		strcpy(fn, include[i]);
+		strncpy(fn, include[i], sizeof(fn));
 		if(strchr(fn, '.') == NULL)
 			strcat(fn, ".pez");
-		fp = fopen(fn,
-#ifdef FBmode
-			   "rb"
-#else
-			   "r"
-#endif
-		    );
-		if(fp == NULL) {
-			fprintf(stderr, "Unable to open include file %s\n",
-				include[i]);
-			return 1;
-		}
-		stat = pez_load(p, fp);
-		fclose(fp);
-		if(stat != PEZ_SNORM) {
-			printf("\nError %d in include file %s\n", stat,
-			       include[i]);
-		}
+		include_file(fn);
 	}
 
 	/* Now that all the preliminaries are out of the way, fall into
