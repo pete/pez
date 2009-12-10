@@ -140,24 +140,38 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
    Note that, as we don't share dictionaries across instances, we can assume
    that the Pez instance we have is the one that will be in use when the
    function is called.
+
+   Conventions (because this can get confusing and comments inside macros are
+   bad enough):  r is a useful register, sr is a swap register.
 */
+
+// Loads cell n into register r.
 #define jit_ld_S(n, r) do { \
-	jit_ldi_p((r), (&p->stk)); \
+	jit_ldi_p((r), &p->stk); \
 	jit_subi_p((r), (r), (n + 1) * sizeof(pez_stackitem)); \
 	jit_ldr_p((r), (r)); \
 } while(0)
 // r = address of stack pointer
 // r = *(r - 8)
 
+// Loads S0 into register r
 #define jit_ld_S0(r) jit_ld_S(0, r)
 
-#define jit_Npop(ra, rb, n) do { \
-	jit_ldi_p((ra), &p->stk); \
-	jit_subi_p((ra), (ra), n * sizeof(pez_stackitem)); \
-	jit_sti_p(&p->stk, (ra)); \
+// jit_Npop(number_of_things_to_pop, register_to_use_for_popping)
+#define jit_Npop(n, r) do { \
+	jit_ldi_p((r), &p->stk); \
+	jit_subi_p((r), (r), n * sizeof(pez_stackitem)); \
+	jit_sti_p(&p->stk, (r)); \
 } while(0)
+#define jit_Pop(r) jit_Npop(1, r);
 
-#define jit_Pop(ra, rb) jit_Npop(ra, rb, 1);
+// Push register r onto the stack.
+#define jit_Pushr(r, sr) do { \
+	jit_ldi_p(sr, &p->stk); \
+	jit_str_p(sr, r); \
+	jit_addi_p(sr, sr, sizeof(pez_stackitem)); \
+	jit_sti_p(&p->stk, sr); \
+} while(0)
 
 #ifdef MEMSTAT
 #define Mss(n) if ((p->stk+(n))>p->stack) p->stackmax = p->stk+(n);
