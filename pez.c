@@ -22,6 +22,7 @@
 #include <regex.h>
 #include <limits.h>
 #include <gc/gc.h>
+#include <lightning.h>
 
 #ifdef ALIGNMENT
 #include <memory.h>
@@ -2297,7 +2298,7 @@ prim P_stack_to(pez_instance *p)
 */
 prim P_this_pez(pez_instance *p)
 {
-	Sl(1);
+	So(1);
 	Push = (pez_stackitem)p;
 }
 
@@ -3446,6 +3447,71 @@ prim P_dlerror(pez_instance *p)
 }
 
 /*
+   Define an FFI call.
+*/
+prim P_ffi_colon(pez_instance *p)
+{
+	jit_insn *codebuf;
+	int i, arglen;
+	char *args, *ret, *fname;
+	void *lib, *f;
+
+	Sl(4);
+	codebuf = GC_malloc(4096); // TODO:  Put a real number in there.
+
+	args = (char *)S3;
+	ret = (char *)S2;
+	fname = (char *)S1;
+	lib = (char *)S0;
+	f = dlsym(lib, fname);
+	arglen = strlen(args);
+	Npop(4);
+
+	if(!f) {
+		// TODO:  Error handling.
+		fprintf(stderr, "Oops.\n");
+	}
+
+	P_create(p);
+	p->createword->wcode =
+		(void (*)(pez_instance *p))(jit_set_ip(codebuf).vptr);
+	fprintf(stderr, "Function at 0x%lx\n", p->createword->wcode);
+
+	// The generated code:
+	jit_prolog(1); // We take one arg, although we ignore it.
+
+	// Write the call:
+	if(args) {
+		jit_prepare(arglen);
+		for(i = 0; i < arglen; i++) {
+			switch(args[i]) {
+				case 'p':
+				case 'l':
+				case 'i':
+				case 's':
+				case 'c':
+					jit_ld_S0(JIT_R0);
+					jit_pusharg_l(JIT_R0);
+					jit_Pop(JIT_R0, JIT_R1);
+					break;
+				case 'f':
+					break;
+				case 'd':
+					break;
+				default:
+					fprintf(stderr, "iono?\n");
+			}
+		}
+	}
+	jit_finish(f);
+
+	// TODO:  Handle return value.
+	jit_ret();
+
+	jit_flush_code(codebuf, jit_get_ip().ptr);
+}
+
+/*
    Calls a void (*)() from the top of the stack.
 */
 prim P_call_void_0(pez_instance *p)
@@ -3980,6 +4046,7 @@ static struct primfcn primt[] = {
 	{"0DLOPEN", P_dlopen},
 	{"0DLSYM", P_dlsym},
 	{"0DLERROR", P_dlerror},
+	{"0ffi:", P_ffi_colon},
 
 	// dl* flags:
 	{"0RTLD_LAZY", P_rtld_lazy},

@@ -135,6 +135,30 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 // TODO:  See Realpush().
 #define Push *p->stk++		// Push item onto stack
 
+/*
+   As above, but FFI equivalents.
+   Note that, as we don't share dictionaries across instances, we can assume
+   that the Pez instance we have is the one that will be in use when the
+   function is called.
+*/
+#define jit_ld_S(n, r) do { \
+	jit_ldi_p((r), (&p->stk)); \
+	jit_subi_p((r), (r), (n + 1) * sizeof(pez_stackitem)); \
+	jit_ldr_p((r), (r)); \
+} while(0)
+// r = address of stack pointer
+// r = *(r - 8)
+
+#define jit_ld_S0(r) jit_ld_S(0, r)
+
+#define jit_Npop(ra, rb, n) do { \
+	jit_ldi_p((ra), &p->stk); \
+	jit_subi_p((ra), (ra), n * sizeof(pez_stackitem)); \
+	jit_sti_p(&p->stk, (ra)); \
+} while(0)
+
+#define jit_Pop(ra, rb) jit_Npop(ra, rb, 1);
+
 #ifdef MEMSTAT
 #define Mss(n) if ((p->stk+(n))>p->stack) p->stackmax = p->stk+(n);
 #define Msr(n) if ((p->rstk+(n))>p->rstack) p->rstackmax = p->rstk+(n);
