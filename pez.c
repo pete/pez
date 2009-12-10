@@ -1789,6 +1789,20 @@ prim P_tan(pez_instance *p)
 #undef Mathfunc
 #endif				/* MATH */
 
+prim P_hton(pez_instance *p) {
+	Sl(1);
+	pez_stackitem i = S0;
+	Pop;
+	Push = htonl(i);
+}
+
+prim P_ntoh(pez_instance *p) {
+	Sl(1);
+	pez_stackitem i = S0;
+	Pop;
+	Push = ntohl(i);
+}
+
 /*  Console I/O primitives  */
 
 #ifdef CONIO
@@ -4155,6 +4169,9 @@ static struct primfcn primt[] = {
 	{"0>RESOLVE", P_fwdresolve},
 #endif				// COMPILERW
 
+	{"0HTON", P_hton},
+	{"0NTOH", P_ntoh},
+	
 #ifdef CONIO
 	{"0HEX", P_hex},
 	{"0DECIMAL", P_decimal},
