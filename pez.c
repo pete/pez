@@ -3473,9 +3473,9 @@ prim P_ffi_colon(pez_instance *p)
 	Sl(4);
 	codebuf = GC_malloc(4096); // TODO:  Put a real number in there.
 
-	args = (char *)S3;
-	ret = (char *)S2;
-	fname = (char *)S1;
+	ret = (char *)S3;
+	fname = (char *)S2;
+	args = (char *)S1;
 	lib = (char *)S0;
 	f = dlsym(lib, fname);
 	Npop(4);
