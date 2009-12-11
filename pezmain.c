@@ -105,13 +105,13 @@ void load_rc()
 	len = strlen(home);
 
 	path = GC_malloc(len + 8);
-	sprintf(path, "%s/.pezrc", home);
 	if(!path) {
 		fprintf(stderr,
 			"Couldn't allocate %d bytes; this is troubling.\n", 
 			len);
 		abort();
 	}
+	sprintf(path, "%s/.pezrc", home);
 	
 	fd = fopen(path,
 #ifdef FBmode
