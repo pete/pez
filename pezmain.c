@@ -94,9 +94,24 @@ void include_file(char *fname)
 
 void load_rc()
 {
-	char path[256];
 	FILE *fd;
-	sprintf (path, "%s/.pezrc", getenv ("HOME"));
+	int len;
+	char *path, *home;
+
+	home = getenv("HOME");
+	if(!home)
+		return;
+
+	len = strlen(home);
+
+	path = GC_malloc(len + 8);
+	sprintf(path, "%s/.pezrc", home);
+	if(!path) {
+		fprintf(stderr,
+			"Couldn't allocate %d bytes; this is troubling.\n", 
+			len);
+		abort();
+	}
 	
 	fd = fopen(path,
 #ifdef FBmode
