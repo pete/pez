@@ -3600,6 +3600,17 @@ prim P_call_word_1w(pez_instance *p)
 #include <sys/wait.h>
 #include <signal.h>
 
+/*
+   ( seconds -- )
+   Sleeps the specified number of seconds.
+*/
+P_sleep(pez_instance *p)
+{
+	Sl(1);
+	sleep(S0);
+	Pop;
+}
+   
 extern char **environ;
 /*
    ( -- environment )
@@ -4099,6 +4110,7 @@ static struct primfcn primt[] = {
 #endif
 
 #ifdef PROCESS
+	{"0sleep", P_sleep},
 	{"0ENVIRON", P_environ},
 	{"0GETENV", P_getenv},
 	{"0SETENV", P_setenv},
