@@ -52,6 +52,8 @@ AC_DEFINE([EXPORT], [1], [TODO: These are going away.])
 AC_DEFINE([READONLYSTRINGS], [1], [TODO: These are going away.])
 AC_DEFINE([MEMSTAT], [1], [TODO: These are going away.])
 
+LIGHTNING_CONFIGURE_IF_NOT_FOUND
+
 AC_PROG_INSTALL
 
 AC_CONFIG_FILES([Makefile])
