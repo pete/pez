@@ -3470,7 +3470,7 @@ prim P_ffi_colon(pez_instance *p)
 	void *lib, *f;
 
 	Sl(4);
-	codebuf = GC_malloc(4096); // TODO:  Put a real number in there.
+	codebuf = GC_malloc(1024); // TODO:  Put a real number in there.
 
 	ret = (char *)S3;
 	fname = (char *)S2;
@@ -3480,8 +3480,8 @@ prim P_ffi_colon(pez_instance *p)
 	Npop(4);
 
 	if(!f) {
-		// TODO:  Error handling.
-		fprintf(stderr, "Oops.\n");
+		trouble(p, "Function not found when compiling ffi: call");
+		return;
 	}
 
 	P_create(p);
@@ -3560,6 +3560,8 @@ prim P_ffi_colon(pez_instance *p)
 	jit_ret();
 
 	jit_flush_code(codebuf, jit_get_ip().ptr);
+	fprintf(stderr, "Compiled call to %s, %d bytes.\n", fname,
+			(long)jit_get_ip().ptr - (long)codebuf);
 }
 
 /*
@@ -3615,7 +3617,7 @@ prim P_call_word_1w(pez_instance *p)
    ( seconds -- )
    Sleeps the specified number of seconds.
 */
-P_sleep(pez_instance *p)
+prim P_sleep(pez_instance *p)
 {
 	Sl(1);
 	sleep(S0);
