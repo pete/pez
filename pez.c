@@ -3497,42 +3497,26 @@ prim P_ffi_colon(pez_instance *p)
 		jit_prepare(arglen);
 		for(i = 0; i < arglen; i++) {
 			switch(args[i]) {
-				// TODO:  I think these should probably work
-				// differently...maybe?
-				case 'p':
-				case 'l':
-				case 'i':
-				case 's':
-				case 'c':
-					jit_ld_S0(JIT_R0);
-					jit_pusharg_l(JIT_R0);
-					jit_Pop(JIT_R0);
-					break;
-				case 'f':
-					// TODO
-					break;
-				case 'd':
-					// TODO
-					break;
-				default:
-					// TODO:  Error handling?  Bueller?
-					fprintf(stderr, "iono?\n");
-			}
-		}
-	}
-	jit_finish(f);
-
-	if(ret && ret[0]) {
-		switch(ret[0]) {
-			// TODO:  I think these should probably work
-			// differently...maybe?
 			case 'p':
 			case 'l':
+				jit_ld_S0(JIT_R0);
+				jit_pusharg_l(JIT_R0);
+				jit_Pop(JIT_R0);
+				break;
 			case 'i':
+				jit_ld_S0(JIT_R0);
+				jit_pusharg_i(JIT_R0);
+				jit_Pop(JIT_R0);
+				break;
 			case 's':
+				jit_ld_S0(JIT_R0);
+				jit_pusharg_s(JIT_R0);
+				jit_Pop(JIT_R0);
+				break;
 			case 'c':
-				jit_retval(JIT_R0);
-				jit_Pushr(JIT_R0, JIT_R1);
+				jit_ld_S0(JIT_R0);
+				jit_pusharg_c(JIT_R0);
+				jit_Pop(JIT_R0);
 				break;
 			case 'f':
 				// TODO
@@ -3541,9 +3525,36 @@ prim P_ffi_colon(pez_instance *p)
 				// TODO
 				break;
 			default:
-				// TODO:  Error handling?  Bueller?
-				fprintf(stderr, "what *will* it return?\n");
+				trouble(p,
+					"Unknown argument type in ffi: call");
+				return;
+			}
+		}
+	}
+	jit_finish(f);
 
+	if(ret && ret[0]) {
+		switch(ret[0]) {
+		// TODO:  I think these should probably work
+		// differently...maybe?
+		case 'p':
+		case 'l':
+		case 'i':
+		case 's':
+		case 'c':
+			jit_retval(JIT_R0);
+			jit_Pushr(JIT_R0, JIT_R1);
+			break;
+		case 'f':
+			// TODO
+			break;
+		case 'd':
+			// TODO
+			break;
+		default:
+			// TODO:  Error handling?  Bueller?
+			trouble(p, "Unknown return value type in ffi: call");
+			return;
 		}
 	}
 	jit_ret();
