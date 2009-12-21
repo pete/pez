@@ -31,6 +31,7 @@ typedef double pez_real;	// Real number type
 typedef long pez_stackitem;
 
 typedef struct pez_inst pez_instance;
+typedef struct pez_load_path pez_load_path;
 // External symbols accessible by the calling program.
 typedef void (pez_word)(pez_instance *);	// Machine code pointer
 typedef pez_word *pez_wordp;
@@ -53,6 +54,12 @@ typedef struct {
 	pez_dictword ***mrstack;	// Return stack position marker
 	pez_dictword *mdict;	// Dictionary marker
 } pez_statemark;
+
+// For loading libraries
+struct pez_load_path {
+	pez_load_path *next;
+	char *path;
+};
 
 /* Permissions for instances of Pez: */
 
@@ -184,6 +191,10 @@ struct pez_inst {
 	   We memcpy floats from the stack into the buffers before using them.
 	*/
 	pez_real rbuf0, rbuf1, rbuf2;	
+
+	// Library loading:
+	pez_load_path *load_path;
+	pez_load_path *already_loaded;
 };
 
 //  PEZ_EVAL return status codes
@@ -211,7 +222,9 @@ extern void pez_mark(pez_instance *p, pez_statemark *mp),
        pez_unwind(pez_instance *p, pez_statemark *mp),
        pez_break(pez_instance *p),
        pez_free(pez_instance *p);
-extern int pez_eval(pez_instance *p, char *), pez_load(pez_instance *p, FILE *);
+extern int pez_eval(pez_instance *p, char *sp);
+extern char *pez_which_lib(pez_instance *p, char *libname);
+extern int pez_load(pez_instance *p, FILE *fp);
 
 extern void pez_stack_int(pez_instance *p, pez_int i);
 extern void pez_stack_real(pez_instance *p, pez_real f);

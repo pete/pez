@@ -941,20 +941,56 @@ variable fd1
 		$4 0 -1  2 nok?
 ;
 
+# Loading programs from a file
+: testload
+	"LOAD" tests:
+		"regtemp.pez" fname s!
+		fname o_wronly o_creat or o_trunc or 0644 open fd1 !
+		fd1 @ 0 > -1 ok?
+
+		fd1 @ >output 
+		": 8times 8 * ;" puts
+		": 11plus 11 + ;" puts
+		output> close 0 ok?
+
+		fname load 0 ok?
+		fname unlink drop
+		# Remember, these aren't defined when we compile this function;
+		# only after we load the library.  We have to use eval.
+		"3 8times 11plus 11plus" evaluate 46 0 2 nok? ;
+
+# Loading and using libraries
+: testlibs
+	"LOAD-PATH" tests:
+		# We should only have one library ($LIBDIR/pez/$VERSION) in the
+		# path at this point.
+		load-paths nip 1 ok?
+		"./test" add-load-path load-paths nip 2 ok?
+		load-paths drop @ "./test" sok?
+		"this file totally does not exist!" which-lib 0<> 0 ok?
+		"regress-lib" which-lib 0= 0 ok?
+		"regress-lib" which-lib "./test/regress-lib.pez" sok?
+		"regress-lib.pez" which-lib "./test/regress-lib.pez" sok?
+	
+	"LOAD-LIB" tests:
+		"regress-lib" load-lib
+		"push-a-1" evaluate drop 1 ok?
+;
+
 variable sub-pez
 : testinstantiation
 	"INSTANTIATION" tests:
-		0 new-pez dup sub-pez ! 0= 0 ok?
+		0 new-pez dup sub-pez ! 0= 0  ok?
 	
 	"EVALUATION" tests:
-		"2 2 +" sub-pez @ send-eval 0 ok?
-		sub-pez @ stack> drop @ 4 ok?
+		"2 2 +" sub-pez @ send-eval 0  ok?
+		sub-pez @ stack> drop @ 4  ok?
 	
 	"SELF-REFERENCE" tests:
 		this-pez 0= 0 ok?
-		"2" this-pez send-eval  2 0  2 nok?
-		"this-pez" sub-pez @ send-eval 0 ok?
-		sub-pez @ stack> drop @ sub-pez @ ok?
+		"2" this-pez send-eval  2 0  2  nok?
+		"this-pez" sub-pez @ send-eval 0  ok?
+		sub-pez @ stack> drop @ sub-pez @  ok?
 ;
 
 #   Run all the regression subtests
@@ -991,8 +1027,12 @@ testeval
 testprocess
 "regexes" puts
 testregexes
-# "instantiation" puts
-# testinstantiation
+"load" puts
+testload
+"libs" puts
+testlibs
+"instantiation" puts
+testinstantiation
 
 #   Low-level control structure primitives
 
@@ -1089,28 +1129,12 @@ testlctl
         forget k888
         here hp @ ok?
 
-#   Loading programs from a file
-
-: testload
-	"LOAD" tests:
-		"regtemp.pez" fname s!
-		fname o_wronly o_creat or o_trunc or 0644 open fd1 !
-		fd1 @ 0 > -1 ok?
-		fd1 @ >output 
-		": 8times 8 * ;" puts
-		": 11plus 11 + ;" puts
-		fd1 @ close 0 ok?
-
-		fname load 0 ok?
-		fname unlink drop ;
-
-testload
-3 8times 11plus 11plus 46 ok?
 
 #   Print error summary
 
 : errcount
 	errors @ if
+		decimal
 		2 >output
 		errors @ 1 = if
 			"1 error.\n" puts cr
