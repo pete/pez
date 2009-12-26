@@ -3,12 +3,18 @@
 
 AC_PREREQ(2.61)
 
-AC_INIT([pez],[1.5.2],[pete.elmore@gmail.com])
+# A few lines about versions:
+m4_define([PEZ_VERSION_MAJOR], [1])
+m4_define([PEZ_VERSION_MINOR], [6])
+m4_define([PEZ_VERSION_TEENY], [0])
+m4_define([PEZ_LIB_VERSION], PEZ_VERSION_MAJOR.PEZ_VERSION_MINOR)
+m4_define([PEZ_VERSION], PEZ_VERSION_MAJOR.PEZ_VERSION_MINOR.PEZ_VERSION_TEENY)
+
+AC_INIT([pez],PEZ_VERSION,[pete.elmore@gmail.com])
 AC_CONFIG_HEADERS([config.h:config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([pez.c])
 
-# AM_INIT_AUTOMAKE(pez, 1.5.2)
 AM_INIT_AUTOMAKE
 
 AC_PROG_LIBTOOL
@@ -58,5 +64,3 @@ AC_PROG_INSTALL
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
-# AC_CONFIG_FILES([Makefile lib/Makefile doc/Makefile])
-# AC_OUTPUT

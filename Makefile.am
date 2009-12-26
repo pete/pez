@@ -1,13 +1,12 @@
 # The following gets rid of some GNU complaints about filenames:
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
-# SUBDIRS = lib
 
-# TODO:  This sort of breaks unless I make a Makefile for doc/.  Ignoring for
-# now...
-# docdir = $(prefix)/share/doc/$(PACKAGE)
-# TODO how to include examples?
-# doc_DATA = doc/COPYING doc/CREDITS doc/ChangeLog doc/TODO doc/ctags examples
+pez_version_major=1
+pez_version_minor=6
+pez_version_teeny=0
+pez_lib_version=$(pez_version_major).$(pez_version_minor)
+pez_version=$(pez_version_major).$(pez_version_minor).$(pez_version_teeny)
 
 AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
 	    "-DPEZCONF_BINDIR=\"${bindir}\"" \
@@ -20,11 +19,14 @@ AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
 bin_PROGRAMS = pez$(EXEEXT)
 
 pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
+pezdir = $(libdir)/pez/$(pez_lib_version)
+pez_DATA = lib/*.pez
+
 pez_CFLAGS = $(AM_CFLAGS)
 include_HEADERS = pez.h pezdef.h
 
-EXTRA_DIST = README doc/COPYING doc/CREDITS doc/TODO doc/ctags \
-	     pez.h pezdef.h regress.pez
+EXTRA_DIST = README doc/* lightning/* m4 \
+	     pez.h pezdef.h regress.pez $(pez_DATA)
 
 lib_LTLIBRARIES = libpez.la
 
