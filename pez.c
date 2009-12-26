@@ -1119,6 +1119,7 @@ SIZE_FUNCS(double, P_c_double_size, P_c_doubles)
 
 PUSH_CONSTANT(P_pezconf_bindir, PEZCONF_BINDIR)
 PUSH_CONSTANT(P_pezconf_libdir, PEZCONF_LIBDIR)
+PUSH_CONSTANT(P_pezconf_pez_libdir, PEZCONF_PEZ_LIBDIR)
 PUSH_CONSTANT(P_pezconf_cc, PEZCONF_CC)
 PUSH_CONSTANT(P_pezconf_ld, PEZCONF_LD)
 PUSH_CONSTANT(P_pezconf_cflags, PEZCONF_CFLAGS)
@@ -4139,6 +4140,7 @@ static struct primfcn primt[] = {
 
 	{"0PEZ-BINDIR", P_pezconf_bindir},
 	{"0PEZ-LIBDIR", P_pezconf_libdir},
+	{"0PEZ-PEZ-LIBDIR", P_pezconf_pez_libdir},
 	{"0PEZ-CC", P_pezconf_cc},
 	{"0PEZ-LD", P_pezconf_ld},
 	{"0PEZ-CFLAGS", P_pezconf_cflags},
@@ -4683,8 +4685,9 @@ extern pez_instance *pez_init(long flags)
 	p->broken = Falsity;
 	p->instream = NULL;
 
-	pathtmp = alloc(sizeof(PEZCONF_LIBDIR "/pez/" VERSION));
-	strcpy(pathtmp, PEZCONF_LIBDIR "/pez/" VERSION);
+	pathtmp = alloc(sizeof(PEZCONF_PEZ_LIBDIR));
+	strcpy(pathtmp, PEZCONF_PEZ_LIBDIR);
+
 	p->load_path = (pez_load_path *)alloc(sizeof(pez_load_path));
 	p->load_path->path = pathtmp;
 	p->load_path->next = NULL;

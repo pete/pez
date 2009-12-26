@@ -8,19 +8,20 @@ pez_version_teeny=0
 pez_lib_version=$(pez_version_major).$(pez_version_minor)
 pez_version=$(pez_version_major).$(pez_version_minor).$(pez_version_teeny)
 
+bin_PROGRAMS = pez$(EXEEXT)
+
+pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
+pezdir = $(libdir)/pez/$(pez_lib_version)
+pez_DATA = lib/*.pez
+
 AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
+	    "-DPEZCONF_PEZ_LIBDIR=\"${pezdir}\"" \
 	    "-DPEZCONF_BINDIR=\"${bindir}\"" \
 	    "-DPEZCONF_CFLAGS=\"${CFLAGS}\"" \
 	    "-DPEZCONF_LDFLAGS=\"${LDFLAGS}\"" \
 	    "-DPEZCONF_SO_FLAGS=\"-shared ${pic_flag}\"" \
 	    "-DPEZCONF_LD=\"${LD}\"" \
 	    "-DPEZCONF_CC=\"${CC}\""
-
-bin_PROGRAMS = pez$(EXEEXT)
-
-pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
-pezdir = $(libdir)/pez/$(pez_lib_version)
-pez_DATA = lib/*.pez
 
 pez_CFLAGS = $(AM_CFLAGS)
 include_HEADERS = pez.h pezdef.h
