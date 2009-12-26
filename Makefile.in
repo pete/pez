@@ -17,6 +17,7 @@
 
 
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -77,7 +78,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(includedir)"
+	"$(DESTDIR)$(pezdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpez_la_LIBADD =
 am_libpez_la_OBJECTS = pez.lo
@@ -104,6 +105,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libpez_la_SOURCES) $(pez_SOURCES)
 DIST_SOURCES = $(libpez_la_SOURCES) $(pez_SOURCES)
+DATA = $(pez_DATA)
 HEADERS = $(include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -235,13 +237,11 @@ top_srcdir = @top_srcdir@
 # The following gets rid of some GNU complaints about filenames:
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
-# SUBDIRS = lib
-
-# TODO:  This sort of breaks unless I make a Makefile for doc/.  Ignoring for
-# now...
-# docdir = $(prefix)/share/doc/$(PACKAGE)
-# TODO how to include examples?
-# doc_DATA = doc/COPYING doc/CREDITS doc/ChangeLog doc/TODO doc/ctags examples
+pez_version_major = 1
+pez_version_minor = 6
+pez_version_teeny = 0
+pez_lib_version = $(pez_version_major).$(pez_version_minor)
+pez_version = $(pez_version_major).$(pez_version_minor).$(pez_version_teeny)
 AM_CPPFLAGS = "-DPEZCONF_LIBDIR=\"${libdir}\"" \
 	    "-DPEZCONF_BINDIR=\"${bindir}\"" \
 	    "-DPEZCONF_CFLAGS=\"${CFLAGS}\"" \
@@ -252,10 +252,12 @@ AM_CPPFLAGS = "-DPEZCONF_LIBDIR=\"${libdir}\"" \
 
 bin_PROGRAMS = pez$(EXEEXT)
 pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
+pezdir = $(libdir)/pez/$(pez_lib_version)
+pez_DATA = lib/*.pez
 pez_CFLAGS = $(AM_CFLAGS)
 include_HEADERS = pez.h pezdef.h
-EXTRA_DIST = README doc/COPYING doc/CREDITS doc/TODO doc/ctags \
-	     pez.h pezdef.h regress.pez
+EXTRA_DIST = README doc/* lightning/* m4 \
+	     pez.h pezdef.h regress.pez $(pez_DATA)
 
 lib_LTLIBRARIES = libpez.la
 libpez_la_SOURCES = pez.c
@@ -462,6 +464,26 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-pezDATA: $(pez_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pezdir)" || $(MKDIR_P) "$(DESTDIR)$(pezdir)"
+	@list='$(pez_DATA)'; test -n "$(pezdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pezdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pezdir)" || exit $$?; \
+	done
+
+uninstall-pezDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pez_DATA)'; test -n "$(pezdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(pezdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(pezdir)" && rm -f $$files
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(includedir)" || $(MKDIR_P) "$(DESTDIR)$(includedir)"
@@ -683,11 +705,12 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) config.h
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS) \
+		config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pezdir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -739,7 +762,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-includeHEADERS
+install-data-am: install-includeHEADERS install-pezDATA
 
 install-dvi: install-dvi-am
 
@@ -788,7 +811,7 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
-	uninstall-libLTLIBRARIES
+	uninstall-libLTLIBRARIES uninstall-pezDATA
 
 .MAKE: all install-am install-strip
 
@@ -804,12 +827,13 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	install-exec-am install-html install-html-am \
 	install-includeHEADERS install-info install-info-am \
 	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-pezDATA install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-includeHEADERS uninstall-libLTLIBRARIES
+	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-pezDATA
 
 # I swear, the docs say this works:
 # libpez_la_LIBTOOLFLAGS = -version-info 1:5:2
