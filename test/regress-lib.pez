@@ -1,0 +1,3 @@
+# This is a trivial library for the purposes of testing library loading
+# in regress.pez.
+: push-a-1  1 ;
