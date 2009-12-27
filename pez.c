@@ -2742,8 +2742,11 @@ prim P_2rot(pez_instance *p)
 	S0 = t1;
 }
 
+/*
+   Declare a double-cell variable.
+*/
 prim P_2variable(pez_instance *p)
-{				/* Declare double variable */
+{
 	P_create(p);		// Create dictionary item
 	Ho(2);
 	Hstore = 0;		// Initial value = 0...
