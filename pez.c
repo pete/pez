@@ -888,8 +888,21 @@ prim P_0lss(pez_instance *p)
 */
 prim P_malloc(pez_instance *p)
 {
-	So(1);
+	Sl(1);
 	S0 = (pez_stackitem)GC_MALLOC(S0);
+}
+
+/*
+   ( dest src len -- )
+   Just memcpy.
+*/
+prim P_memcpy(pez_instance *p)
+{
+	Sl(3);
+	Hpc(S2);
+	Hpc(S1);
+	memcpy((void *)S2, (void *)S1, S0);
+	Npop(3);
 }
 
 /*
@@ -2563,38 +2576,58 @@ prim P_minusrot(pez_instance *p)
 	S2 = t;
 }
 
+/*
+   ( cN ... c0 N -- c(N-1) ... c0 cN )
+   With the top of the stack as zero, roll moves the Nth item to the top, and
+   all other items down one.
+*/
 prim P_roll(pez_instance *p)
-{				// Rotate N top stack items
-	pez_stackitem i, j, t;
-
+{
+	pez_stackitem i, j, tmp;
 	Sl(1);
+
 	i = S0;
 	Pop;
+
 	Sl(i + 1);
-	t = p->stk[-(i + 1)];
+
+	tmp = p->stk[-(i + 1)];
 	for(j = -(i + 1); j < -1; j++)
 		p->stk[j] = p->stk[j + 1];
-	S0 = t;
+	S0 = tmp;
 }
 
+/*
+   ( x -- )
+   Puts the top cell onto the return stack.
+*/
 prim P_tor(pez_instance *p)
-{				// Transfer stack top to return stack
+{
 	Rso(1);
 	Sl(1);
 	Rpush = (rstackitem)S0;
 	Pop;
 }
 
+/*
+   ( -- x )
+   Takes the top item from the return stack, and pushes it onto the regular
+   stack.
+*/
 prim P_rfrom(pez_instance *p)
-{				// Transfer return stack top to stack
+{
 	Rsl(1);
 	So(1);
 	Push = (pez_stackitem)R0;
 	Rpop;
 }
 
+/*
+   ( -- x )
+   Copies the top item on the return stack to the regular stack.
+*/
 prim P_rfetch(pez_instance *p)
-{				// Fetch top item from return stack
+{
 	Rsl(1);
 	So(1);
 	Push = (pez_stackitem)R0;
@@ -2619,8 +2652,12 @@ prim P_time(pez_instance *p)
 
 /*  Double stack manipulation items  */
 
+/*
+   ( a b -- a b a b )
+   Dups the top two cells.
+*/
 prim P_2dup(pez_instance *p)
-{				// Duplicate stack top doubleword
+{
 	pez_stackitem s;
 
 	Sl(2);
@@ -2631,14 +2668,22 @@ prim P_2dup(pez_instance *p)
 	Push = s;
 }
 
+/*
+   ( a b -- )
+   Drops the top two items from the stack.
+*/
 prim P_2drop(pez_instance *p)
-{				/* Drop top two items from stack */
+{
 	Sl(2);
 	p->stk -= 2;
 }
 
+/*
+   ( a b c d -- c d a b )
+   Swaps the top two pairs of cells.
+*/
 prim P_2swap(pez_instance *p)
-{				/* Swap top two double items on stack */
+{
 	pez_stackitem t;
 
 	Sl(4);
@@ -2650,8 +2695,12 @@ prim P_2swap(pez_instance *p)
 	S1 = t;
 }
 
+/*
+   ( a b c d -- a b c d a b )
+   Pushes the second pair of cells onto the top of the stack.
+*/
 prim P_2over(pez_instance *p)
-{				/* Extract second pair from stack */
+{
 	pez_stackitem s;
 
 	Sl(4);
@@ -2662,6 +2711,10 @@ prim P_2over(pez_instance *p)
 	Push = s;
 }
 
+/*
+   ( a b c d -- c d )
+   Nips the second pair of cells.
+*/
 prim P_2nip(pez_instance *p)
 {
 	Sl(4);
@@ -2670,8 +2723,12 @@ prim P_2nip(pez_instance *p)
 	Pop2;
 }
 
+/*
+   ( a b c d e f -- c d e f a b )
+   Move third pair to top of stack.
+*/
 prim P_2rot(pez_instance *p)
-{				/* Move third pair to top of stack */
+{
 	pez_stackitem t1, t2;
 
 	Sl(6);
@@ -4041,6 +4098,8 @@ prim P_fwdresolve(pez_instance *p)
 /*  Table of primitive words  */
 // TODO:  Add a member to primfcn giving permissions required, and don't add
 // words to the dictionary when Pez doesn't have permissions.
+// TODO:  At some point, probably the same time the above happens, change these
+// all to lower-case and drop the case-insensitivity from dictionary lookups.
 static struct primfcn primt[] = {
 	{"0+", P_plus},
 	{"0-", P_minus},
@@ -4127,6 +4186,7 @@ static struct primfcn primt[] = {
 	{"0C,", P_ccomma},
 	{"0C=", P_cequal},
 	{"0MALLOC", P_malloc},
+	{"0memcpy", P_memcpy},
 	{"0HERE", P_here},
 
 	{"0CELL-SIZE", P_cell_size},
