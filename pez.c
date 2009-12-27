@@ -1102,17 +1102,23 @@ prim P_constant(pez_instance *p)
    A series of very small functions for portably figuring out sizes and offsets
    from within Pez.
 */
-#define SIZE_FUNCS(typename, size_fname, plural_fname) \
-	prim size_fname(pez_instance *p) { So(1); Push = sizeof(typename); } \
-	prim plural_fname(pez_instance *p) { Sl(1); S0 *= sizeof(typename); }
-SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells)
-SIZE_FUNCS(pez_real, P_float_size, P_floats)
-SIZE_FUNCS(void *, P_c_pointer_size, P_c_pointers)
-SIZE_FUNCS(short, P_c_short_size, P_c_shorts)
-SIZE_FUNCS(long, P_c_long_size, P_c_longs)
-SIZE_FUNCS(int, P_c_int_size, P_c_ints)
-SIZE_FUNCS(float, P_c_float_size, P_c_floats)
-SIZE_FUNCS(double, P_c_double_size, P_c_doubles)
+#define SIZE_FUNCS(typename, size_fn, plural_fn, read_fn, write_fn) \
+	prim size_fn(pez_instance *p) { So(1); Push = sizeof(typename); } \
+	prim plural_fn(pez_instance *p) { Sl(1); S0 *= sizeof(typename); } \
+	prim read_fn(pez_instance *p) { Sl(1); \
+		S0 = (pez_stackitem)(*(typename *)S0); } \
+	prim write_fn(pez_instance *p) { Sl(2); \
+		*(typename *)S0 = (typename)S1; Npop(2); }
+
+SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells, P_cell_at, P_cell_bang)
+SIZE_FUNCS(pez_real, P_float_size, P_floats, P_float_at, P_float_bang)
+SIZE_FUNCS(void *, P_c_pointer_size, P_c_pointers, P_c_pointer_at,
+		P_c_pointer_bang)
+SIZE_FUNCS(short, P_c_short_size, P_c_shorts, P_c_short_at, P_c_short_bang)
+SIZE_FUNCS(long, P_c_long_size, P_c_longs, P_c_long_at, P_c_long_bang)
+SIZE_FUNCS(int, P_c_int_size, P_c_ints, P_c_int_at, P_c_int_bang)
+SIZE_FUNCS(float, P_c_float_size, P_c_floats, P_c_float_at, P_c_float_bang)
+SIZE_FUNCS(double, P_c_double_size, P_c_doubles, P_c_double_at, P_c_double_bang)
 #undef SIZE_FUNCS
 
 /*  Reflection for Pez's compile-time options, for building libs from Pez: */
@@ -4127,16 +4133,28 @@ static struct primfcn primt[] = {
 	{"0FLOATS", P_floats},
 	{"0c-pointer-size", P_c_pointer_size},
 	{"0c-pointers", P_c_pointers},
+	{"0c-pointer@", P_c_pointer_at},
+	{"0c-pointer!", P_c_pointer_bang},
 	{"0c-short-size", P_c_short_size},
 	{"0c-shorts", P_c_shorts},
+	{"0c-short@", P_c_short_at},
+	{"0c-short!", P_c_short_bang},
 	{"0c-long-size", P_c_long_size},
 	{"0c-longs", P_c_longs},
+	{"0c-long@", P_c_long_at},
+	{"0c-long!", P_c_long_bang},
 	{"0c-int-size", P_c_int_size},
 	{"0c-ints", P_c_ints},
+	{"0c-int@", P_c_int_at},
+	{"0c-int!", P_c_int_bang},
 	{"0c-float-size", P_c_float_size},
 	{"0c-floats", P_c_floats},
+	{"0c-float@", P_c_float_at},
+	{"0c-float!", P_c_float_bang},
 	{"0c-double-size", P_c_double_size},
 	{"0c-doubles", P_c_doubles},
+	{"0c-double@", P_c_double_at},
+	{"0c-double!", P_c_double_bang},
 
 	{"0PEZ-BINDIR", P_pezconf_bindir},
 	{"0PEZ-LIBDIR", P_pezconf_libdir},
