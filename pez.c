@@ -3717,8 +3717,10 @@ prim P_ffi_colon(pez_instance *p)
 	jit_ret();
 
 	jit_flush_code(codebuf, jit_get_ip().ptr);
+	/*
 	fprintf(stderr, "Compiled call to %s, %d bytes.\n", fname,
 			(long)jit_get_ip().ptr - (long)codebuf);
+	*/
 }
 
 /*
