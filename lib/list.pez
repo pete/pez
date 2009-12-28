@@ -16,6 +16,6 @@ variable list-each-word'
 : list-each ( list word -- )
 	list-each-word' !
 	begin dup empty? not while
-		ca/dr list-each-word' @ execute
+		ca/dr swap >r list-each-word' @ execute r>
 	repeat drop ;
 		
