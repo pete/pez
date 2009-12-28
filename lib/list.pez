@@ -10,12 +10,18 @@
 
 : ca/dr ( list -- cdr car )
 	dup cdr swap car ;
+: cd/ar ( list -- car cdr )
+	dup car swap cdr ;
 
 variable list-each-word'
 # Executes the given item for each car of the list.
 : list-each ( list word -- )
 	list-each-word' !
 	begin dup empty? not while
-		ca/dr swap >r list-each-word' @ execute r>
+		cd/ar >r list-each-word' @ execute r>
 	repeat drop ;
-		
+
+: list-reduce ( list word -- reduction )
+	swap cd/ar rot list-each ;
+# Hilariously, if you want to supply an initial value instead of using the head
+# of the list, this word is equivalent to list-each.
