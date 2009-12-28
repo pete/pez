@@ -1,0 +1,149 @@
+# A fledgling library for wrapping C's sockets in a loving, Pezzy embrace.
+# Not yet complete, but I plan to support the whole API at some point.
+
+# "Constants" first.  Maybe non-portable.
+2 constant af-inet	# Unfortunately, I have no BSD or OSX to test on (yet),
+6 constant af-inet6	# but for now, hopefully libc is the same everywhere.
+# TODO:  Pez's FFI should, at some point, support figuring out simple C macros,
+# like the above.  Ruby-FFI (last time I checked) actually built C programs that
+# printed the values of numerical macros.  If possible, I'd rather try to just
+# use the cpp or even generate a .so with words for those constants, but we're
+# doing this for now.
+
+( For reference, here's how it looks in C:
+	struct addrinfo {
+		  int ai_flags;
+		  int ai_family;
+		  int ai_socktype;
+		  int ai_protocol;
+		  size_t ai_addrlen;
+		  struct sockaddr *ai_addr;
+		  char *ai_canonname;
+		  struct addrinfo *ai_next;
+	};
+)
+
+# This stuff is here only until structs are implemented.
+# And, man, is it tedious.
+4 c-ints 4 cells + constant sizeof-addrinfo
+: new-addrinfo  sizeof-addrinfo malloc ;
+: ->ai-flags  ;
+: ->ai-flags@  c-int@ ;
+: ->ai-flags!  c-int! ;
+: ->ai-family  c-int-size + ;
+: ->ai-family@  ->ai-family c-int@ ;
+: ->ai-family!  ->ai-family c-int! ;
+: ->ai-socktype  2 c-ints + ;
+: ->ai-socktype@  ->ai-socktype c-int@ ;
+: ->ai-socktype!  ->ai-socktype c-int! ;
+: ->ai-protocol  3 c-ints + ;
+: ->ai-protocol@  ->ai-protocol c-int@ ;
+: ->ai-protocol!  ->ai-protocol c-int! ;
+: ->ai-addrlen  4 c-ints + ;
+: ->ai-addrlen@  ->ai-addrlen @ ;
+: ->ai-addrlen!  ->ai-addrlen ! ;
+: ->ai-addr  4 c-ints + cell-size + ;
+: ->ai-addr@  ->ai-addr @ ;
+: ->ai-addr!  ->ai-addr ! ;
+: ->ai-canonname  4 c-ints + 2 cells + ;
+: ->ai-canonname@  ->ai-canonname @ ;
+: ->ai-canonname!  ->ai-canonname ! ;
+: ->ai-next  4 c-ints + 3 cells + ;
+: ->ai-next@  ->ai-next @ ;
+: ->ai-next!  ->ai-next ! ;
+
+(
+	struct sockaddr_in {
+		short int          sin_family;
+		unsigned short int sin_port;
+		struct in_addr     sin_addr;
+		unsigned char      sin_zero[8];
+	};
+	struct in_addr {
+		uint32_t s_addr;
+	};
+	struct sockaddr_in6 {
+		u_int16_t       sin6_family;
+		u_int16_t       sin6_port;
+		u_int32_t       sin6_flowinfo;
+		struct in6_addr sin6_addr;
+		u_int32_t       sin6_scope_id;
+	};
+	struct in6_addr {
+		unsigned char s6_addr[16];
+	};
+)
+
+# The larger of the two is sockaddr_in6:
+2 2 + 4 + 16 + 4 + constant sizeof-sockaddr
+
+: new-sockaddr  sizeof-sockaddr malloc ;
+: ->sin-family  ;
+: ->sin-family@  c-short@ ;
+: ->sin-family!  c-short! ;
+
+: ->sin-port  c-short-size + ;
+: ->sin-port@  ->sin-port c-short@ ;
+: ->sin-port!  ->sin-port c-short! ;
+
+: ->sin-addr  2 c-shorts + ;
+: ->sin-addr@  ->sin-addr @ ;
+: ->sin-addr!  ->sin-addr ! ;
+
+# And the IPv6-specific stuff (easier, since they specify sizes):
+: ->sin6-flowinfo  4 + ;
+: ->sin6-flowinfo@  ->sin6-flowinfo @ ;
+: ->sin6-flowinfo!  ->sin6-flowinfo ! ;
+
+: ->sin6-addr  8 + ;
+
+: ->sin6-scope-id 24 + ;
+: ->sin6-scope-id@  ->sin6-scope-id @ ;
+: ->sin6-scope-id!  ->sin6-scope-id ! ;
+
+# At least these aren't changing until we get a new protocol:
+46 constant inet6-addrstrlen
+16 constant inet-addrstrlen
+
+0 "freeaddrinfo" "p" this-proc ffi: freeaddrinfo'
+"i" "getaddrinfo" "pppp" this-proc ffi: getaddrinfo'
+"p" "inet_ntop" "ippp" this-proc ffi: inet-ntop'
+
+: copy-addrinfo ( addrinfo -- new-addrinfo )
+	new-addrinfo dup ( info new new )
+	rot ( new new info )
+	sizeof-addrinfo memcpy ( new-copy ) ;
+
+# Makes a copy of an addrinfo linked list, like returned by getaddrinfo.
+# Don't pass it a NULL, you'll segfault, and then nobody's happy.
+: copy-addrinfo-list ( addrinfo-head -- new-addrinfo-head )
+	dup copy-addrinfo ( addrinfo new-copy )
+	dup rot ( new-head new-head addrinfo )
+	->ai-next@ ( new-head new-head addrinfo )
+	begin dup while ( head curr node )
+		swap over ( head node curr node )
+		copy-addrinfo  ( head node curr copy )
+		over ->ai-next! ( head node curr )
+		->ai-next@ ( head node cnext )
+		swap ->ai-next@ ( head cnext nnext )
+	repeat 2drop ;
+
+variable getaddrinfobuf
+# Man, back in my day, we didn't need to memcopy un-GC'd memory and free
+# it.  We just leaked memory and segfaulted like real men.
+: getaddrinfo ( nodename portname hints -- addrinfo|0 )
+	getaddrinfobuf getaddrinfo' if 0 exit then
+	getaddrinfobuf @ copy-addrinfo-list
+	getaddrinfobuf @ freeaddrinfo' ;
+
+# Given a sockaddr-in{,6}, returns the address as a string.
+: inet-ntop ( sockaddr -- str )
+	dup ->sin-family@ af-inet6 = if 
+		af-inet6 swap ->sin6-addr inet6-addrstrlen
+	else
+		af-inet swap ->sin-addr inet-addrstrlen
+	then
+	1+ dup malloc swap over >r
+	inet-ntop' drop r> ;
+	
+
