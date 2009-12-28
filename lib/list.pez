@@ -1,0 +1,21 @@
+# A trivial implementation of linked lists.
+
+: nil  0 ;
+: car ( list -- head )  @ ;
+: cdr ( list -- tail )  cell-size + @ ;
+: cons ( list item -- new-list )
+	2 cells malloc swap over ! ( list new-list )
+	swap over cell-size + ! ;
+: empty? ( list -- t|f )  0= ;
+
+: ca/dr ( list -- cdr car )
+	dup cdr swap car ;
+
+variable list-each-word'
+# Executes the given item for each car of the list.
+: list-each ( list word -- )
+	list-each-word' !
+	begin dup empty? not while
+		ca/dr list-each-word' @ execute
+	repeat drop ;
+		
