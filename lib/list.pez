@@ -1,6 +1,6 @@
 # A trivial implementation of linked lists.
 
-: nil  0 ;
+0 constant nil
 : car ( list -- head )  @ ;
 : cdr ( list -- tail )  cell-size + @ ;
 : cons ( list item -- new-list )
