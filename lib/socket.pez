@@ -2,8 +2,8 @@
 # Not yet complete, but I plan to support the whole API at some point.
 
 # "Constants" first.  Maybe non-portable.
-2 constant af-inet	# Unfortunately, I have no BSD or OSX to test on (yet),
-6 constant af-inet6	# but for now, hopefully libc is the same everywhere.
+ 2 constant af-inet	# Unfortunately, I have no BSD or OSX to test on (yet),
+10 constant af-inet6	# but for now, hopefully libc is the same everywhere.
 # TODO:  Pez's FFI should, at some point, support figuring out simple C macros,
 # like the above.  Ruby-FFI (last time I checked) actually built C programs that
 # printed the values of numerical macros.  If possible, I'd rather try to just
@@ -107,6 +107,7 @@
 
 0 "freeaddrinfo" "p" this-proc ffi: freeaddrinfo'
 "i" "getaddrinfo" "pppp" this-proc ffi: getaddrinfo'
+"p" "gai_strerror" "i" this-proc ffi: gai-strerror'
 "p" "inet_ntop" "ippp" this-proc ffi: inet-ntop'
 
 : copy-addrinfo ( addrinfo -- new-addrinfo )
@@ -128,13 +129,22 @@
 		swap ->ai-next@ ( head cnext nnext )
 	repeat 2drop ;
 
-variable getaddrinfobuf
+variable getaddrinfobuf'
+variable getaddrinfo-error
 # Man, back in my day, we didn't need to memcopy un-GC'd memory and free
 # it.  We just leaked memory and segfaulted like real men.
 : getaddrinfo ( nodename portname hints -- addrinfo|0 )
-	getaddrinfobuf getaddrinfo' if 0 exit then
-	getaddrinfobuf @ copy-addrinfo-list
-	getaddrinfobuf @ freeaddrinfo' ;
+	getaddrinfobuf' getaddrinfo' dup getaddrinfo-error ! 
+	if 0 exit then
+	getaddrinfobuf' @ copy-addrinfo-list
+	getaddrinfobuf' @ freeaddrinfo' ;
+
+: gai-strerror ( error-number -- str )
+	gai-strerror'
+	dup strlen ( str len )
+	dup malloc ( str len dst )
+	dup >r -rot ( dst str len )
+	memcpy r> ;
 
 # Given a sockaddr-in{,6}, returns the address as a string.
 : inet-ntop ( sockaddr -- str )
