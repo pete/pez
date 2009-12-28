@@ -1,0 +1,40 @@
+#! /usr/bin/env pez
+# A simple command-line resolver.
+
+"./lib" add-load-path
+"socket" load-lib
+
+# Housekeeping.
+: usage ( -- )
+	"host.pez host1 [host2 ...]" puts ;
+: check-args ( -- )
+	argc 1 < if stderr @ >output usage "No arguments passed!" 1 die! then ;
+
+variable each-arg-word
+: each-arg ( word -- ) # Calls the supplied word on each argument.
+	each-arg-word !
+	argc 0 do
+		argv i cells + @
+		each-arg-word @ execute
+	loop ;
+
+variable hints
+: init-hints new-addrinfo hints ! ; # af-inet hints @ ->ai-family! ;
+
+: print-addrinfo ( hostname -- )
+	dup print ":\t" print
+	0 hints @ getaddrinfo dup if
+		begin dup while
+			dup ->ai-addr@ inet-ntop print " " print
+			->ai-next@
+		repeat drop
+		cr
+	else
+		drop "Could not resolve host." puts
+	then ;
+
+check-args
+init-hints
+
+hex
+' print-addrinfo each-arg
