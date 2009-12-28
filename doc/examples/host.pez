@@ -19,7 +19,7 @@ variable each-arg-word
 	loop ;
 
 variable hints
-: init-hints new-addrinfo hints ! ; # af-inet hints @ ->ai-family! ;
+: init-hints new-addrinfo hints ! ;
 
 : print-addrinfo ( hostname -- )
 	dup print ":\t" print
@@ -30,7 +30,9 @@ variable hints
 		repeat drop
 		cr
 	else
-		drop "Could not resolve host." puts
+		drop "Could not resolve host (" print
+		getaddrinfo-error @ gai-strerror print
+		")." puts
 	then ;
 
 check-args
