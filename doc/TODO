@@ -1,16 +1,10 @@
 This is a sort of unordered roadmap for Pez.
 
-* Add support for sockets.
+* Structs.
 
-* Supplement the FFI, probably using Lightning.
+* Finish up the socket library, once structs are solidified.
 
-* Add examples for the FFI, and write a couple of libraries.
-
-* Set up something like $LIBDIR/pez, to make it a little more easy to distribute
-  a standard library (both FFI .so files and regular .pez files) with Pez and
-  load files from it.
-
-* Data structures.
+* Include more batteries.
 
 * Add support for hashes, via st_hash (public domain).
 
@@ -24,17 +18,6 @@ This is a sort of unordered roadmap for Pez.
 * Finalize the API for a Pez interpreter instantiated by another Pez
   program, so that the above-mentioned jailing of sub-pez's makes sense.
 
-* Autotools tweaks.  Specifically, I'm incompetent with that build
-  system, and a few things need to happen:
-	* The standard collection of FFI libraries (most of which are
-	  yet to be written, except for a minimal SDL proof-of-concept)
-	  need to be built and installed in /usr/lib/pez/ (or wherever
-	  autotools and the runner of ./configure decide is
-	  appropriate) and the path to this library defined where Pez
-	  can see it, so that it can install and load libraries.
-
-* The various compile-time options need to mostly go away.
-
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
 	* Also, do both if possible.
@@ -43,12 +26,10 @@ This is a sort of unordered roadmap for Pez.
   depends on how much of a pain that turns out to be.
 
 * Misc cleanup
-	* Fix up some of Atlast's quirks, where it makes sense.  (e.g., change
-	  'Push = x' to 'Push(x)'.)
 
-* Investigate a few key optimizations, as I'm planning on using Pez as an
-  intermediate language for Roboto.
+* Investigate a few key optimizations, as I'm planning on using Pez as a VM
+  language, especially for Roboto.
 
 * Along those lines, there are a few Roboto features that may be pushed down to
   Pez, although this will only happen where it does not interfere with Pez as a
-  standalone language or embedded scripting language.
+  general-purpose standalone language or embedded scripting language.
