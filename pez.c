@@ -2926,13 +2926,14 @@ prim P_dolit(pez_instance *p)
 		fflush(stdout);
 	}
 	Push = (pez_stackitem) *p->ip++;	/* Push the next datum from the
-					   instruction stream. */
+						   instruction stream. */
 }
 
 /*  Control flow primitives  */
 
 /*
-	Invoke compiled word
+	Invoke compiled word.  Usually used implicitly by the compiler rather
+	than by the user.
 */
 prim P_nest(pez_instance *p)
 {
@@ -2945,7 +2946,9 @@ prim P_nest(pez_instance *p)
 #endif
 		Rpush = p->ip;
 	}
-	p->ip = (((pez_dictword **)p->curword) + Dictwordl);
+	// curword points to the header, after which is the actual code.  See
+	// also exword().
+	p->ip = (((pez_dictword **)p->curword) + sizeof(pez_dictword));
 }
 
 prim P_exit(pez_instance *p)
