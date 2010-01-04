@@ -2948,7 +2948,7 @@ prim P_nest(pez_instance *p)
 	}
 	// curword points to the header, after which is the actual code.  See
 	// also exword().
-	p->ip = (((pez_dictword **)p->curword) + sizeof(pez_dictword));
+	p->ip = (((pez_dictword **)p->curword) + Dictwordl);
 }
 
 prim P_exit(pez_instance *p)
