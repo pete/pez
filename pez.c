@@ -438,6 +438,17 @@ static pez_dictword *lookup(pez_instance *p, char *tkname)
 	return dw;
 }
 
+static int is_word(pez_instance *p, pez_dictword *d)
+{
+	pez_dictword *c = p->dict;
+	while(c) {
+		if(c == d)
+			return 1;
+		c = c->wnext;
+	}
+	return 0;
+}
+
 /* Gag me with a spoon!  Does no compiler but Turbo support
    #if defined(x) || defined(y) ?? */
 #ifdef EXPORT
@@ -1873,6 +1884,7 @@ prim P_argv(pez_instance *p)
 prim P_dot(pez_instance *p)
 {
 	Sl(1);
+	fflush(stdout);
 	printf(p->base == 16 ? "0x%lx " : "%ld ", S0);
 	fflush(stdout);
 	Pop;
@@ -1914,12 +1926,13 @@ prim P_ndots(pez_instance *p)
 	if(depth == 0) {
 		printf("Stack is empty.\n");
 		return;
+	}
+
+	printf("Stack:  ");
+	if(n >= depth) {
+		n = depth;
 	} else {
-		if(n >= depth) {
-			n = depth;
-		} else {
-			printf("... ");
-		}
+		printf("... ");
 	}
 
 	for(tsp = p->stk - n; tsp < p->stk; tsp++) {
@@ -3416,15 +3429,31 @@ prim P_bracktick(pez_instance *p)
 				   word in compile stream */
 }
 
+/*
+   ( word -- )
+   Executes the word on the top of the stack.  For example,
+   	' cr execute
+   is equivalent to
+   	cr
+*/
 prim P_execute(pez_instance *p)
-{				/* Execute word pointed to by stack */
+{
 	pez_dictword *wp;
 
 	Sl(1);
-	wp = (pez_dictword *)S0;	// Load word address from stack
-	Pop;			// Pop data stack before execution
-	exword(p, wp);		/* Recursively call exword() to run
-				   the word. */
+	wp = (pez_dictword *)S0;
+	Pop;	// Pop the word off the stack *before* calling it.
+	exword(p, wp);
+}
+
+/*
+   ( pointer -- bool )
+   True if the pointer is a valid word in the dictionary.
+*/
+prim P_wordp(pez_instance *p)
+{
+	Sl(1);
+	S0 = -is_word(p, (pez_dictword *)S0);
 }
 
 prim P_tail_call(pez_instance *p)
@@ -3441,7 +3470,7 @@ prim P_body(pez_instance *p)
 prim P_state(pez_instance *p)
 {				/* Get state of system */
 	So(1);
-	Push = (pez_stackitem) & state;
+	Push = (pez_stackitem) &state;
 }
 
 /*  Definition field access primitives	*/
@@ -3470,15 +3499,20 @@ prim P_find(pez_instance *p)
 
 #define DfOff(fld)  (((char *)&(p->dict->fld)) - ((char *)p->dict))
 
+/*
+   ( addr -- name )
+   Find name field from compile addr
+*/
 prim P_toname(pez_instance *p)
-{				/* Find name field from compile addr */
+{
 	Sl(1);
 	S0 += DfOff(wname);
 }
 
 /*
+   ( addr -- link )
    Find link field from compile addr
- */
+*/
 prim P_tolink(pez_instance *p)
 {
 	if(DfOff(wnext) != 0)
@@ -3488,14 +3522,22 @@ prim P_tolink(pez_instance *p)
 	// SO += DfOff(wnext)
 }
 
+/*
+   ( body -- addr )
+   Get compile address from body
+*/
 prim P_frombody(pez_instance *p)
-{				/* Get compile address from body */
+{
 	Sl(1);
 	S0 -= Dictwordl * sizeof(pez_stackitem);
 }
 
+/*
+   ( name -- addr )
+   Get compile address from name
+*/
 prim P_fromname(pez_instance *p)
-{				/* Get compile address from name */
+{
 	Sl(1);
 	S0 -= DfOff(wname);
 }
@@ -4401,6 +4443,7 @@ static struct primfcn primt[] = {
 	{"0'", P_tick},
 	{"1[']", P_bracktick},
 	{"0EXECUTE", P_execute},
+	{"0word?", P_wordp},
 	{"0TAIL-CALL", P_tail_call},
 	{"0>BODY", P_body},
 	{"0STATE", P_state},
@@ -5301,11 +5344,11 @@ void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 			/* Finally, back the heap allocation pointer up to the
 			  start of the last item forgotten. */
 			p->hptr = (pez_stackitem *)di;
-			/* Uhhhh, just one more thing. If this word was defined with
-			  DOES>, there's a link to the method address hidden before
-			  its wnext field.  See if it's a DOES> by testing the wcode
-			  field for P_dodoes and, if so, back up the heap one more
-			  item. */
+			/* Uhhhh, just one more thing. If this word was defined
+			  with DOES>, there's a link to the method address
+			  hidden before its wnext field.  See if it's a DOES> by
+			  testing the wcode field for P_dodoes and, if so, back
+			  up the heap one more item. */
 			if(di->wcode == (pez_wordp)P_dodoes) {
 #ifdef FORGETDEBUG
 				printf(" Forgetting DOES> word. ");
