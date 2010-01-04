@@ -1,0 +1,35 @@
+# 
+# Introspection.  A memory dumper that can act as a decompiler of sorts for
+# Pez code.  A sample program:
+#	"disas" load-lib
+#	hex 
+#	here 
+#	: test1 1 2 3 drop drop drop ;
+#	here over - dump
+# Running that will dump the contents of the memory that includes test1, and you
+# can see that it compiles to (LIT) 1 (LIT) 2 (LIT) 3 DROP DROP DROP EXIT.
+#
+# It's not yet smart enough to recognize that EXIT appears outside a
+# conditional, and thus represents the end of the word, or to alert the user if
+# a word has been redefined.
+
+: >code  2 cells + @ ;
+
+: print-name ( word-addr -- )
+	>name @ 1+ print ;
+
+: dump-cell ( addr -- )
+	@ dup .
+	dup word? if "\t(" print print-name ")" puts
+	else drop cr
+	then ;
+
+: dump ( addr len -- )
+	"Dumping " print over .
+	over word? if over "(" print print-name ")" print then
+	cr
+	cell-size / 0 do
+		"[ " print dup i cells + . "]: " print
+		dup i cells +
+		dump-cell
+	loop drop ;
