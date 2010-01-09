@@ -20,7 +20,7 @@
 
 : dump-cell ( addr -- )
 	@ dup .
-	dup word? if "\t(" print print-name ")" puts
+	dup word? if "\t" print print-name cr
 	else drop cr
 	then ;
 
@@ -29,7 +29,8 @@
 	over word? if over "(" print print-name ")" print then
 	cr
 	cell-size / 0 do
-		"[ " print dup i cells + . "]: " print
 		dup i cells +
+		dup word? if "(" print dup print-name ")" puts then
+		"[ " print dup . "]: " print
 		dump-cell
 	loop drop ;
