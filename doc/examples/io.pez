@@ -1,0 +1,42 @@
+#! /usr/bin/env pez
+# A simple demonstration of how file I/O works in Pez.
+
+1024 constant buffer-size
+
+# Open a file with umask&0666 permissions:
+"/tmp/pez-io-demo" o_creat o_wronly or 0666 open ( fd )
+
+# The current output stream is the top item on the output stack.  It's stdout by
+# default.
+>output	( ) # Push fd onto the output stream
+	"Hello, world!" puts
+output> ( fd )	# Pop it off the output stack, onto the regular stack.
+close	# Close the file.
+
+buffer-size string buf
+# Input works the same way.
+"The file contains one line:" puts
+"/tmp/pez-io-demo" o_rdonly 0 open
+>input
+	buf buffer-size gets drop
+input> close
+buf puts
+
+# That's it for the code; I'm going to chatter for a bit in case the above
+# didn't make sense.
+#
+# As you may have noticed, the words "open" and "close" are fairly thin wrappers
+# around the system calls.  The flags (refer to the open(2) man page) have also
+# been pulled in.  The usual rules for permissions apply.  Where we deviate from
+# C is in the operations you perform on those files.  There are two stacks, one
+# each for input and output; they mostly behave like the return stack.
+#
+# All output goes through the top fd on the output stack, and the same with
+# input (minus the special cases of words that are intended for interactive or
+# debugging use, like ".s").  This allows words that do I/O to be written
+# without concern for where the input is coming from or the output goes, which
+# is to say that it allows you to factor out code that manipulates the I/O
+# streams from the code that does the I/O.  And as long as the conventions
+# around the return stack are also observed for the I/O stacks (e.g., "always
+# pop what you push"), individual I/O-manipulation words can even ignore each
+# other.
