@@ -5219,7 +5219,6 @@ int pez_prologue(pez_instance *p, char *sp)
 /*
 	The string, you fling upon the heap.
 */
-
 void pez_heap_string(pez_instance *p, char* str)
 {
 	int l =
@@ -5235,10 +5234,11 @@ void pez_heap_string(pez_instance *p, char* str)
 */
 void pez_stack_string(pez_instance *p, char *str)
 {
+	char *stacked;
 	So(1);
-	strncpy(p->strbuf[p->cstrbuf], str, p->ltempstr - 1);
-	Push = (pez_stackitem)p->strbuf[p->cstrbuf];
-	p->cstrbuf = (p->cstrbuf + 1) % ((int)p->ntempstr);
+	stacked = alloc(p->ltempstr);
+	strncpy(stacked, str, p->ltempstr - 1);
+	Push = stacked;
 }
 
 void pez_heap_int(pez_instance *p, pez_int val)
