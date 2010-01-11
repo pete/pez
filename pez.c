@@ -5238,7 +5238,7 @@ void pez_stack_string(pez_instance *p, char *str)
 	So(1);
 	stacked = alloc(p->ltempstr);
 	strncpy(stacked, str, p->ltempstr - 1);
-	Push = stacked;
+	Push = (pez_stackitem *)stacked;
 }
 
 void pez_heap_int(pez_instance *p, pez_int val)
