@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <gc/gc.h>
+#include <unistd.h>
 
 #include <signal.h>
 #include "pezdef.h"
@@ -79,7 +80,6 @@ void pezmain_load(char *fname, FILE *fp)
 
 void include_file(char *fname)
 {
-	int stat;
 	FILE *fp;
 
 	fp = fopen(fname,
@@ -218,9 +218,7 @@ int main(int argc, char *argv[])
 	   we execute the program. */
 
 	for(i = 0; i < in; i++) {
-		int stat;
 		char fn[132];
-		FILE *fp;
 
 		strncpy(fn, include[i], sizeof(fn));
 		if(strchr(fn, '.') == NULL)

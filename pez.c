@@ -571,10 +571,9 @@ static void print_regex_error(int code, regex_t *rx)
 	fflush(stderr);
 }
 
-
 /*  Primitive word definitions.  */
 
-#ifdef COMPILATION_SAFETY
+#ifndef COMPILATION_SAFETY
 #define Compiling
 #else
 #define Compiling if (state == Falsity) {notcomp(p); return;}
@@ -2241,7 +2240,6 @@ prim P_load_paths(pez_instance *p)
 	pez_load_path *cur = p->load_path;
 	int count = 0, i;
 	char **lps;
-	char *tmp;
 	So(2);
 
 	fflush(stderr);
@@ -2283,7 +2281,6 @@ prim P_add_load_path(pez_instance *p)
 */
 prim P_which_lib(pez_instance *p)
 {
-	char *which;
 	Sl(1);
 	S0 = (pez_stackitem)pez_which_lib(p, (char *)S0);
 }
