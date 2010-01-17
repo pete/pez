@@ -641,8 +641,21 @@ variable k
 : testmath
     "^" tests:
         1 1000 ^ 1 ok?
-	2 10 ^ 1024 ok?
-	3 14 ^ 4782969 ok?
+        2 10 ^ 1024 ok?
+        3 14 ^ 4782969 ok?
+
+    "UNFLOATING" tests:
+        1.0 floor 1 ok?
+        1.0 fix 1 ok?
+        1.0 ceil 1 ok?
+
+        5.5 floor 5 ok?
+        5.5 fix 5 ok?
+        5.5 ceil 6 ok?
+
+        -9.3 floor -10 ok?
+        -9.3 fix -9 ok?
+        -9.3 ceil -9 ok?
 
     "ACOS" tests:
         0.0 acos pi 2.0 f/ fok?

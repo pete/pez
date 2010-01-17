@@ -1729,14 +1729,38 @@ prim P_float(pez_instance *p)
 
 /*
    ( f -- i )
-   Convert a floating-point number to an integer.
+   Convert a floating-point number to an integer, truncating towards zero.
 */
 prim P_fix(pez_instance *p)
 {
 	pez_stackitem i;
 
 	Sl(Realsize);
-	i = (int)REAL0;
+	i = (pez_stackitem)REAL0;
+	Realpop;
+	Push = i;
+}
+
+/*
+   ( f -- floor(f) )
+   The greatest integer that is less than or equal to f.
+*/
+prim P_floor(pez_instance *p)
+{
+	pez_stackitem i;
+	i = floor(REAL0);
+	Realpop;
+	Push = i;
+}
+
+/*
+   ( f -- ceil(f) )
+   The smallest integer that is greater than or equal to f.
+*/
+prim P_ceil(pez_instance *p)
+{
+	pez_stackitem i;
+	i = ceil(REAL0);
 	Realpop;
 	Push = i;
 }
@@ -4336,6 +4360,8 @@ static struct primfcn primt[] = {
 	{"0F.", P_fdot},
 	{"0FLOAT", P_float},
 	{"0FIX", P_fix},
+	{"0floor", P_floor},
+	{"0ceil", P_ceil},
 	{"0FTIME", P_ftime},
 
 #ifdef MATH
@@ -5230,7 +5256,7 @@ void pez_heap_string(pez_instance *p, char* str)
 }
 
 /*
-   Copy a string to one of the temporary buffers and push it on the stack.
+   Copy a string to a new GC'd buffer, and push it onto the stack.
 */
 void pez_stack_string(pez_instance *p, char *str)
 {
@@ -5266,7 +5292,6 @@ void pez_heap_real(pez_instance *p, pez_real val)
 	Hstore = s_flit;	// Push (flit) at execution
 
 	tru.r = val;
-	fflush(stderr);
 
 	for(i = 0; i < Realsize; i++) {
 		Hstore = tru.s[i];
