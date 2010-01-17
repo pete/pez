@@ -136,6 +136,10 @@ char copyright[] = "PEZ: This program is in the public domain.";
 */
 static pez_stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 	s_qbranch, s_branch, s_xdo, s_xqdo, s_xloop, s_pxloop, s_abortq;
+#define SMALLEST_OLIT -10
+#define LARGEST_OLIT 10
+static pez_stackitem s_olits[LARGEST_OLIT - SMALLEST_OLIT];
+static pez_stackitem *s_olit0;
 
 /*  Forward functions  */
 
@@ -2942,6 +2946,28 @@ prim P_fat(pez_instance *p)
 
 /*  Data transfer primitives  */
 
+PUSH_CONSTANT(P_dolit_n10, -10)
+PUSH_CONSTANT(P_dolit_n9, -9)
+PUSH_CONSTANT(P_dolit_n8, -8)
+PUSH_CONSTANT(P_dolit_n7, -7)
+PUSH_CONSTANT(P_dolit_n6, -6)
+PUSH_CONSTANT(P_dolit_n5, -5)
+PUSH_CONSTANT(P_dolit_n4, -4)
+PUSH_CONSTANT(P_dolit_n3, -3)
+PUSH_CONSTANT(P_dolit_n2, -2)
+PUSH_CONSTANT(P_dolit_n1, -1)
+PUSH_CONSTANT(P_dolit_0, 0)
+PUSH_CONSTANT(P_dolit_1, 1)
+PUSH_CONSTANT(P_dolit_2, 2)
+PUSH_CONSTANT(P_dolit_3, 3)
+PUSH_CONSTANT(P_dolit_4, 4)
+PUSH_CONSTANT(P_dolit_5, 5)
+PUSH_CONSTANT(P_dolit_6, 6)
+PUSH_CONSTANT(P_dolit_7, 7)
+PUSH_CONSTANT(P_dolit_8, 8)
+PUSH_CONSTANT(P_dolit_9, 9)
+PUSH_CONSTANT(P_dolit_10, 10)
+
 prim P_dolit(pez_instance *p)
 {				/* Push instruction stream literal */
 	So(1);
@@ -4382,6 +4408,29 @@ static struct primfcn primt[] = {
 	{"0(NEST)", P_nest},
 	{"0EXIT", P_exit},
 	{"0(LIT)", P_dolit},
+
+	{"0(LIT-10)", P_dolit_n10},
+	{"0(LIT-9)", P_dolit_n9},
+	{"0(LIT-8)", P_dolit_n8},
+	{"0(LIT-7)", P_dolit_n7},
+	{"0(LIT-6)", P_dolit_n6},
+	{"0(LIT-5)", P_dolit_n5},
+	{"0(LIT-4)", P_dolit_n4},
+	{"0(LIT-3)", P_dolit_n3},
+	{"0(LIT-2)", P_dolit_n2},
+	{"0(LIT-1)", P_dolit_n1},
+	{"0(LIT0)", P_dolit_0},
+	{"0(LIT1)", P_dolit_1},
+	{"0(LIT2)", P_dolit_2},
+	{"0(LIT3)", P_dolit_3},
+	{"0(LIT4)", P_dolit_4},
+	{"0(LIT5)", P_dolit_5},
+	{"0(LIT6)", P_dolit_6},
+	{"0(LIT7)", P_dolit_7},
+	{"0(LIT8)", P_dolit_8},
+	{"0(LIT9)", P_dolit_9},
+	{"0(LIT10)", P_dolit_10},
+
 	{"0BRANCH", P_branch},
 	{"0?BRANCH", P_qbranch},
 	{"1IF", P_if},
@@ -4807,7 +4856,7 @@ extern pez_instance *pez_init(long flags)
 	static int gc_already_inited = 0;
 	pez_instance *p;
 	int i;
-	char *pathtmp;
+	char *pathtmp, *olittmp;
 
 	if(!gc_already_inited) {
 		GC_INIT();
@@ -4868,8 +4917,13 @@ extern pez_instance *pez_init(long flags)
 	   save their compile addresses in static variables. */
 
 #define Cconst(cell, name)  do {\
-		cell = (pez_stackitem)lookup(p, name);\
-		if(!cell) abort();\
+		if(!(cell)) { (cell) = (pez_stackitem)lookup(p, name); }\
+		if(!(cell)) {\
+			fprintf(stderr, \
+				"Compiler error!  Couldn't lookup %s!  " \
+				"Aborting!\n", name); \
+			    abort();\
+		}\
 	} while(0)
 
 	Cconst(s_exit, "EXIT");
@@ -4884,6 +4938,16 @@ extern pez_instance *pez_init(long flags)
 	Cconst(s_xloop, "(XLOOP)");
 	Cconst(s_pxloop, "(+XLOOP)");
 	Cconst(s_abortq, "ABORT\"");
+
+	if(!s_olit0) {
+		char *olittmp = GC_MALLOC(32);
+		s_olit0 = s_olits - SMALLEST_OLIT;
+		for(i = SMALLEST_OLIT; i <= LARGEST_OLIT; i++) {
+			olittmp[0] = '0';
+			snprintf(olittmp + 1, 31, "(LIT%d)", i);
+			Cconst(s_olit0[i], olittmp + 1);
+		}
+	}
 #undef Cconst
 
 	if(p->stack == NULL) {	// Allocate stack if needed
@@ -5264,14 +5328,21 @@ void pez_stack_string(pez_instance *p, char *str)
 	So(1);
 	stacked = alloc(p->ltempstr);
 	strncpy(stacked, str, p->ltempstr - 1);
-	Push = stacked;
+	Push = (pez_stackitem)stacked;
 }
 
 void pez_heap_int(pez_instance *p, pez_int val)
 {
-	Ho(2);
-	Hstore = s_lit;		// Push (lit)
-	Hstore = val;	// Compile actual literal
+	if(SMALLEST_OLIT < val && val < LARGEST_OLIT) {
+		// Optimized (lit)s.
+		Ho(1);
+		Hstore = s_olit0[val];
+	} else {
+		// Compile a (LIT), and add the literal inline.
+		Ho(2);
+		Hstore = s_lit;
+		Hstore = val;
+	}
 }
 
 void pez_stack_int(pez_instance *p, pez_int val)
