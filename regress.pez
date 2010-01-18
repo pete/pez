@@ -528,7 +528,7 @@ variable k
     "DO-+LOOP" tests:
         0 10 0 do 3 + 1 +loop 30 ok?
         0 21 1 do i + 3 +loop 70 ok?
-	0 0 99 do 1 + -1 +loop 99 ok?
+        0 0 99 do 1 + -1 +loop 99 ok?
 
     "?DO" tests:
         0 10 0 ?do 2+ loop 20 ok?
@@ -641,8 +641,21 @@ variable k
 : testmath
     "^" tests:
         1 1000 ^ 1 ok?
-	2 10 ^ 1024 ok?
-	3 14 ^ 4782969 ok?
+        2 10 ^ 1024 ok?
+        3 14 ^ 4782969 ok?
+
+    "UNFLOATING" tests:
+        1.0 floor 1 ok?
+        1.0 fix 1 ok?
+        1.0 ceil 1 ok?
+
+        5.5 floor 5 ok?
+        5.5 fix 5 ok?
+        5.5 ceil 6 ok?
+
+        -9.3 floor -10 ok?
+        -9.3 fix -9 ok?
+        -9.3 ceil -9 ok?
 
     "ACOS" tests:
         0.0 acos pi 2.0 f/ fok?
@@ -773,7 +786,7 @@ variable k
         "Fingers" "Finger" strcmp 1 ok?
 
     "STRNCMP" tests:
-    	"a1" "a2" 1 strncmp 0 ok?
+        "a1" "a2" 1 strncmp 0 ok?
 
     "STRFORM" tests:
         -11 "Test <%ld> 1" tstr strform tstr "Test <-11> 1" sok?
@@ -797,10 +810,10 @@ variable k
         "-99.1786X" tstr s! tstr strreal tstr 8 + -99.1786  1 floatcells + nok?
         "   1.234E2" tstr s! tstr strreal tstr 10 + 123.4  1 floatcells + nok?
         "Bilge" tstr s! tstr strreal tstr 0.0   1 floatcells + nok?
-        "  0771234Real" tstr s! tstr strreal tstr 9 + 771234.0  
-		1 floatcells + nok?
-#   	Following test disabled because some libraries permit hexadecimal
-#   	floating point constants.
+        "  0771234Real" tstr s! tstr strreal tstr 9 + 771234.0
+                1 floatcells + nok?
+#       Following test disabled because some libraries permit hexadecimal
+#       floating point constants.
 #       "  0xBEEF0ABEGHex!" tstr s! tstr strreal tstr 3 + 0.0  3 nok?
 ;
 

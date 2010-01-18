@@ -8,7 +8,7 @@
 
 # The current output stream is the top item on the output stack.  It's stdout by
 # default.
->output	( ) # Push fd onto the output stream
+>output	( ) # Push fd onto the output stack
 	"Hello, world!" puts
 output> ( fd )	# Pop it off the output stack, onto the regular stack.
 close	# Close the file.

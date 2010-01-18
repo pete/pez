@@ -136,6 +136,10 @@ char copyright[] = "PEZ: This program is in the public domain.";
 */
 static pez_stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 	s_qbranch, s_branch, s_xdo, s_xqdo, s_xloop, s_pxloop, s_abortq;
+#define SMALLEST_OLIT -10
+#define LARGEST_OLIT 10
+static pez_stackitem s_olits[LARGEST_OLIT - SMALLEST_OLIT];
+static pez_stackitem *s_olit0;
 
 /*  Forward functions  */
 
@@ -899,7 +903,7 @@ prim P_0lss(pez_instance *p)
 prim P_malloc(pez_instance *p)
 {
 	Sl(1);
-	S0 = (pez_stackitem)GC_MALLOC(S0);
+	S0 = (pez_stackitem)alloc(S0);
 }
 
 /*
@@ -1728,14 +1732,38 @@ prim P_float(pez_instance *p)
 
 /*
    ( f -- i )
-   Convert a floating-point number to an integer.
+   Convert a floating-point number to an integer, truncating towards zero.
 */
 prim P_fix(pez_instance *p)
 {
 	pez_stackitem i;
 
 	Sl(Realsize);
-	i = (int)REAL0;
+	i = (pez_stackitem)REAL0;
+	Realpop;
+	Push = i;
+}
+
+/*
+   ( f -- floor(f) )
+   The greatest integer that is less than or equal to f.
+*/
+prim P_floor(pez_instance *p)
+{
+	pez_stackitem i;
+	i = floor(REAL0);
+	Realpop;
+	Push = i;
+}
+
+/*
+   ( f -- ceil(f) )
+   The smallest integer that is greater than or equal to f.
+*/
+prim P_ceil(pez_instance *p)
+{
+	pez_stackitem i;
+	i = ceil(REAL0);
 	Realpop;
 	Push = i;
 }
@@ -4333,6 +4361,8 @@ static struct primfcn primt[] = {
 	{"0F.", P_fdot},
 	{"0FLOAT", P_float},
 	{"0FIX", P_fix},
+	{"0floor", P_floor},
+	{"0ceil", P_ceil},
 	{"0FTIME", P_ftime},
 
 #ifdef MATH
@@ -4353,6 +4383,7 @@ static struct primfcn primt[] = {
 	{"0(NEST)", P_nest},
 	{"0EXIT", P_exit},
 	{"0(LIT)", P_dolit},
+
 	{"0BRANCH", P_branch},
 	{"0?BRANCH", P_qbranch},
 	{"1IF", P_if},
@@ -4778,7 +4809,7 @@ extern pez_instance *pez_init(long flags)
 	static int gc_already_inited = 0;
 	pez_instance *p;
 	int i;
-	char *pathtmp;
+	char *pathtmp, *olittmp;
 
 	if(!gc_already_inited) {
 		GC_INIT();
@@ -4839,8 +4870,13 @@ extern pez_instance *pez_init(long flags)
 	   save their compile addresses in static variables. */
 
 #define Cconst(cell, name)  do {\
-		cell = (pez_stackitem)lookup(p, name);\
-		if(!cell) abort();\
+		if(!(cell)) { (cell) = (pez_stackitem)lookup(p, name); }\
+		if(!(cell)) {\
+			fprintf(stderr, \
+				"Compiler error!  Couldn't lookup %s!  " \
+				"Aborting!\n", name); \
+			    abort();\
+		}\
 	} while(0)
 
 	Cconst(s_exit, "EXIT");
@@ -4855,6 +4891,7 @@ extern pez_instance *pez_init(long flags)
 	Cconst(s_xloop, "(XLOOP)");
 	Cconst(s_pxloop, "(+XLOOP)");
 	Cconst(s_abortq, "ABORT\"");
+
 #undef Cconst
 
 	if(p->stack == NULL) {	// Allocate stack if needed
@@ -5227,7 +5264,7 @@ void pez_heap_string(pez_instance *p, char* str)
 }
 
 /*
-   Copy a string to one of the temporary buffers and push it on the stack.
+   Copy a string to a new GC'd buffer, and push it onto the stack.
 */
 void pez_stack_string(pez_instance *p, char *str)
 {
@@ -5235,14 +5272,15 @@ void pez_stack_string(pez_instance *p, char *str)
 	So(1);
 	stacked = alloc(p->ltempstr);
 	strncpy(stacked, str, p->ltempstr - 1);
-	Push = (pez_stackitem *)stacked;
+	Push = (pez_stackitem)stacked;
 }
 
 void pez_heap_int(pez_instance *p, pez_int val)
 {
+	// Compile a (LIT), and store the literal inline.
 	Ho(2);
-	Hstore = s_lit;		// Push (lit)
-	Hstore = val;	// Compile actual literal
+	Hstore = s_lit;
+	Hstore = val;
 }
 
 void pez_stack_int(pez_instance *p, pez_int val)
@@ -5263,7 +5301,6 @@ void pez_heap_real(pez_instance *p, pez_real val)
 	Hstore = s_flit;	// Push (flit) at execution
 
 	tru.r = val;
-	fflush(stderr);
 
 	for(i = 0; i < Realsize; i++) {
 		Hstore = tru.s[i];
