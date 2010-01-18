@@ -136,10 +136,6 @@ char copyright[] = "PEZ: This program is in the public domain.";
 */
 static pez_stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 	s_qbranch, s_branch, s_xdo, s_xqdo, s_xloop, s_pxloop, s_abortq;
-#define SMALLEST_OLIT -10
-#define LARGEST_OLIT 10
-static pez_stackitem s_olits[LARGEST_OLIT - SMALLEST_OLIT];
-static pez_stackitem *s_olit0;
 
 /*  Forward functions  */
 
@@ -4809,7 +4805,7 @@ extern pez_instance *pez_init(long flags)
 	static int gc_already_inited = 0;
 	pez_instance *p;
 	int i;
-	char *pathtmp, *olittmp;
+	char *pathtmp;
 
 	if(!gc_already_inited) {
 		GC_INIT();
