@@ -1,0 +1,10 @@
+# Various functions that are useful for doing math.
+
+# Greatest Common Denominator
+: gcd ( a b -- gcd )
+	dup 0= if drop exit then
+	swap over mod gcd ;
+
+# Least Common Multiple
+: lcm ( a b -- lcm )
+	2dup * -rot gcd / ;
