@@ -563,14 +563,6 @@ static Boolean kbquit()
 }
 #endif				// Keyhit
 
-static void print_regex_error(int code, regex_t *rx)
-{
-	char buf[1024];
-	regerror(code, rx, buf, 1024);
-	fprintf(stderr, "Regex error:  %s\n", buf);
-	fflush(stderr);
-}
-
 /*  Primitive word definitions.  */
 
 #ifndef COMPILATION_SAFETY
@@ -1406,8 +1398,13 @@ prim P_strint(pez_instance *p)
 	Push = is;
 }
 
+/*
+   ( string -- string' float )
+   Parses a floating point out of a string, and increments the string's pointer
+   to the end of that float.
+*/
 prim P_strreal(pez_instance *p)
-{				/* String to real *//* str -- endptr value */
+{
 	int i;
 	union {
 		pez_real fs;
@@ -4830,9 +4827,9 @@ extern pez_instance *pez_init(long flags)
 	p->redef = Truth;
 	p->errline = 0;
 	p->ntempstr = 8;
-	p->stklen = 1000;		// Evaluation stack length
-	p->rstklen = 1000;		// Return stack length
-	p->heaplen = 20000;		// Heap length
+	p->stklen = 10000;		// Evaluation stack length
+	p->rstklen = 10000;		// Return stack length
+	p->heaplen = 200000;		// Heap length
 	p->ltempstr = max(PATH_MAX, 4096);// Temporary string buffer length
 	p->base = 10;
 	p->broken = Falsity;
