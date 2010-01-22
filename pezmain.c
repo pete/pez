@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 	int in = 0, status = PEZ_SNORM, interactive;
 	char **pez_argv_current;
 
-	p = pez_init();
+	p = pez_init(PEZ_A_EVERYTHING);
 	if(!p) {
 		fprintf(stderr, "Couldn't initialize Pez!\n");
 		exit(1);

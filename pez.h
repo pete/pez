@@ -217,7 +217,7 @@ struct pez_inst {
 #define PEZ_BADFILE	15	// Attempt to load a bad file
 
 //  Entry points
-extern pez_instance *pez_init();
+extern pez_instance *pez_init(long flags);
 extern void pez_mark(pez_instance *p, pez_statemark *mp),
        pez_unwind(pez_instance *p, pez_statemark *mp),
        pez_break(pez_instance *p),
