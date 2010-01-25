@@ -18,7 +18,7 @@ buffer-size string buf
 "The file contains one line:" puts
 "/tmp/pez-io-demo" o_rdonly 0 open
 >input
-	buf buffer-size gets drop
+	gets buf s!
 input> close
 buf puts
 
