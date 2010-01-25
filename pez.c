@@ -2035,30 +2035,44 @@ prim P_puts(pez_instance *p)
 }
 
 /*
-   ( strbuf maxlen -- len )
+   ( -- str )
+   Grabs a string from the current input stream up to and including the first
+   newline.
 */
 prim P_gets(pez_instance *p)
 {
-	pez_stackitem max;
-	char *buf;
+	pez_stackitem max = 1024; // TODO:  Real numbers
+	int i;
+	char *buf, *c, *tmp;
 
-	Sl(2);
-	Hpc(S1);
+	So(1);
 
-	buf = (char *)S1;
+	buf = alloc(max);
+	c = buf;
+	i = max;
 
 	// TODO:  This is horribly inefficient, but will have to stay until we
 	// do internal buffering.
-	for(max = S0; max; max--) {
-		read(input_stream, buf++, 1);
-		if(buf[-1] == '\n') {
+	while(read(input_stream, c++, 1)) {
+		i--;
+		if(!i) {
+			i = max;
+			max *= 2;
+			tmp = GC_REALLOC(buf, max);
+			if(!tmp) {
+				fprintf(stderr, "Couldn't realloc.  Bad.\n");
+				abort();
+			}
+			c = buf + (max / 2);
+		}
+
+		if(c[-1] == '\n') {
 			if(max - 1)
-				*buf = '\0';
+				*c = '\0';
 			break;
 		}
 	}
-	S1 = buf - (char *)S1;
-	Pop;
+	Push = buf;
 }
 
 /*

@@ -1,5 +1,4 @@
 #! /usr/bin/env pez
-# *heap 6100
 
 #  Pez  --  Comprehensive regression test
 
@@ -848,6 +847,17 @@ variable fd1
 		hex
 		tstr 1 cells read 1 cells ok?
 		tstr @ "Who told you that?\n" @ ok?
+	
+	"PUTS/GETS" tests:
+		fd1 @ 0 seek_set seek drop
+		fd1 @ >output
+			"asdf" puts
+		output> drop
+		fd1 @ 0 seek_set seek drop
+		fd1 @ >input
+			gets
+		input> drop
+		"asdf\n" strcmp 0 ok?
 	
 	"PUTC" tests:
 		fd1 @ >output
