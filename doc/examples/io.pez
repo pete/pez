@@ -13,12 +13,11 @@
 output> ( fd )	# Pop it off the output stack, onto the regular stack.
 close	# Close the file.
 
-buffer-size string buf
 # Input works the same way.
 "The file contains one line:" puts
 "/tmp/pez-io-demo" o_rdonly 0 open
 >input
-	gets buf s!
+	gets
 input> close
 buf puts
 
