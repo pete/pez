@@ -223,6 +223,7 @@ extern void pez_mark(pez_instance *p, pez_statemark *mp),
        pez_break(pez_instance *p),
        pez_free(pez_instance *p);
 extern int pez_eval(pez_instance *p, char *sp);
+extern int pez_anticipating_token(pez_instance *p);
 extern char *pez_which_lib(pez_instance *p, char *libname);
 extern int pez_load(pez_instance *p, FILE *fp);
 

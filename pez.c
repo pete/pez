@@ -4575,11 +4575,11 @@ static struct primfcn primt[] = {
 	{NULL, (pez_wordp)0}
 };
 
-/*  PEZ_PRIMDEF  --  Initialise the dictionary with the built-in primitive
-			 words.  To save the memory overhead of separately
-			 allocated word items, we get one buffer for all
-			 the items and link them internally within the buffer. */
-
+/*
+   Initialise the dictionary with the built-in primitive words.
+   To save the memory overhead of separately allocated word items, we get one
+   buffer for all the items and link them internally within the buffer.
+*/
 void pez_primdef(pez_instance *p, struct primfcn *pt)
 {
 	struct primfcn *pf = pt;
@@ -5409,9 +5409,18 @@ void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 
 }
 
+/*
+   Returns true if Pez is anticipating a token, as in the case of : or create.
+*/
+int pez_anticipating_token(pez_instance * p)
+{
+	return(p->tickpend || p->ctickpend || p->cbrackpend || p->defpend ||
+		p->forgetpend);
+}
 
-/*  PEZ_EVAL  --  Evaluate a string containing PEZ words.  */
-
+/*
+   Tokenize and execute the supplied input in the supplied Pez instance.
+*/
 int pez_eval(pez_instance *p, char *sp)
 {
 	int token;

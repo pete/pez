@@ -235,12 +235,13 @@ int main(int argc, char *argv[])
 	signal(SIGINT, ctrlc);
 #endif				/* HIGHC */
 	while(status == PEZ_SNORM || interactive) {
-		char t[TOK_BUF_SZ];	
+		char t[TOK_BUF_SZ];
 
 		if(interactive) {
 			if(p->comment)
 				printf("(  ");
-			else if(p->heap != NULL && state)
+			else if((p->heap != NULL && state) ||
+					pez_anticipating_token(p))
 				printf(":> ");
 			else {
 				pez_eval(p, "10 n.s");
