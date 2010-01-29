@@ -2109,7 +2109,7 @@ prim P_write(pez_instance *p)
 */
 prim P_getc(pez_instance *p)
 {
-	char c;
+	char c = 0;
 
 	So(1);
 	read(input_stream, &c, 1);
