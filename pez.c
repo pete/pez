@@ -2993,18 +2993,24 @@ prim P_exit(pez_instance *p)
 	Rpop;
 }
 
+/*
+   A jump to an IP-relative inline address.
+*/
 prim P_branch(pez_instance *p)
-{				// Jump to in-line address
-	p->ip += (pez_stackitem) *p->ip;	// Jump addresses are IP-relative
+{
+	p->ip += (pez_stackitem) *p->ip;
 }
 
+/*
+   As above, but jump conditionally, if the top item on the stack is zero.
+*/
 prim P_qbranch(pez_instance *p)
-{				// Conditional branch to in-line addr
+{
 	Sl(1);
-	if(S0 == 0)		// If flag is false
-		p->ip += (pez_stackitem) *p->ip;	// then branch.
-	else			// Otherwise
-		p->ip++;		// skip the in-line address.
+	if(S0 == 0)
+		p->ip += (pez_stackitem) *p->ip;
+	else
+		p->ip++;	// Skip the in-line address.
 	Pop;
 }
 
@@ -3399,16 +3405,19 @@ prim P_colon(pez_instance *p)
 	P_create(p);		// Create conventional word
 }
 
+/*
+   Ends compile mode.
+*/
 prim P_semicolon(pez_instance *p)
-{				/* End compilation */
+{
 	Compiling;
 	Ho(1);
 	Hstore = s_exit;
-	state = Falsity;	// No longer compiling
+	state = Falsity;
 	/* We wait until now to plug the P_nest code so that it will be
 	   present only in completed definitions. */
 	if(p->createword != NULL)
-		p->createword->wcode = P_nest;	// Use P_nest for code
+		p->createword->wcode = P_nest;
 	p->createword = NULL;	// Flag no word being created
 }
 
