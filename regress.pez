@@ -750,12 +750,19 @@ variable k
         " the final touch." tstr strcat
             tstr "Initial string to which we add the final touch." sok?
 
-    "S+" tests:
-        "Initial string " tstr strcpy "to which we add" tstr s+
+    "STRCAT" tests:
+        "Initial string " tstr strcpy "to which we add" tstr strcat
             tstr "Initial string to which we add" sok?
-        "" tstr s+ tstr "Initial string to which we add" sok?
-        " the final touch." tstr s+
+        "" tstr strcat tstr "Initial string to which we add" sok?
+        " the final touch." tstr strcat
             tstr "Initial string to which we add the final touch." sok?
+
+    "S+" tests:
+        "" "Initial string " s+ "to which we add" s+
+            "Initial string to which we add" sok?
+        "Initial string to which we add" "" over s+ sok?
+        "Initial string to which we add" " the final touch." s+
+            "Initial string to which we add the final touch." sok?
 
     "STRLEN" tests:
         "" strlen 0 ok?

@@ -1274,8 +1274,42 @@ prim P_strcpy(pez_instance *p)
 	Pop2;
 }
 
+/*
+   ( s1 s2 -- s3 )
+   Given two null-terminated strings, s+ returns their concatenation in a fresh
+   buffer.
+*/
+prim P_splus(pez_instance *p)
+{
+	long len1, len0;
+	char *s;
+
+	Sl(2);
+	Hpc(S0);
+	Hpc(S1);
+
+	len0 = strlen(S0);
+	len1 = strlen(S1);
+
+	s = alloc(len1 + len0 + 1);
+
+	if(len1)
+		memcpy(s, (void *)S1, len1);
+
+	if(len0)
+		memcpy(s + len1, (void *)S0, len0);
+
+	s[len1 + len0] = 0;
+	S1 = (pez_stackitem)s;
+	Pop;
+}
+
+/*
+   ( s1 s2 -- )
+   Just like C's strcat, it copies s1 to the end of s2.
+*/
 prim P_strcat(pez_instance *p)
-{				/* Append string to address on stack */
+{
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
@@ -4326,7 +4360,7 @@ static struct primfcn primt[] = {
 	{"0STRCPY", P_strcpy},
 	{"0S!", P_strcpy},
 	{"0STRCAT", P_strcat},
-	{"0S+", P_strcat},
+	{"0S+", P_splus},
 	{"0STRLEN", P_strlen},
 	{"0STRCMP", P_strcmp},
 	{"0STRNCMP", P_strncmp},
