@@ -718,6 +718,18 @@ variable k
         pi -4.0 f/  tan -1.0 fok?
 ;
 
+: test-memory
+	"MALLOC" tests:
+		1 malloc 0= 0 ok?
+		cell-size malloc @ 0<> 0 ok? # Initialized to zero.
+	
+	"MEMCPY" tests:
+		cell-size malloc dup
+		cell-size malloc 0xa0a0 over !
+		cell-size memcpy @ 0xa0a0 ok?
+;
+
+
 #   String primitives
 
 80 string tstr
@@ -1045,6 +1057,8 @@ testloop
 testfloat
 "math" puts
 testmath
+"memory" puts
+test-memory
 "str" puts
 teststr
 "file" puts
