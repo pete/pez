@@ -789,12 +789,11 @@ variable k
 
     "SUBSTR" tests:
         "The quick brown fox jumped" tstr s!
-        tstr 0 1 tstr1 substr tstr1 "T" sok?
-        tstr 0 0 tstr1 substr tstr1 "" sok?
-        tstr 0 -1 tstr1 substr tstr1 "The quick brown fox jumped" sok?
-        tstr 3 7 tstr1 substr tstr1 " quick " sok?
-        tstr 20 19 tstr1 substr tstr1 "jumped" sok?
-        tstr 26 10 tstr1 substr tstr1 "" sok?
+        1 0 tstr substr "T" sok?
+        0 0 tstr substr "" sok?
+        7 3 tstr substr " quick " sok?
+        19 20 tstr substr "jumped" sok?
+        10 26 tstr substr "" sok?
 
     "STRCMP" tests:
         "a" "b" strcmp -1 ok?
@@ -977,9 +976,16 @@ variable fd1
 		"asdf" tstr s!
 		tstr "a((.)*(f))" 0 regex rmatch -1 ok?
 		$0 tstr + "asdf" rot strncmp 0 ok?
+
 		$1 3  1  2 nok?
+		$1 tstr substr "sdf" sok?
+
 		$2 1  2  2 nok?
+		$2 tstr substr "d" sok?
+
 		$3 1  3  2 nok?
+		$3 tstr substr "f" sok?
+
 		$4 0 -1  2 nok?
 ;
 

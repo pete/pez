@@ -1365,27 +1365,34 @@ prim P_strchar(pez_instance *p)
 }
 
 /*
-   (source start length/-1 dest -- )
-   Extract and store substring
+   ( len offset s -- s' )
+   Returns a substring from s, starting at offset and going to len.  Passing a
+   length of zero or less gets you an empty string, passing a negative offset
+   gets you a null pointer.  For example:
+   ( 2 1 "abcd" -- "bc" )
 */
 prim P_substr(pez_instance *p)
 {
-	long sl, sn;
-	char *ss, *sp, *se, *ds;
+	char *sub;
+	long len;
 
-	Sl(4);
+	Sl(3);
 	Hpc(S0);
-	Hpc(S3);
-	sl = strlen(ss = ((char *)S3));
-	se = ss + sl;
-	sp = ((char *)S3) + S2;
-	if((sn = S1) < 0)
-		sn = 999999L;
-	ds = (char *)S0;
-	while(sn-- && (sp < se))
-		*ds++ = *sp++;
-	*ds++ = 0;
-	Npop(4);
+
+	if(!S0 || S1 < 0) {
+		Pop2;
+		S0 = 0;
+		return;
+	}
+
+	len = S2 <= 0 ? 0 : S2;
+	sub = alloc(len + 1);
+
+	if(len > 0)
+		strncpy(sub, (char *)S0 + S1, len);
+
+	Pop2;
+	S0 = (pez_stackitem)sub;
 }
 
 /*
