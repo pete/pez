@@ -5391,7 +5391,7 @@ void pez_stack_int(pez_instance *p, pez_int val)
 	Push = val;
 }
 
-void pez_heap_float(pez_instance *p, pez_float val)
+void pez_heap_float(pez_instance *p, pez_real val)
 {
 	int i;
 	union {
@@ -5409,7 +5409,7 @@ void pez_heap_float(pez_instance *p, pez_float val)
 	}
 }
 
-void pez_stack_float(pez_instance *p, pez_float val)
+void pez_stack_float(pez_instance *p, pez_real val)
 {
 	int i;
 	union {
