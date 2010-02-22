@@ -167,7 +167,7 @@ static char *pez_strdup(char *s)
 	char *dup = GC_STRDUP(s);
 	if(dup == NULL) {
 		fprintf(stderr, "\n\nOut of memory!  Couldn't strdup 0x%lx!\n",
-			s);
+			(long)s);
 		fflush(stderr);
 		abort();
 	}
@@ -1288,8 +1288,8 @@ prim P_splus(pez_instance *p)
 	Hpc(S0);
 	Hpc(S1);
 
-	len0 = strlen(S0);
-	len1 = strlen(S1);
+	len0 = strlen((char *)S0);
+	len1 = strlen((char *)S1);
 
 	s = alloc(len1 + len0 + 1);
 
@@ -1500,18 +1500,38 @@ prim P_regex(pez_instance *p)
 */
 prim P_rmatch(pez_instance *p)
 {
-	int match;
+	int match, len;
+	char *str;
+
+	Hpc(S0);
+	Hpc(S1);
 	Sl(2);
 
-	match = !regexec((regex_t *)S0, (char *)S1,
-			MAX_REGEX_MATCHES, p->regex_matches, 0);
-	S1 = match ? Truth : Falsity;
+	str = (char *)S1;
+	len = strlen(str);
+
+	match = !regexec((regex_t *)S0, str, MAX_REGEX_MATCHES,
+			p->regex_matches, 0);
 	Pop;
+
+	// Because we don't remember the string after this, we need to compute
+	// the prematch and postmatch before they're actually used.
+	if(match) {
+		S0 = Truth;
+		p->regex_prematch[0] = 0;
+		p->regex_prematch[1] = p->regex_matches[0].rm_so;
+		p->regex_postmatch[0] = p->regex_matches[0].rm_eo;
+		p->regex_postmatch[1] = len - p->regex_matches[0].rm_eo;
+	} else {
+		S0 = Falsity;
+		p->regex_prematch[0] = p->regex_postmatch[0] = -1;
+		p->regex_prematch[1] = p->regex_postmatch[1] = 0;
+	}
 }
 
 /*
    ( -- len first-offset )
-   An approximation of Perl's/Ruby's/other's regex match variables.  The most
+   An approximation of Perl's/Ruby's/others' regex match variables.  The most
    recent regex to be matched is used, and the length and initial offset into
    the string are pushed.  The entire match is $0, the first group is $1, and so
    on.  If there was no match, then the initial offset will be -1 and the length
@@ -1543,6 +1563,29 @@ PUSH_RX(P_money17, 17)
 PUSH_RX(P_money18, 18)
 PUSH_RX(P_money19, 19)
 #undef PUSH_RX
+
+/*
+   ( -- len offset )
+   Returns the prematch.  Offset is always zero if there was a match, -1
+   otherwise.
+*/
+prim P_moneypre(pez_instance *p)
+{
+	So(2);
+	Push = p->regex_prematch[1];
+	Push = p->regex_prematch[0];
+}
+
+/*
+   ( -- len offset )
+   Returns the postmatch.  
+*/
+prim P_moneypost(pez_instance *p)
+{
+	So(2);
+	Push = p->regex_postmatch[1];
+	Push = p->regex_postmatch[0];
+}
 
 /*  Floating point primitives  */
 
@@ -2113,7 +2156,7 @@ prim P_gets(pez_instance *p)
 			break;
 		}
 	}
-	Push = buf;
+	Push = (pez_stackitem)buf;
 }
 
 /*
@@ -4379,6 +4422,8 @@ static struct primfcn primt[] = {
 	{"0STRREAL", P_strreal},
 	{"0REGEX", P_regex},
 	{"0RMATCH", P_rmatch},
+	{"0$pre", P_moneypre},
+	{"0$post", P_moneypost},
 	{"0$0", P_money0},
 	{"0$1", P_money1},
 	{"0$2", P_money2},
@@ -5346,7 +5391,7 @@ void pez_stack_int(pez_instance *p, pez_int val)
 	Push = val;
 }
 
-void pez_heap_real(pez_instance *p, pez_real val)
+void pez_heap_float(pez_instance *p, pez_float val)
 {
 	int i;
 	union {
@@ -5364,7 +5409,7 @@ void pez_heap_real(pez_instance *p, pez_real val)
 	}
 }
 
-void pez_stack_real(pez_instance *p, pez_real val)
+void pez_stack_float(pez_instance *p, pez_float val)
 {
 	int i;
 	union {
@@ -5558,9 +5603,9 @@ int pez_eval(pez_instance *p, char *sp)
 
 		case TokReal:
 			if(state)
-				pez_heap_real(p, p->tokreal);
+				pez_heap_float(p, p->tokreal);
 			else
-				pez_stack_real(p, p->tokreal);
+				pez_stack_float(p, p->tokreal);
 			break;
 
 		case TokString:
@@ -5591,4 +5636,24 @@ int pez_eval(pez_instance *p, char *sp)
 	}
 
 	return p->evalstat;
+}
+
+long pez_pop_int(pez_instance *p)
+{
+	long ret;
+
+	Sl(1);
+	ret = S0;
+	Pop;
+	return ret;
+}
+
+double pez_pop_float(pez_instance *p)
+{
+	double ret;
+
+	Sl(Realsize);
+	ret = REAL0;
+	Realpop;
+	return ret;
 }

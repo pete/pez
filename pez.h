@@ -182,6 +182,9 @@ struct pez_inst {
 
 	// Regexes:
 	regmatch_t regex_matches[MAX_REGEX_MATCHES];
+	// For both of these, offset is index 0, length is index 1.
+	pez_stackitem regex_prematch[2];
+	pez_stackitem regex_postmatch[2];
 
 	/* 
 	   These are temporary buffers, for the case where an architecture 
@@ -223,15 +226,17 @@ extern void pez_mark(pez_instance *p, pez_statemark *mp),
        pez_break(pez_instance *p),
        pez_free(pez_instance *p);
 extern int pez_eval(pez_instance *p, char *sp);
+extern long pez_pop(pez_instance *p);
+extern int pez_push(pez_instance *p, long i);
 extern int pez_anticipating_token(pez_instance *p);
 extern char *pez_which_lib(pez_instance *p, char *libname);
 extern int pez_load(pez_instance *p, FILE *fp);
 
 extern void pez_stack_int(pez_instance *p, pez_int i);
-extern void pez_stack_real(pez_instance *p, pez_real f);
+extern void pez_stack_float(pez_instance *p, pez_real f);
 extern void pez_stack_string(pez_instance *p, char *s);
 
-extern void pez_heap_real(pez_instance *p, pez_real f);
+extern void pez_heap_float(pez_instance *p, pez_real f);
 extern void pez_heap_string(pez_instance *p, char *s);
 extern void pez_memstat(pez_instance *p);
 

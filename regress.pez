@@ -973,20 +973,27 @@ variable fd1
 		"as\tDF \t jKl;" \{as.df.+jkl;} "i" regex rmatch -1 ok?
 
 	"$0" tests:
-		"asdf" tstr s!
+		"PREasdfPOST" tstr s!
 		tstr "a((.)*(f))" 0 regex rmatch -1 ok?
 		$0 tstr + "asdf" rot strncmp 0 ok?
 
-		$1 3  1  2 nok?
+		# $n is ( -- len offset )
+		$1 3 4  2 nok?
 		$1 tstr substr "sdf" sok?
 
-		$2 1  2  2 nok?
+		$2 1 5  2 nok?
 		$2 tstr substr "d" sok?
 
-		$3 1  3  2 nok?
+		$3 1 6  2 nok?
 		$3 tstr substr "f" sok?
 
-		$4 0 -1  2 nok?
+		$4 0 -1  2 nok? # There was no group 4.
+
+		$pre 3 0  2 nok?
+		$pre tstr substr "PRE" sok?
+
+		$post 4 7  2 nok?
+		$post tstr substr "POST" sok?
 ;
 
 # Loading programs from a file
