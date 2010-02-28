@@ -563,6 +563,31 @@ static Boolean kbquit()
 }
 #endif				// Keyhit
 
+/*
+   Runs a regex on a string, returning 1 for a match, 0 otherwise, and filling
+   in all the $n variables, as well as the pre- and post-matches.  For use by
+   rmatch, rsub, rgsub, etc.  'flags' is passed directly as 'eflags' to
+   regexec(3).
+*/
+static int regex_match(pez_instance *p, regex_t *rx, char *str, int flags)
+{
+	int match;
+	int len = strlen(str);
+
+	match = !regexec(rx, str, MAX_REGEX_MATCHES, p->regex_matches, flags);
+	if(match) {
+		p->regex_prematch[0] = 0;
+		p->regex_prematch[1] = p->regex_matches[0].rm_so;
+		p->regex_postmatch[0] = p->regex_matches[0].rm_eo;
+		p->regex_postmatch[1] = len - p->regex_matches[0].rm_eo;
+		return 1;
+	} else {
+		p->regex_prematch[0] = p->regex_postmatch[0] = -1;
+		p->regex_prematch[1] = p->regex_postmatch[1] = 0;
+		return 0;
+	}
+}
+
 /*  Primitive word definitions.  */
 
 #ifndef COMPILATION_SAFETY
@@ -1500,33 +1525,17 @@ prim P_regex(pez_instance *p)
 */
 prim P_rmatch(pez_instance *p)
 {
-	int match, len;
 	char *str;
+	regex_t *rx;
 
 	Hpc(S0);
 	Hpc(S1);
 	Sl(2);
 
 	str = (char *)S1;
-	len = strlen(str);
-
-	match = !regexec((regex_t *)S0, str, MAX_REGEX_MATCHES,
-			p->regex_matches, 0);
+	rx = (regex_t *)S0;
 	Pop;
-
-	// Because we don't remember the string after this, we need to compute
-	// the prematch and postmatch before they're actually used.
-	if(match) {
-		S0 = Truth;
-		p->regex_prematch[0] = 0;
-		p->regex_prematch[1] = p->regex_matches[0].rm_so;
-		p->regex_postmatch[0] = p->regex_matches[0].rm_eo;
-		p->regex_postmatch[1] = len - p->regex_matches[0].rm_eo;
-	} else {
-		S0 = Falsity;
-		p->regex_prematch[0] = p->regex_postmatch[0] = -1;
-		p->regex_prematch[1] = p->regex_postmatch[1] = 0;
-	}
+	S0 = -regex_match(p, rx, str, 0);
 }
 
 /*
@@ -1585,6 +1594,62 @@ prim P_moneypost(pez_instance *p)
 	So(2);
 	Push = p->regex_postmatch[1];
 	Push = p->regex_postmatch[0];
+}
+
+/*
+   ( str rx word -- new-str )
+   Performs a substitution on a string.  Needs a string, a regex, and a word to
+   execute if a match is found.  The word to execute will get the matching part
+   of the string on the stack, followed by whatever was there before rsub was
+   called; the match variables ($0 et al) are available and valid for the word.
+   The word is expected to have the stack effect ( match -- replacement|0 ).  If
+   it leaves 0 on the stack, the subtitution is left off.
+   A newly allocated string is left on the stack after the call.  See also
+   rgsub.
+*/
+prim P_rsub(pez_instance *p)
+{
+	pez_dictword *subber;
+	regex_t *rx;
+	char *str, *rep, *sub;
+	long len, sublen = 0;
+
+	Sl(3);
+
+	// Stack's gotta be cleared before we call the word.
+	subber = (pez_dictword *)S0;
+	rx = (regex_t *)S1;
+	str = (char *)S2;
+	Npop(3);
+
+	if(regex_match(p, rx, str, 0)) {
+		len = p->regex_prematch[1] + p->regex_postmatch[1];
+
+		P_money0(p);
+		Push = (pez_stackitem)str;
+		P_substr(p);
+		pez_exec(p, subber);
+		Sl(1);
+
+		if(S0) {
+			Hpc(S0);
+			sub = (char *)S0;
+			sublen = strlen(sub);
+			len += sublen;
+		} else {
+			sub = "";
+		}
+
+		rep = alloc(len +  1);
+		memcpy(rep, str, p->regex_prematch[1]);
+		memcpy(rep + p->regex_prematch[1], sub, sublen);
+		memcpy(rep + p->regex_prematch[1] + sublen,
+				str + p->regex_postmatch[0],
+				p->regex_postmatch[1]);
+		S0 = (pez_stackitem)rep;
+	} else {
+		Push = (pez_stackitem)pez_strdup(str);
+	}
 }
 
 /*  Floating point primitives  */
@@ -4424,6 +4489,7 @@ static struct primfcn primt[] = {
 	{"0RMATCH", P_rmatch},
 	{"0$pre", P_moneypre},
 	{"0$post", P_moneypost},
+	{"0rsub", P_rsub},
 	{"0$0", P_money0},
 	{"0$1", P_money1},
 	{"0$2", P_money2},

@@ -11,7 +11,7 @@ variable errors
 # TODO:  This is somewhat common for portability reasons; maybe make it a
 # primitive.
 : floatcells ( -- float:cell-ratio )
-	float-size cell-size / 
+	float-size cell-size /
 ;
 
 #  TESTS:  --  Declare current word under tests
@@ -957,6 +957,16 @@ variable fd1
 		"pezregress" unsetenv -1 ok?
 ;
 
+# For sub/gsub:
+: sub'zero-top drop 0 ;
+: sub'jkl drop "jkl" ;
+: sub'all-a # Just writes a's all over the string
+	dup dup strlen 0 do
+		"a" c@ over c! 1+
+	loop drop ;
+variable sub'never-called-called?
+: sub'never-called 1 sub'never-called-called? ! ;
+
 #   Test regular expression support.
 : testregexes
 	"REGEX" tests:
@@ -994,6 +1004,17 @@ variable fd1
 
 		$post 4 7  2 nok?
 		$post tstr substr "POST" sok?
+	
+	"RSUB" tests:
+		"PREasdfPOST" "asdf" 0 regex ['] sub'zero-top rsub "PREPOST"
+			sok?
+		"PREasdfPOST" "asdf" 0 regex ['] sub'jkl rsub "PREjklPOST" sok?
+		"PREasdfPOST" ".*" 0 regex ['] sub'all-a rsub "aaaaaaaaaaa" sok?
+
+		# Non-matches:
+		"PREasdfPOST" dup "j" 0 regex ['] sub'never-called rsub sok?
+		"PREasdfPOST" dup "j" 0 regex ['] sub'never-called rsub = 0 ok?
+		sub'never-called-called? @ 0 ok?
 ;
 
 # Loading programs from a file
