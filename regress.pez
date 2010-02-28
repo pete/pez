@@ -958,14 +958,16 @@ variable fd1
 ;
 
 # For sub/gsub:
-: sub'zero-top drop 0 ;
-: sub'jkl drop "jkl" ;
+: sub'zero-top   drop 0 ;
+: sub'jkl   drop "jkl" ;
 : sub'all-a # Just writes a's all over the string
 	dup dup strlen 0 do
 		"a" c@ over c! 1+
 	loop drop ;
 variable sub'never-called-called?
-: sub'never-called 1 sub'never-called-called? ! ;
+: sub'never-called   1 sub'never-called-called? ! ;
+: sub'>$1
+	drop $1 rot substr ;
 
 #   Test regular expression support.
 : testregexes
@@ -1010,6 +1012,8 @@ variable sub'never-called-called?
 			sok?
 		"PREasdfPOST" "asdf" 0 regex ['] sub'jkl rsub "PREjklPOST" sok?
 		"PREasdfPOST" ".*" 0 regex ['] sub'all-a rsub "aaaaaaaaaaa" sok?
+		"PREasdfPOST" dup "a(.*)f" 0 regex ['] sub'>$1 rsub
+			"PREsdPOST" sok?
 
 		# Non-matches:
 		"PREasdfPOST" dup "j" 0 regex ['] sub'never-called rsub sok?
