@@ -40,8 +40,8 @@ AC_CHECK_LIB([gc], [GC_malloc], [],
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(
-	[memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h])
+LIGHTNING_CONFIGURE_IF_NOT_FOUND
+AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h gc.h lightning.h lightning/lightning.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
@@ -57,8 +57,6 @@ AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 AC_DEFINE([EXPORT], [1], [TODO: These are going away.])
 AC_DEFINE([READONLYSTRINGS], [1], [TODO: These are going away.])
 AC_DEFINE([MEMSTAT], [1], [TODO: These are going away.])
-
-LIGHTNING_CONFIGURE_IF_NOT_FOUND
 
 AC_PROG_INSTALL
 
