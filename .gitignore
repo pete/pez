@@ -19,3 +19,5 @@ ltmain.sh
 libtool
 *~
 stamp-h1
+configure
+Makefile.in
