@@ -41,7 +41,7 @@ AC_CHECK_LIB([gc], [GC_malloc], [],
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 LIGHTNING_CONFIGURE_IF_NOT_FOUND
-AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h gc.h lightning.h lightning/lightning.h])
+AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h gc.h lightning.h lightning/lightning.h inttypes.h types.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
@@ -53,6 +53,8 @@ AC_FUNC_MALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
+
+AC_CHECK_SIZEOF(void *)
 
 AC_DEFINE([EXPORT], [1], [TODO: These are going away.])
 AC_DEFINE([READONLYSTRINGS], [1], [TODO: These are going away.])

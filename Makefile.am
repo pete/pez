@@ -10,7 +10,7 @@ pez_version=$(pez_version_major).$(pez_version_minor).$(pez_version_teeny)
 
 bin_PROGRAMS = pez$(EXEEXT)
 
-pez_SOURCES = pez.c pezmain.c pez.h pezdef.h
+pez_SOURCES = pez.c pez.h pezmain.c pezdef.h st.c st.h
 pezdir = $(libdir)/pez/$(pez_lib_version)
 pez_DATA = lib/*.pez
 
@@ -31,7 +31,7 @@ EXTRA_DIST = README doc/* lightning/* m4 \
 
 lib_LTLIBRARIES = libpez.la
 
-libpez_la_SOURCES = pez.c
+libpez_la_SOURCES = pez.c pez.h st.c st.h
 # I swear, the docs say this works:
 # libpez_la_LIBTOOLFLAGS = -version-info 1:5:2
 
