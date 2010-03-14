@@ -4,6 +4,8 @@ NOW
 
 * Misc cleanup
 
+* Finish up missing pieces of ffi: and load-lib.
+
 * Structs.
 
 * Finish up the socket library, once structs are solidified.
