@@ -22,6 +22,8 @@ else
 	echo "Can't re-libtoolize.  If the build breaks, try installing libtoolize."
 fi
 
+touch config.h.in
+
 run aclocal -I m4
 run automake --add-missing -c
 run autoconf
