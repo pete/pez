@@ -69,6 +69,7 @@
 #endif				// !INDIVIDUALLY
 
 #include "pezdef.h"
+#include "st.h"
 
 #ifdef MATH
 #include <math.h>
@@ -1665,6 +1666,88 @@ prim P_rsub(pez_instance *p)
 	} else {
 		Push = (pez_stackitem)pez_strdup(str);
 	}
+}
+
+/* Hashtable stuff */
+
+/*
+   ( -- new-hash-table )
+   Returns a new cell-keyed hash table.
+*/
+prim P_htable(pez_instance *p)
+{
+	So(1);
+	Push = (pez_stackitem)st_init_numtable();
+}
+
+/*
+   ( -- new-str-hash-table )
+   Returns a new string-keyed hash table.
+*/
+prim P_str_htable(pez_instance *p)
+{
+	So(1);
+	Push = (pez_stackitem)st_init_strtable();
+}
+
+/*
+   ( val key table -- )
+   Stores val as key in table.
+*/
+prim P_htbang(pez_instance *p)
+{
+	Sl(3);
+	Hpc(S0);
+	st_insert((st_table *)S0, (st_data_t)S1, (st_data_t)S2);
+	Npop(3);
+}
+
+/*
+   ( key table -- val )
+   Looks up a value by key in table.  val is 0 if it is not found; you may be
+   interested in ht? if you want to check presence or absence.
+*/
+prim P_htat(pez_instance *p)
+{
+	st_data_t key;
+	st_table *table;
+
+	Sl(2);
+	table = (st_table *)S0;
+	key = (st_data_t)S1;
+
+	Pop;
+	(pez_stackitem)st_lookup(table, key, (st_data_t *)&S0);
+}
+
+/*
+   ( key table -- bool )
+   Returns true if key exists in table, false otherwise.
+*/
+prim P_htp(pez_instance *p)
+{
+	st_data_t key;
+	st_table *table;
+
+	Sl(2);
+	table = (st_table *)S0;
+	key = (st_data_t)S1;
+
+	Pop;
+	S0 = (pez_stackitem)st_lookup(table, key, (st_data_t *)0) ?
+		Truth : Falsity;
+}
+
+/*
+   ( table -- )
+   Clears all keys from the provided hash table.
+*/
+prim P_ht_clear(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+	st_clear((st_table *)S0);
+	Pop;
 }
 
 /*  Floating point primitives  */
@@ -4528,6 +4611,13 @@ static struct primfcn primt[] = {
 	{"0$17", P_money17},
 	{"0$18", P_money18},
 	{"0$19", P_money19},
+
+	{"0htable", P_htable},
+	{"0str-htable", P_str_htable},
+	{"0ht!", P_htbang},
+	{"0ht@", P_htat},
+	{"0ht?", P_htp},
+	{"0ht-clear", P_ht_clear},
 
 	{"0(FLIT)", P_flit},
 	{"0F+", P_fplus},

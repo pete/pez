@@ -1021,6 +1021,30 @@ variable sub'never-called-called?
 		sub'never-called-called? @ 0 ok?
 ;
 
+variable tht
+# Test support for hash tables
+: testhashes
+	"HTABLE" tests:
+		htable 0= 0 ok?
+		htable tht !
+		1 100 tht @ ht!
+		100 tht @ ht? -1 ok?
+		100 tht @ ht@ 1 ok?
+		tht @ ht-clear
+		100 tht @ ht? 0 ok?
+
+	"STR-HTABLE" tests:
+		str-htable 0= 0 ok?
+		str-htable tht !
+		15 "key" tht @ ht!
+		"key" tht @ ht? -1 ok?
+		"doesn't exist in this htable" tht @ ht? 0 ok?
+		"key" tht @ ht@ 15 ok?
+		tht @ ht-clear
+		"key" tht @ ht? 0 ok?
+;
+
+
 # Loading programs from a file
 : testload
 	"LOAD" tests:
@@ -1109,6 +1133,8 @@ testeval
 testprocess
 "regexes" puts
 testregexes
+"hashes" puts
+testhashes
 "load" puts
 testload
 "libs" puts

@@ -11,9 +11,14 @@
    interesting, but for the benefit of whoever tries to find the original next
    and finds six different versions, no original, and no explanation.
 
+   This version also includes a public-domain implementation of a murmur hash,
+   from http://sites.google.com/site/murmurhash/ by Austin Appleby, and the
+   string hashing code from Fowler/Noll/Vo.  As noted above, most of the
+   original code is by Peter Moore.
+
    --Pete Elmore (No relation).
 */
-   
+
 #include <gc/gc.h>
 #include "st.h"
 
@@ -67,7 +72,7 @@ static void rehash(st_table *);
 
 // Use GC'd memory and ignore calls to free()
 #define malloc GC_MALLOC
-#define calloc(x,y) (char *)GC_MALLOC(x * y) 
+#define calloc(x,y) (char *)GC_MALLOC(x * y)
 #define realloc GC_REALLOC
 #define free(x)
 
@@ -128,9 +133,7 @@ static st_index_t new_size(st_index_t size)
 
 	st_index_t newsize;
 
-	for(i = 0, newsize = MINSIZE;
-			i < numberof(primes);
-			i++, newsize <<= 1) {
+	for(i = 0, newsize = MINSIZE; i < numberof(primes); i++, newsize <<= 1) {
 		if(newsize > size)
 			return primes[i];
 	}
@@ -794,7 +797,8 @@ int st_foreach(st_table * table, int (*func) (ANYARGS), st_data_t arg)
 				    tmp = tmp->next) {
 					if(!tmp) {
 						/* call func with error notice */
-						retval = (*func) (0, 0, arg, 1);
+						retval =
+						    (*func) (0, 0, arg, 1);
 						return 1;
 					}
 				}
@@ -879,7 +883,8 @@ int st_reverse_foreach(st_table * table, int (*func) (ANYARGS), st_data_t arg)
 				    tmp = tmp->next) {
 					if(!tmp) {
 						/* call func with error notice */
-						retval = (*func) (0, 0, arg, 1);
+						retval =
+						    (*func) (0, 0, arg, 1);
 						return 1;
 					}
 				}
