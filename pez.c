@@ -3950,7 +3950,7 @@ prim P_ffi_colon(pez_instance *p)
 	Npop(4);
 
 	if(!f) {
-		trouble(p, "Function not found when compiling ffi: call");
+		pez_error(p, "Function not found when compiling ffi: call");
 		return;
 	}
 
