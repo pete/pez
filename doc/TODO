@@ -1,16 +1,12 @@
 This is a sort of unordered roadmap for Pez.
 
-NOW
-
-* Misc cleanup
+NOW (1.6.0 release)
 
 * Finish up missing pieces of ffi: and load-lib.
 
 * Structs.
 
 * Finish up the socket library, once structs are solidified.
-
-* Include more batteries.  Flesh out core.pez.
 
 * Use flags in the interpreter struct instead of #define's for features
   to support or disallow.  The basics have been set up, but are not
@@ -21,6 +17,14 @@ NOW
 
 * Finalize the API for a Pez interpreter instantiated by another Pez
   program, so that the above-mentioned jailing of sub-pez's makes sense.
+
+* gsub
+
+ONGOING
+
+* Misc cleanup
+
+* Include more batteries.  Flesh out core.pez.
 
 LATER
 
