@@ -175,6 +175,28 @@ static char *pez_strdup(char *s)
 }
 
 /*
+   Returns the concatenation of a and b.
+*/
+static char *pez_strcat(char *a, char *b)
+{
+	long lena, lenb;
+	char *s;
+
+	lena = strlen((char *)a);
+	lenb = strlen((char *)b);
+
+	s = alloc(lena + lenb + 1);
+
+	if(lena)
+		memcpy(s, (void *)a, lena);
+
+	if(lenb)
+		memcpy(s + lena, (void *)b, lenb);
+
+	return s;
+}
+
+/*
 	Given the input stream, try to assemble a string
 	in the token buffer.  These strings allow escaped characters.
 */
@@ -1306,27 +1328,16 @@ prim P_strcpy(pez_instance *p)
 */
 prim P_splus(pez_instance *p)
 {
-	long len1, len0;
 	char *s;
 
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
 
-	len0 = strlen((char *)S0);
-	len1 = strlen((char *)S1);
-
-	s = alloc(len1 + len0 + 1);
-
-	if(len1)
-		memcpy(s, (void *)S1, len1);
-
-	if(len0)
-		memcpy(s + len1, (void *)S0, len0);
-
-	s[len1 + len0] = 0;
-	S1 = (pez_stackitem)s;
+	s = pez_strcat((char *)S1, (char *)S0);
 	Pop;
+	S0 = (pez_stackitem)s;
+
 }
 
 /*
@@ -1342,8 +1353,12 @@ prim P_strcat(pez_instance *p)
 	Pop2;
 }
 
+/*
+   ( str -- len )
+   Returns the length of the null-terminated string at the top of the stack.
+*/
 prim P_strlen(pez_instance *p)
-{				/* Take length of string on stack top */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = strlen((char *)S0);
@@ -2184,9 +2199,9 @@ prim P_puts(pez_instance *p)
 }
 
 /*
-   ( -- str )
+   ( -- str|0 )
    Grabs a string from the current input stream up to and including the first
-   newline.
+   newline.  Returns 0 on EOF.
 */
 prim P_gets(pez_instance *p)
 {
@@ -2221,7 +2236,10 @@ prim P_gets(pez_instance *p)
 			break;
 		}
 	}
-	Push = (pez_stackitem)buf;
+	if(c == buf + 1) // i.e., no input at all.
+		Push = 0;
+	else
+		Push = (pez_stackitem)buf;
 }
 
 /*
