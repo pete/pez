@@ -52,6 +52,7 @@ AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
+AC_C_INLINE
 AC_CHECK_FUNCS([gettimeofday pow setenv strchr strtoul])
 
 AC_CHECK_SIZEOF(void *)
