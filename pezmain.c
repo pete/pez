@@ -150,7 +150,6 @@ int main(int argc, char *argv[])
 	pez_argv_current = p->argv;
 
 	ifp = stdin;
-	load_rc();
 	
 	for(i = 1; i < argc; i++) {
 		cp = argv[i];
@@ -230,6 +229,9 @@ int main(int argc, char *argv[])
 	   the main PEZ execution loop. */
 
 	interactive = !fname && isatty(0);
+
+	if(interactive)
+		load_rc();
 
 #ifndef HIGHC
 	signal(SIGINT, ctrlc);
