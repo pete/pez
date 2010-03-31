@@ -1,12 +1,19 @@
-Nearly all of the work, especially design work, was done by John Walker,
-and we're indebted for his release of the code to the public domain.
-This library was originally called Atlast, and a pristine version can be
-downloaded from Mr. Walker's site at http://fourmilab.ch/ .  (It was
-renamed to Pez when I discovered that I was not the only one to have the
-obvious idea of adapting public domain code for my own purposes.)
+Initially, nearly all of the work, especially design work, was done by
+John Walker, and we're indebted for his release of the code to the
+public domain.  This library was originally called Atlast, and a
+pristine version can be downloaded from Mr. Walker's site at
+http://fourmilab.ch/ .  (It was renamed to Pez when I discovered that I
+was not the only one to have the obvious idea of adapting this wonderful
+chunk of public domain code for my own purposes.)
 
 The current state of the codebase (the bugs fixed, the features added
-or removed, the refactoring, etc.) is due to the efforts of Pete Elmore
-and Matthew King.
+or removed, the refactoring, redesigning, etc.) is due to the efforts of
+Pete Elmore and Matthew King, who are currently the principal authors.
 
 Jeff Hodges was invaluable in helping to get autotools working properly.
+
+Support for hash tables made it into the codebase with just a couple of
+hours of hacking thanks to Peter Moore, Austin Appleby, Phong Vo, Glenn
+Fowler and Landon Curt Noll, with their public domain implementation of
+the required algorithms and the nice API of st.c.  Gluing it all
+together into a single st.c came courtesy of the Ruby team.
