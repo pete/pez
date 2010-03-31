@@ -3880,7 +3880,7 @@ prim P_linktoname(pez_instance *p)
 }
 
 /*
-   ( nfa string -- )
+   ( nfa buf -- )
    Copy word name to string buffer
 */
 prim P_fetchname(pez_instance *p)
@@ -3888,12 +3888,14 @@ prim P_fetchname(pez_instance *p)
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
-	/* Since the name buffers aren't in the system heap, but
+	/*
+	   Since the name buffers aren't in the system heap, but
 	   rather are separately allocated with alloc(), we can't
 	   check the name pointer references.  But, hey, if the user's
 	   futzing with word dictionary items on the heap in the first
 	   place, there's a billion other ways to bring us down at
-	   his command. */
+	   his command.
+	*/
 	strcpy((char *)S0, *((char **)S1) + 1);
 	Pop2;
 }
