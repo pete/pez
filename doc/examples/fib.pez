@@ -1,0 +1,58 @@
+#! /usr/bin/env pez
+# A demonstration of how to use hashes in Pez, and a quick, rough benchmark,
+# using naive algorithms for finding Fibonacci[n].  To test out the speed, you
+# can just run the program and enjoy the output, with an optional n passed on
+# the command line (default 30).
+
+# The naive, recursive version.  The slowest of the three.
+: recursive-fib ( n -- fib[n] )
+	dup 2 < if drop 1 exit then
+	1- dup recursive-fib swap 1- recursive-fib + ;
+
+# The iterative version.  Still uses a naive algorithm, but is pretty speedy.
+: iterative-fib ( n -- fib[n] )
+	dup 2 < if drop 1 exit then
+	0 1 rot ( prev cur n )
+	0 do swap over + loop nip ;
+
+# This is the memoizing version; it uses a hash table (created with htable) to
+# memoize results.
+htable constant fiboize
+# Initialize the table so that it starts with two 1s:
+1 0 fiboize ht!
+1 1 fiboize ht!
+: memoizing-fib ( n -- fib[n] )
+	# First we check for the key's presence in the hash, and return its
+	# value if present:
+	dup fiboize ht? if fiboize ht@ exit then
+	# Calculate fib[n-1], which fills the hash, so we can just look up
+	# fib[n-2] directly.
+	dup 2 - dup 1+ memoizing-fib swap fiboize ht@ + ( n fib[n] )
+	# Store our result in the hash before returning:
+	dup rot fiboize ht! ;
+
+# These next two definitions are utilitarian, 
+
+# Just executes a word from the stack, and prints the time (in seconds) that it
+# took to execute the word.
+fvariable bench-before
+: bench-execute ( word -- )
+	"Benchmarking " print dup >name @ 1+ print "..." puts
+	ftime bench-before f!
+	execute
+	ftime bench-before f@ f-
+	"Ran in " print f. "seconds." puts ;
+
+# If the user specifies a number on the command line, we use that one.
+# Otherwise, we go with the supplied default.
+: default-number ( n -- argv[0]|n )
+	argc 0= if exit then
+	drop argv @ strint nip ;
+
+30 default-number dup
+"Calculating Fib[ " print dup . "], and benchmarking the results:" puts
+' recursive-fib bench-execute . cr dup
+' iterative-fib bench-execute . cr dup
+' memoizing-fib bench-execute . cr
+"And running the memoizing version again, after it has heated up:" puts
+' memoizing-fib bench-execute . cr
