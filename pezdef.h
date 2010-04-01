@@ -268,7 +268,9 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define SREAL1(x) REAL1 = (x)
 #endif
 #define Realpush(x) do { \
-	So(Realsize); ((pez_real *)p->stk++)[0] = (x); } while(0)
+	So(Realsize);\
+	p->stk += Realsize; SREAL0(x);\
+} while(0)
 
 #ifdef TRACE
 #define tracing if(p->trace)
