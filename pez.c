@@ -3249,6 +3249,10 @@ prim P_exit(pez_instance *p)
 prim P_branch(pez_instance *p)
 {
 	p->ip += (pez_stackitem) *p->ip;
+	if(!*p->ip)
+		trouble(p,
+			"Zero branch!  Non-terminated if/do/begin are "
+			"likely culprits");
 }
 
 /*
@@ -3257,10 +3261,15 @@ prim P_branch(pez_instance *p)
 prim P_qbranch(pez_instance *p)
 {
 	Sl(1);
-	if(S0 == 0)
+	if(S0 == 0) {
 		p->ip += (pez_stackitem) *p->ip;
-	else
+		if(!*p->ip)
+			trouble(p,
+				"Zero branch!  Non-terminated if/do/begin are "
+				"likely culprits");
+	} else {
 		p->ip++;	// Skip the in-line address.
+	}
 	Pop;
 }
 
