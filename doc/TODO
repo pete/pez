@@ -13,7 +13,7 @@ NOW (1.6.0 release)
   implemented.
 
 * Restructure the dictionary, so that flags are no longer stored in the
-  first byte of the name field.
+  first byte of the name field, and so that file:line are included in entries.
 
 * Finalize the API for a Pez interpreter instantiated by another Pez
   program, so that the above-mentioned jailing of sub-pez's makes sense.
