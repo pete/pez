@@ -20,6 +20,8 @@ NOW (1.6.0 release)
 
 * gsub
 
+* Clean up command-line parsing!
+
 ONGOING
 
 * Misc cleanup
