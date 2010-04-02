@@ -3249,6 +3249,7 @@ prim P_exit(pez_instance *p)
 prim P_branch(pez_instance *p)
 {
 	p->ip += (pez_stackitem) *p->ip;
+	// TODO:  Move this check from runtime to compile-time.
 	if(!*p->ip)
 		trouble(p,
 			"Zero branch!  Non-terminated if/do/begin are "
@@ -3263,10 +3264,13 @@ prim P_qbranch(pez_instance *p)
 	Sl(1);
 	if(S0 == 0) {
 		p->ip += (pez_stackitem) *p->ip;
-		if(!*p->ip)
+		// TODO:  Move this check from runtime to compile-time.
+		if(!*p->ip) {
 			trouble(p,
 				"Zero branch!  Non-terminated if/do/begin are "
 				"likely culprits");
+			return;
+		}
 	} else {
 		p->ip++;	// Skip the in-line address.
 	}
