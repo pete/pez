@@ -20,11 +20,6 @@ NOW (1.6.0 release)
 
 * gsub
 
-* A check for incorrect branches, hopefully at compile time.  (e.g., omitting
-  the 'then' after an 'if').
-
-* Some float words segfault on 32-bit OSs.
-
 ONGOING
 
 * Misc cleanup
