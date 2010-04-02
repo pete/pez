@@ -3249,11 +3249,6 @@ prim P_exit(pez_instance *p)
 prim P_branch(pez_instance *p)
 {
 	p->ip += (pez_stackitem) *p->ip;
-	// TODO:  Move this check from runtime to compile-time.
-	if(!*p->ip)
-		trouble(p,
-			"Zero branch!  Non-terminated if/do/begin are "
-			"likely culprits");
 }
 
 /*
@@ -3264,13 +3259,6 @@ prim P_qbranch(pez_instance *p)
 	Sl(1);
 	if(S0 == 0) {
 		p->ip += (pez_stackitem) *p->ip;
-		// TODO:  Move this check from runtime to compile-time.
-		if(!*p->ip) {
-			trouble(p,
-				"Zero branch!  Non-terminated if/do/begin are "
-				"likely culprits");
-			return;
-		}
 	} else {
 		p->ip++;	// Skip the in-line address.
 	}
@@ -3677,10 +3665,35 @@ prim P_semicolon(pez_instance *p)
 	Ho(1);
 	Hstore = s_exit;
 	state = Falsity;
-	/* We wait until now to plug the P_nest code so that it will be
-	   present only in completed definitions. */
-	if(p->createword != NULL)
+	pez_stackitem *bit;
+	char *diag;
+
+	if(p->createword != NULL) {
+		// We wait until now to plug the P_nest code so that it will be
+		// present only in completed definitions:
 		p->createword->wcode = P_nest;
+		// Next, we loop over the body of the word, looking for
+		// un-backpatched branches:
+		// TODO:  This is a good place for a few compile-time checks,
+		// and perhaps an optimization pass.
+		for(bit = (pez_stackitem *)p->createword + Dictwordl;
+				bit < p->hptr - 1;
+				bit++) {
+			if((*bit == s_qbranch || *bit == s_branch) && !bit[1]) {
+				diag = alloc(1024);
+				pez_forget_during_eval(p,
+						p->createword->wname + 1);
+				snprintf(diag, 1024, 
+					"Zero branch in definition of %s!\n"
+					"Non-terminated if/do/begin are "
+					"likely culprits",
+					p->createword->wname + 1);
+				trouble(p, diag);
+				return;
+			}
+		}
+	}
+
 	p->createword = NULL;	// Flag no word being created
 }
 
