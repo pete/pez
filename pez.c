@@ -1171,7 +1171,9 @@ prim P_constant(pez_instance *p)
 	prim read_fn(pez_instance *p) { Sl(1); \
 		S0 = (pez_stackitem)(*(typename *)S0); } \
 	prim write_fn(pez_instance *p) { Sl(2); \
-		*(typename *)S0 = (typename)S1; Npop(2); }
+		*(typename *)S0 = (typename)S1; \
+		Npop(1 + (sizeof(typename) + sizeof(pez_stackitem) - 1) / \
+					sizeof(pez_stackitem)); }
 
 SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells, P_cell_at, P_cell_bang)
 SIZE_FUNCS(pez_real, P_float_size, P_floats, P_float_at, P_float_bang)
@@ -1323,6 +1325,17 @@ prim P_strcpy(pez_instance *p)
 }
 
 /*
+   ( str -- copy )
+   Produces a copy of a string.
+*/
+prim P_sdup(pez_instance *p)
+{
+	Sl(0);
+	Hpc(S0);
+	S0 = (pez_stackitem)pez_strdup((char *)S0);
+}
+
+/*
    ( s1 s2 -- s3 )
    Given two null-terminated strings, s+ returns their concatenation in a fresh
    buffer.
@@ -1447,6 +1460,35 @@ prim P_strform(pez_instance *p)
 	Hpc(S1);
 	sprintf((char *)S0, (char *)S1, S2);
 	Npop(3);
+}
+
+/*
+   ( val format -- str )
+   Like sprintf(malloc(enough), format, val), where val is an integer.
+   
+   Also like sprintf, you should choose your format strings with caution; Pez
+   team takes no responsibility if you decide to do bad things in the format
+   string, like tell it "%ld%ld%ld%ld" (thus getting gibberish from effectively
+   random argument registers and/or smashing the C stack).
+*/
+prim P_format(pez_instance *p)
+{
+	char *formatted;
+
+	Sl(2);
+	Hpc(S0);
+	// There are about ceil(log(2)/log(10)) digits per bit, but the upper
+	// limit is actually the number of digits in octal plus the length of
+	// the format, minus the metacharacters in the format, plus a \0 and
+	// possibly a sign and/or a prefix if you use something like "%#lx".
+	// It's better to err on the side of allocating too much in this case,
+	// so we do.  I say all of this only so that whoever comes up with
+	// something more clever for this line does so without accidentally
+	// breaking it.
+	formatted = alloc(sizeof(long) * 4 + 2 + strlen((char *)S0));
+	sprintf(formatted, (char *)S0, S1);
+	Pop;
+	S0 = (pez_stackitem)formatted;
 }
 
 /*
@@ -1717,7 +1759,7 @@ prim P_htat(pez_instance *p)
 	key = (st_data_t)S1;
 
 	Pop;
-	(pez_stackitem)st_lookup(table, key, (st_data_t *)&S0);
+	st_lookup(table, key, (st_data_t *)&S0);
 }
 
 /*
@@ -1736,6 +1778,17 @@ prim P_htp(pez_instance *p)
 	Pop;
 	S0 = (pez_stackitem)st_lookup(table, key, (st_data_t *)0) ?
 		Truth : Falsity;
+}
+
+/*
+   ( table -- copy )
+   Produces a copy of a hash table.
+*/
+prim P_ht_dup(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+	S0 = (pez_stackitem)st_copy((st_table *)S0);
 }
 
 /*
@@ -4604,6 +4657,7 @@ static struct primfcn primt[] = {
 	{"0STRCPY", P_strcpy},
 	{"0S!", P_strcpy},
 	{"0STRCAT", P_strcat},
+	{"0sdup", P_sdup},
 	{"0S+", P_splus},
 	{"0STRLEN", P_strlen},
 	{"0STRCMP", P_strcmp},
@@ -4611,6 +4665,7 @@ static struct primfcn primt[] = {
 	{"0STRCHAR", P_strchar},
 	{"0SUBSTR", P_substr},
 	{"0STRFORM", P_strform},
+	{"0format", P_format},
 	{"0FSTRFORM", P_fstrform},
 	{"0STRINT", P_strint},
 	{"0STRREAL", P_strreal},
@@ -4645,6 +4700,7 @@ static struct primfcn primt[] = {
 	{"0ht!", P_htbang},
 	{"0ht@", P_htat},
 	{"0ht?", P_htp},
+	{"0ht-dup", P_ht_dup},
 	{"0ht-clear", P_ht_clear},
 
 	{"0(FLIT)", P_flit},
