@@ -6,7 +6,7 @@
 	argv
 	argc 0 do
 		dup @ puts
-		cellsize +
+		cell-size +
 	loop ;
 		
 "argc = " print argc . cr
