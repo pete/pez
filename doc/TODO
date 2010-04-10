@@ -22,11 +22,13 @@ NOW (1.6.0 release)
 
 * Clean up command-line parsing!
 
+* Fix up size limiting.
+
 ONGOING
 
 * Misc cleanup
 
-* Include more batteries.  Flesh out core.pez.
+* Include more batteries.  Flesh out the standard library.
 
 LATER
 
@@ -36,6 +38,15 @@ LATER
 
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
   depends on how much of a pain that turns out to be.
+
+* Bolt down the security model.
+
+* Tweak the I/O so that interpreter-generated messages can be sent, through a
+  pipe or arbitrary FD (as opposed to talking to stderr, etc., directly), so
+  that the UI can be interacted with.
+
+* Mailboxes for communicating between Pez instances, when a concurrency model
+  is implemented.
 
 MUCH LATER
 
