@@ -23,7 +23,14 @@
 #include <regex.h>
 #include <limits.h>
 #include <gc/gc.h>
+
+#ifdef HAVE_LIGHTNING_H
 #include <lightning.h>
+#else
+#ifdef HAVE_LIGHTNING_LIGHTNING_H
+#include <lighting/lightning.h>
+#endif
+#endif
 
 #ifdef ALIGNMENT
 #include <memory.h>
