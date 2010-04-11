@@ -140,13 +140,14 @@ static pez_stackitem s_exit, s_lit, s_flit, s_strlit, s_dotparen,
 
 /*  Forward functions  */
 
-STATIC void exword(pez_instance *p, pez_dictword *dw),
+static void pez_forget_during_eval(pez_instance *p, char token_buffer[]);
+static void exword(pez_instance *p, pez_dictword *dw),
 	trouble(pez_instance *p, char *kind);
 #ifdef MATH_CHECK
-STATIC void notcomp(pez_instance *p), divzero(pez_instance *p);
+static void notcomp(pez_instance *p), divzero(pez_instance *p);
 #endif
 #ifdef WALKBACK
-STATIC void pwalkback(pez_instance *p);
+static void pwalkback(pez_instance *p);
 #endif
 
 /*  ALLOC  --  Allocate memory and error upon exhaustion.  */
@@ -1164,19 +1165,36 @@ prim P_constant(pez_instance *p)
 /*
    A series of very small functions for portably figuring out sizes and offsets
    from within Pez.
+
+   TODO:  There are some cell size mismatch bugs lurking.
 */
 #define SIZE_FUNCS(typename, size_fn, plural_fn, read_fn, write_fn) \
 	prim size_fn(pez_instance *p) { So(1); Push = sizeof(typename); } \
 	prim plural_fn(pez_instance *p) { Sl(1); S0 *= sizeof(typename); } \
-	prim read_fn(pez_instance *p) { Sl(1); \
-		S0 = (pez_stackitem)(*(typename *)S0); } \
+	prim read_fn(pez_instance *p) {\
+		pez_stackitem *sp; \
+		Sl((sizeof(typename) + sizeof(pez_stackitem) - 1) / \
+			sizeof(pez_stackitem)); \
+		sp = (pez_stackitem *)S0; Pop; \
+		Hpc(sp); \
+		switch((sizeof(typename) + sizeof(pez_stackitem) - 1) / \
+			sizeof(pez_stackitem)) { \
+		case 4: Push = *sp++;\
+		case 3: Push = *sp++;\
+		case 2: Push = *sp++;\
+		case 1: Push = *sp++;\
+		} \
+		S0 = (pez_stackitem)(*(typename *)S0); \
+	} \
 	prim write_fn(pez_instance *p) { Sl(2); \
+		Hpc(S0); \
 		*(typename *)S0 = (typename)S1; \
 		Npop(1 + (sizeof(typename) + sizeof(pez_stackitem) - 1) / \
 					sizeof(pez_stackitem)); }
 
 SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells, P_cell_at, P_cell_bang)
 SIZE_FUNCS(pez_real, P_float_size, P_floats, P_float_at, P_float_bang)
+
 SIZE_FUNCS(void *, P_c_pointer_size, P_c_pointers, P_c_pointer_at,
 		P_c_pointer_bang)
 SIZE_FUNCS(short, P_c_short_size, P_c_shorts, P_c_short_at, P_c_short_bang)
@@ -1184,6 +1202,16 @@ SIZE_FUNCS(long, P_c_long_size, P_c_longs, P_c_long_at, P_c_long_bang)
 SIZE_FUNCS(int, P_c_int_size, P_c_ints, P_c_int_at, P_c_int_bang)
 SIZE_FUNCS(float, P_c_float_size, P_c_floats, P_c_float_at, P_c_float_bang)
 SIZE_FUNCS(double, P_c_double_size, P_c_doubles, P_c_double_at, P_c_double_bang)
+
+SIZE_FUNCS(int8_t, P_int8_size, P_int8s, P_int8_at, P_int8_bang)
+SIZE_FUNCS(uint8_t, P_uint8_size, P_uint8s, P_uint8_at, P_uint8_bang)
+SIZE_FUNCS(int16_t, P_int16_size, P_int16s, P_int16_at, P_int16_bang)
+SIZE_FUNCS(uint16_t, P_uint16_size, P_uint16s, P_uint16_at, P_uint16_bang)
+SIZE_FUNCS(int32_t, P_int32_size, P_int32s, P_int32_at, P_int32_bang)
+SIZE_FUNCS(uint32_t, P_uint32_size, P_uint32s, P_uint32_at, P_uint32_bang)
+SIZE_FUNCS(int64_t, P_int64_size, P_int64s, P_int64_at, P_int64_bang)
+SIZE_FUNCS(uint64_t, P_uint64_size, P_uint64s, P_uint64_at, P_uint64_bang)
+
 #undef SIZE_FUNCS
 
 /*  Reflection for Pez's compile-time options, for building libs from Pez: */
@@ -4521,6 +4549,69 @@ prim P_fwdresolve(pez_instance *p)
 // TODO:  At some point, probably the same time the above happens, change these
 // all to lower-case and drop the case-insensitivity from dictionary lookups.
 static struct primfcn primt[] = {
+	// We open with a severely long list of size and load/store words for
+	// all of the types one might run into when inter-operating with C.
+	{"0cell-size", P_cell_size},
+	{"0cells", P_cells},
+	{"0float-size", P_float_size},
+	{"0floats", P_floats},
+	{"0c-pointer-size", P_c_pointer_size},
+	{"0c-pointers", P_c_pointers},
+	{"0c-pointer@", P_c_pointer_at},
+	{"0c-pointer!", P_c_pointer_bang},
+	{"0c-short-size", P_c_short_size},
+	{"0c-shorts", P_c_shorts},
+	{"0c-short@", P_c_short_at},
+	{"0c-short!", P_c_short_bang},
+	{"0c-long-size", P_c_long_size},
+	{"0c-longs", P_c_longs},
+	{"0c-long@", P_c_long_at},
+	{"0c-long!", P_c_long_bang},
+	{"0c-int-size", P_c_int_size},
+	{"0c-ints", P_c_ints},
+	{"0c-int@", P_c_int_at},
+	{"0c-int!", P_c_int_bang},
+	{"0c-float-size", P_c_float_size},
+	{"0c-floats", P_c_floats},
+	{"0c-float@", P_c_float_at},
+	{"0c-float!", P_c_float_bang},
+	{"0c-double-size", P_c_double_size},
+	{"0c-doubles", P_c_doubles},
+	{"0c-double@", P_c_double_at},
+	{"0c-double!", P_c_double_bang},
+	{"0int8-size", P_int8_size},
+	{"0int8s", P_int8s},
+	{"0int8@", P_int8_at},
+	{"0int8!", P_int8_bang},
+	{"0uint8-size", P_uint8_size},
+	{"0uint8s", P_uint8s},
+	{"0uint8@", P_uint8_at},
+	{"0uint8!", P_uint8_bang},
+	{"0int16-size", P_int16_size},
+	{"0int16s", P_int16s},
+	{"0int16@", P_int16_at},
+	{"0int16!", P_int16_bang},
+	{"0uint16-size", P_uint16_size},
+	{"0uint16s", P_uint16s},
+	{"0uint16@", P_uint16_at},
+	{"0uint16!", P_uint16_bang},
+	{"0int32-size", P_int32_size},
+	{"0int32s", P_int32s},
+	{"0int32@", P_int32_at},
+	{"0int32!", P_int32_bang},
+	{"0uint32-size", P_uint32_size},
+	{"0uint32s", P_uint32s},
+	{"0uint32@", P_uint32_at},
+	{"0uint32!", P_uint32_bang},
+	{"0int64-size", P_int64_size},
+	{"0int64s", P_int64s},
+	{"0int64@", P_int64_at},
+	{"0int64!", P_int64_bang},
+	{"0uint64-size", P_uint64_size},
+	{"0uint64s", P_uint64s},
+	{"0uint64@", P_uint64_at},
+	{"0uint64!", P_uint64_bang},
+
 	{"0+", P_plus},
 	{"0-", P_minus},
 	{"0*", P_times},
@@ -4608,35 +4699,6 @@ static struct primfcn primt[] = {
 	{"0MALLOC", P_malloc},
 	{"0memcpy", P_memcpy},
 	{"0HERE", P_here},
-
-	{"0CELL-SIZE", P_cell_size},
-	{"0CELLS", P_cells},
-	{"0FLOAT-SIZE", P_float_size},
-	{"0FLOATS", P_floats},
-	{"0c-pointer-size", P_c_pointer_size},
-	{"0c-pointers", P_c_pointers},
-	{"0c-pointer@", P_c_pointer_at},
-	{"0c-pointer!", P_c_pointer_bang},
-	{"0c-short-size", P_c_short_size},
-	{"0c-shorts", P_c_shorts},
-	{"0c-short@", P_c_short_at},
-	{"0c-short!", P_c_short_bang},
-	{"0c-long-size", P_c_long_size},
-	{"0c-longs", P_c_longs},
-	{"0c-long@", P_c_long_at},
-	{"0c-long!", P_c_long_bang},
-	{"0c-int-size", P_c_int_size},
-	{"0c-ints", P_c_ints},
-	{"0c-int@", P_c_int_at},
-	{"0c-int!", P_c_int_bang},
-	{"0c-float-size", P_c_float_size},
-	{"0c-floats", P_c_floats},
-	{"0c-float@", P_c_float_at},
-	{"0c-float!", P_c_float_bang},
-	{"0c-double-size", P_c_double_size},
-	{"0c-doubles", P_c_doubles},
-	{"0c-double@", P_c_double_at},
-	{"0c-double!", P_c_double_bang},
 
 	{"0PEZ-BINDIR", P_pezconf_bindir},
 	{"0PEZ-LIBDIR", P_pezconf_libdir},
@@ -5706,7 +5768,7 @@ void pez_stack_word(pez_instance *p, char token_buffer[])
 }
 
 // FIXME: yes, this is not a good function name.
-void pez_forget_during_eval(pez_instance *p, char token_buffer[])
+static void pez_forget_during_eval(pez_instance *p, char token_buffer[])
 {
 	pez_dictword *di;
 	p->forgetpend = False;
