@@ -48,6 +48,11 @@ LATER
 * Mailboxes for communicating between Pez instances, when a concurrency model
   is implemented.
 
+* Look into separating the float stack from the data stack, as some
+  implementations do; this would greatly simplify things, and shouldn't break
+  existing code if written portably per the current rules.  It should also
+  speed Pez up a bit.
+
 MUCH LATER
 
 * Investigate a few key optimizations, as I'm planning on using Pez as a VM
