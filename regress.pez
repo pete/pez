@@ -283,6 +283,9 @@ variable nsi
     "-ROT" tests:
         6 9 5 -rot 5 6 9   3 nok?
 
+    "TUCK" tests:
+    	1 2 tuck 2 1 2  3 nok?
+
     "ROLL" tests:
         3 5 8 9  2 roll  0 roll  3 roll   8 9 5 3   4 nok?
 ;
@@ -307,6 +310,9 @@ variable nsi
 
     "2ROT" tests:
         1 2 3 4 5 6   2rot   3 4 5 6 1 2   6 nok?
+
+    "2TUCK" tests:
+    	1 2 3 4  2tuck  3 4 1 2 3 4  6 nok?
 ;
 
 #   Heap allocation and byte addressing

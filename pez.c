@@ -2937,8 +2937,11 @@ prim P_nip(pez_instance *p)
 	Pop;
 }
 
+/*
+   ( a b c -- b c a )
+*/
 prim P_rot(pez_instance *p)
-{				// Rotate 3 top stack items
+{
 	pez_stackitem t;
 
 	Sl(3);
@@ -2948,8 +2951,11 @@ prim P_rot(pez_instance *p)
 	S1 = t;
 }
 
+/*
+   ( a b c -- c a b )
+*/
 prim P_minusrot(pez_instance *p)
-{				// Reverse rotate 3 top stack items
+{
 	pez_stackitem t;
 
 	Sl(3);
@@ -2957,6 +2963,18 @@ prim P_minusrot(pez_instance *p)
 	S0 = S1;
 	S1 = S2;
 	S2 = t;
+}
+
+/*
+   ( a b -- b a b )
+*/
+prim P_tuck(pez_instance *p)
+{
+	pez_stackitem t;
+	So(1); // swap does the Sl(2)
+	// I love the inline keyword.
+	P_swap(p);
+	P_over(p);
 }
 
 /*
@@ -3123,6 +3141,33 @@ prim P_2rot(pez_instance *p)
 	S2 = S0;
 	S1 = t2;
 	S0 = t1;
+
+	/*
+	pez_stackitem t;
+
+	Sl(6);
+	t = S5;
+	S5 = S3;
+	S3 = S1;
+	S1 = t;
+
+	t = S4;
+	S4 = S2;
+	S2 = S0;
+	S0 = t;
+	*/
+}
+
+/*
+   ( a b c d -- c d a b c d )
+*/
+prim P_2tuck(pez_instance *p)
+{
+	// See P_tuck
+	pez_stackitem t;
+	So(2);
+	P_2swap(p);
+	P_2over(p);
 }
 
 /*
@@ -4652,6 +4697,7 @@ static struct primfcn primt[] = {
 	{"0NIP", P_nip},
 	{"0ROT", P_rot},
 	{"0-ROT", P_minusrot},
+	{"0tuck", P_tuck},
 	{"0ROLL", P_roll},
 	{"0>R", P_tor},
 	{"0R>", P_rfrom},
@@ -4676,6 +4722,7 @@ static struct primfcn primt[] = {
 	{"02OVER", P_2over},
 	{"02NIP", P_2nip},
 	{"02ROT", P_2rot},
+	{"02tuck", P_2tuck},
 	{"02VARIABLE", P_2variable},
 	{"02CONSTANT", P_2constant},
 	{"02!", P_2bang},
