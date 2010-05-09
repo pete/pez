@@ -1,0 +1,30 @@
+#! /usr/bin/env pez
+# Illustrative!  This little program is a roughly compatible version of the Unix
+# command 'factor', which, given 1 or more positive integer arguments on the
+# command-line, will print each argument, followed by a colon and a
+# space-separated list of factors.
+
+# Yes, also, it uses the second-dumbest possible algorithm.
+
+: print-factors ( n -- )
+	dup "%ld: " format print
+	begin dup 2 mod 0= while 2 . 2 / repeat
+	3
+	begin over 1 > while
+		2dup /mod swap ( n m n/m n%m )
+		0= if over . -rot nip
+		else drop 2 + then
+	repeat cr 2drop ;
+
+: factor-args
+	argc 0= if exit then
+	argc 0 do
+		argv i cells + @ strint nip ( arg )
+		dup 0 < if negate print-factors
+			else dup 2 <
+				if dup "%ld: " format print . cr
+				else print-factors then
+			then 
+	loop ;
+
+factor-args
