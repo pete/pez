@@ -1193,31 +1193,18 @@ prim P_constant(pez_instance *p)
 		} \
 		S0 = (pez_stackitem)(*(typename *)S0); \
 	} \
-	prim write_fn(pez_instance *p) { Sl(2); \
+	prim write_fn(pez_instance *p) {\
+		Sl(2); \
 		Hpc(S0); \
 		*(typename *)S0 = (typename)S1; \
 		Npop(1 + (sizeof(typename) + sizeof(pez_stackitem) - 1) / \
-					sizeof(pez_stackitem)); }
+					sizeof(pez_stackitem)); \
+	}
 
 SIZE_FUNCS(pez_stackitem, P_cell_size, P_cells, P_cell_at, P_cell_bang)
 SIZE_FUNCS(pez_real, P_float_size, P_floats, P_float_at, P_float_bang)
-
 SIZE_FUNCS(void *, P_c_pointer_size, P_c_pointers, P_c_pointer_at,
 		P_c_pointer_bang)
-SIZE_FUNCS(short, P_c_short_size, P_c_shorts, P_c_short_at, P_c_short_bang)
-SIZE_FUNCS(long, P_c_long_size, P_c_longs, P_c_long_at, P_c_long_bang)
-SIZE_FUNCS(int, P_c_int_size, P_c_ints, P_c_int_at, P_c_int_bang)
-SIZE_FUNCS(float, P_c_float_size, P_c_floats, P_c_float_at, P_c_float_bang)
-SIZE_FUNCS(double, P_c_double_size, P_c_doubles, P_c_double_at, P_c_double_bang)
-
-SIZE_FUNCS(int8_t, P_int8_size, P_int8s, P_int8_at, P_int8_bang)
-SIZE_FUNCS(uint8_t, P_uint8_size, P_uint8s, P_uint8_at, P_uint8_bang)
-SIZE_FUNCS(int16_t, P_int16_size, P_int16s, P_int16_at, P_int16_bang)
-SIZE_FUNCS(uint16_t, P_uint16_size, P_uint16s, P_uint16_at, P_uint16_bang)
-SIZE_FUNCS(int32_t, P_int32_size, P_int32s, P_int32_at, P_int32_bang)
-SIZE_FUNCS(uint32_t, P_uint32_size, P_uint32s, P_uint32_at, P_uint32_bang)
-SIZE_FUNCS(int64_t, P_int64_size, P_int64s, P_int64_at, P_int64_bang)
-SIZE_FUNCS(uint64_t, P_uint64_size, P_uint64s, P_uint64_at, P_uint64_bang)
 
 #undef SIZE_FUNCS
 
@@ -1351,7 +1338,7 @@ prim P_string(pez_instance *p)
    Copies a string from src to dest.
 */
 prim P_strcpy(pez_instance *p)
-{				// Copy string to address on stack
+{
 	Sl(2);
 	Hpc(S0);
 	Hpc(S1);
@@ -1365,7 +1352,7 @@ prim P_strcpy(pez_instance *p)
 */
 prim P_sdup(pez_instance *p)
 {
-	Sl(0);
+	Sl(1);
 	Hpc(S0);
 	S0 = (pez_stackitem)pez_strdup((char *)S0);
 }
@@ -2377,7 +2364,7 @@ prim P_puts(pez_instance *p)
 prim P_gets(pez_instance *p)
 {
 	pez_stackitem max = 1024; // TODO:  Real numbers
-	int i;
+	int i, more_input;
 	char *buf, *c, *tmp;
 
 	So(1);
@@ -2388,7 +2375,7 @@ prim P_gets(pez_instance *p)
 
 	// TODO:  This is horribly inefficient, but will have to stay until we
 	// do internal buffering.
-	while(read(input_stream, c++, 1)) {
+	while((more_input = read(input_stream, c++, 1))) {
 		i--;
 		if(!i) {
 			i = max;
@@ -2402,12 +2389,13 @@ prim P_gets(pez_instance *p)
 		}
 
 		if(c[-1] == '\n') {
-			if(max - 1)
+			if(i - 1)
 				*c = '\0';
 			break;
 		}
 	}
-	if(c == buf + 1) // i.e., no input at all.
+
+	if(!more_input)
 		Push = 0;
 	else
 		Push = (pez_stackitem)buf;
@@ -2970,7 +2958,6 @@ prim P_minusrot(pez_instance *p)
 */
 prim P_tuck(pez_instance *p)
 {
-	pez_stackitem t;
 	So(1); // swap does the Sl(2)
 	// I love the inline keyword.
 	P_swap(p);
@@ -3164,7 +3151,6 @@ prim P_2rot(pez_instance *p)
 prim P_2tuck(pez_instance *p)
 {
 	// See P_tuck
-	pez_stackitem t;
 	So(2);
 	P_2swap(p);
 	P_2over(p);
@@ -4077,13 +4063,236 @@ prim P_storename(pez_instance *p)
 #endif				// DEFFIELDS
 
 #ifdef SYSTEM
+/*
+   ( string -- status )
+   Makes a system call, returning the exit status of the process.
+*/
 prim P_system(pez_instance *p)
-{				/* string -- status */
+{
 	Sl(1);
 	Hpc(S0);
 	S0 = system((char *)S0);
 }
-#endif				/* SYSTEM */
+#endif	// SYSTEM
+
+/*
+   Starts a struct definition.
+*/
+prim P_struct_colon(pez_instance *p)
+{
+	int token;
+	char *buf;
+
+	p->createstruct = (pez_struct *)alloc(sizeof(pez_struct));
+
+	buf = alloc(TOK_BUF_SZ);
+	token = lex(p, &p->instream, buf);
+	if(token != TokWord) {
+		trouble(p, "Expected a word to follow 'struct:'");
+		return;
+	}
+
+	p->createstruct->name = buf;
+}
+
+/*
+   Ends a struct definition.
+*/
+prim P_semicolon_struct(pez_instance *p)
+{
+	pez_dictword *w;
+	int namelen;
+	char *buf;
+
+	if(!p->createstruct) {
+		trouble(p, "No struct to finish");
+		return;
+	}
+
+	// First, we create a word named after the struct, which just pushes a
+	// pointer to newly allocated memory in the size of that struct:
+	Ho(Dictwordl);
+	w = (pez_dictword *)p->hptr;
+	p->hptr += Dictwordl;
+	namelen = strlen(p->createstruct->name);
+	buf = alloc(namelen + 2);
+	memcpy(buf + 1, p->createstruct->name, namelen);
+	w->wname = buf;
+	w->wcode = P_nest;
+	Hsingle(s_lit);
+	Hsingle(p->createstruct->size);
+	Hsingle((pez_stackitem)lookup(p, "malloc"));
+	Hsingle(s_exit);
+	w->wnext = p->dict;
+	p->dict = w;
+
+	// Next, we create a word that just pushes the size of the struct.
+	Ho(Dictwordl);
+	w = (pez_dictword *)p->hptr;
+	p->hptr += Dictwordl;
+	buf = alloc(namelen + 7);
+	snprintf(buf + 1, namelen + 6, "%s-size", p->createstruct->name);
+	w->wname = buf;
+	w->wcode = P_nest;
+	Hsingle(s_lit);
+	Hsingle(p->createstruct->size);
+	Hsingle(s_exit);
+	w->wnext = p->dict;
+	p->dict = w;
+
+	// And now we're done.
+	p->createstruct = NULL;
+}
+
+/*
+   Defines a cell member of a struct.
+
+   It creates three words, one that adds the offset, one that reads from that
+   offset, and one that writes to the offset.
+*/
+prim P_cell_colon(pez_instance *p)
+{
+	pez_dictword *offsetw = (pez_dictword *)p->hptr, *w;
+	pez_stackitem plus;
+	int namelen, token;
+	char *name, *buf;
+
+	if(!p->createstruct) {
+		trouble(p, "Tried to define struct member outside struct "\
+				"definition");
+		return;
+	}
+
+	plus = (pez_stackitem)lookup(p, "+");
+
+	name = alloc(TOK_BUF_SZ);
+	token = lex(p, &p->instream, name);
+	if(token != TokWord) {
+		trouble(p, "Expected a word to follow 'cell:'");
+		return;
+	}
+	namelen = strlen(name);
+
+	// ( struct-addr -- member-addr ) The offset-adder:
+	Ho(Dictwordl);
+	p->hptr += Dictwordl;
+	buf = alloc(namelen + 2);
+	memcpy(buf + 1, name, namelen);
+	offsetw->wname = buf;
+	offsetw->wcode = P_nest;
+	offsetw->wnext = p->dict;
+	p->dict = offsetw;
+	if(p->createstruct->size) { // No point in adding zero.
+		Hsingle(s_lit);
+		Hsingle(p->createstruct->size);
+		Hsingle(plus);
+	}
+	Hsingle(s_exit);
+
+	// ( struct-addr -- member ) The reader:
+	Ho(Dictwordl);
+
+	buf = alloc(namelen + 3);
+	sprintf(buf + 1, "%s@", name);
+	w = (pez_dictword *)p->hptr;
+	p->hptr += Dictwordl;
+	w->wname = buf;
+	w->wcode = P_nest;
+	w->wnext = p->dict;
+	p->dict = w;
+	if(p->createstruct->size) {
+		Hsingle(s_lit);
+		Hsingle(p->createstruct->size);
+		Hsingle(plus);
+	}
+	Hsingle((pez_stackitem)lookup(p, "@"));
+	Hsingle(s_exit);
+
+	// ( val struct-addr -- ) The writer:
+	Ho(Dictwordl);
+	w = (pez_dictword *)p->hptr;
+	p->hptr += Dictwordl;
+	buf = alloc(namelen + 3);
+	sprintf(buf + 1, "%s!", name);
+	w->wname = buf;
+	w->wcode = P_nest;
+	w->wnext = p->dict;
+	p->dict = w;
+	if(p->createstruct->size) {
+		Hsingle(s_lit);
+		Hsingle(p->createstruct->size);
+		Hsingle(plus);
+	}
+	Hsingle((pez_stackitem)lookup(p, "!"));
+	Hsingle(s_exit);
+
+	// And, finally, we add the size of a cell to the size of the struct.
+	p->createstruct->size += sizeof(pez_stackitem);
+}
+
+prim P_cells_colon(pez_instance *p)
+{
+	pez_dictword *w = (pez_dictword *)p->hptr;
+	pez_stackitem plus;
+	int namelen, token;
+	char *name, *buf;
+
+	if(!p->createstruct) {
+		trouble(p, "Tried to define struct member outside struct "
+				"definition");
+		return;
+	}
+	Sl(1);
+
+	plus = (pez_stackitem)lookup(p, "+");
+
+	name = alloc(TOK_BUF_SZ);
+	token = lex(p, &p->instream, name);
+	if(token != TokWord) {
+		trouble(p, "Expected a word to follow 'cells:'");
+		return;
+	}
+	namelen = strlen(name);
+
+	Ho(Dictwordl);
+	p->hptr += Dictwordl;
+	buf = alloc(namelen + 2);
+	memcpy(buf + 1, name, namelen);
+	w->wname = buf;
+	w->wcode = P_nest;
+	w->wnext = p->dict;
+	p->dict = w;
+	if(p->createstruct->size) { // No point in adding zero.
+		Hsingle(s_lit);
+		Hsingle(p->createstruct->size);
+		Hsingle(plus);
+	}
+	Hsingle(s_exit);
+
+	p->createstruct->size += S0 * sizeof(pez_stackitem);
+	Pop;
+}
+
+/*
+   ( n -- )
+   Aligns a struct to the given boundary size (in bytes).
+*/
+prim P_align_struct(pez_instance *p)
+{
+	if(!p->createstruct) {
+		trouble(p, "Tried to align struct outside struct definition");
+		return;
+	}
+	Sl(1);
+
+	p->createstruct->size = S0 * ((p->createstruct->size + (S0 - 1)) / S0);
+	Pop;
+}
+
+// I know what you're about to think when you read the next line, and I can
+// sympathize, but doing it otherwise presents the same issues that splitting
+// up this file presents.
+#include "type_primitives.c"
 
 #ifdef FFI
 #include <dlfcn.h>
@@ -4889,6 +5098,13 @@ static struct primfcn primt[] = {
 #ifdef SYSTEM
 	{"0SYSTEM", P_system},
 #endif
+
+	{"0struct:", P_struct_colon},
+	{"0;struct", P_semicolon_struct},
+	{"0cell:", P_cell_colon},
+	{"0cells:", P_cells_colon},
+	{"0align-struct", P_align_struct},
+
 #ifdef FFI
 	{"0FFI-LOAD", P_ffi_load},
 	{"0DLOPEN", P_dlopen},
@@ -5338,7 +5554,10 @@ extern pez_instance *pez_init(long flags)
 	p->output_idx = 0;
 	p->input_idx = 0;
 
-	pez_primdef(p, primt);  // Define primitive words
+	// Define primitive words, first the memory/struct stuff, then the
+	// regular set of words.
+	pez_primdef(p, memory_primitives);
+	pez_primdef(p, primt);
 	p->dictprot = p->dict;  // Set protected mark in dictionary, now that we
 	                        // have a dictionary.
 

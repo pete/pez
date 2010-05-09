@@ -241,7 +241,7 @@ variable nsi
         0x1000 1 shift 0x2000 ok?
         0x1000 -1 shift 0x800 ok?
         0x8000 -16 shift 0 ok?
-        # 0x10000 16 shift 0 ok? # FIXME 32-bit only
+	cell-size 3 shift 1- 2 swap ^ 1 shift 0 ok?
         0x80000000 -1 shift 0x40000000 ok?
 ;
 
@@ -650,6 +650,7 @@ variable k
         3 14 ^ 4782969 ok?
 
     "UNFLOATING" tests:
+    	# floor rounds down, ceil rounds up, and fix truncates towards zero.
         1.0 floor 1 ok?
         1.0 fix 1 ok?
         1.0 ceil 1 ok?
@@ -868,7 +869,6 @@ variable fd1
 		fd1 @ 0 seek_set seek drop
 		fd1 @ >input
 		0 tstr !
-		hex
 		tstr 1 cells read 1 cells ok?
 		tstr @ "Who told you that?\n" @ ok?
 	
@@ -1103,6 +1103,39 @@ variable sub-pez
 		sub-pez @ stack> drop @ sub-pez @  ok?
 ;
 
+# A simple linked list implementation to test structs:
+struct: linked-list
+	cell: >head
+	cell: >tail
+;struct
+variable alist
+
+# And for plural members
+struct: trio
+	3 cells: stooges
+	3 cells: musketeers
+	4 cells align-struct
+;struct
+
+: teststruct
+	"STRUCT ALLOCATION" tests:
+		linked-list 0= 0 ok?
+	
+	"STRUCT SIZE" tests:
+		linked-list-size 2 cells ok?
+	
+	"STRUCT MEMBERS" tests:
+		linked-list alist !
+		1 alist @ >head!
+		alist @ >head@ 1 ok?
+		alist @ linked-list tuck >tail!
+		>tail@ >head@ 1 ok?
+	
+	"PLURAL STRUCT MEMBERS" tests:
+		trio-size 8 cells ok?
+		0 musketeers 3 cells ok?
+;
+
 #   Run all the regression subtests
 
 "int" puts
@@ -1147,6 +1180,8 @@ testload
 testlibs
 "instantiation" puts
 testinstantiation
+"teststruct" puts
+teststruct
 
 #   Low-level control structure primitives
 
@@ -1278,6 +1313,7 @@ errcount
 
 : testcons
     "CONIO" tests:
+    	decimal
         ." "Console I/O tests:\n"
         ." "The following two lines should be identical..." cr
         ." ":: 1234 :: -1234.5\n"

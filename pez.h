@@ -25,7 +25,6 @@
 
 #define TOK_BUF_SZ 4096
 
-
 typedef long pez_int;		// Stack integer type
 typedef double pez_real;	// Real number type
 typedef long pez_stackitem;
@@ -60,6 +59,11 @@ struct pez_load_path {
 	pez_load_path *next;
 	char *path;
 };
+
+typedef struct {
+	char *name;
+	long size;
+} pez_struct;
 
 /* Permissions for instances of Pez: */
 
@@ -117,6 +121,7 @@ struct pez_inst {
 
 	// Compiling:
 	pez_dictword *createword;	// Address of word pending creation
+	pez_struct *createstruct;	// Address of struct being defined.
 
 	// Lexing:
 	char *instream;		// Current input stream line
