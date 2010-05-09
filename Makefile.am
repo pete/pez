@@ -27,7 +27,9 @@ pez_CFLAGS = $(AM_CFLAGS)
 include_HEADERS = pez.h pezdef.h
 
 EXTRA_DIST = README doc/* lightning/* m4 \
-	     pez.h pezdef.h regress.pez $(pez_DATA)
+	     pez.h pezdef.h regress.pez \
+	     type_primitives.c typegen.pez type_names \
+	     $(pez_DATA)
 
 lib_LTLIBRARIES = libpez.la
 
@@ -40,3 +42,6 @@ repl: pez$(EXEEXT)
 
 regress: pez$(EXEEXT)
 	./pez$(EXEEXT) regress.pez
+
+type_primitives: pez$(EXEEXT)
+	./pez$(EXEEXT) typegen.pez
