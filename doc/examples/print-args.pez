@@ -3,6 +3,7 @@
 # arguments.
 
 : print-args
+	argc 0= if "No argument to print." puts exit then
 	argv
 	argc 0 do
 		dup @ puts
