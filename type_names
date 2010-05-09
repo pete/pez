@@ -1,0 +1,16 @@
+int		c-int		c_int
+long		c-long		c_long
+short		c-short		c_short
+unsigned int	c-uint		c_uint
+unsigned long	c-ulong		c_ulong
+unsigned short	c-ushort	c_ushort
+float		c-float		c_float
+double		c-double	c_double
+int8_t		int8		int8
+uint8_t		uint8		uint8
+int16_t		int16		int16
+uint16_t	uint16		uint16
+int32_t		int32		int32
+uint32_t	uint32		uint32
+int64_t		int64		int64
+uint64_t	uint64		uint64

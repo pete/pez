@@ -1,0 +1,276 @@
+#! /usr/bin/env pez
+# A big, ugly file that generates a bigger, uglier C file to generate the
+# primitive words for accessing the variously sized bits of memory that are
+# needed in order to talk across the FFI with C structs.
+#
+# TODO:  Handling for types larger than a cell.  See pez.c's SIZE_FUNCS macro.
+
+variable funcs "" funcs !
+variable decls "" decls !
+
+variable cname
+variable pezname
+variable ctype
+
+variable fname
+variable #funcs 0 #funcs !
+
+"\t*([^\t\n]+)(\t*|$)" 0 regex constant tabtok-rx
+: tabtok ( str -- str+n word|0 )
+	dup tabtok-rx rmatch
+	0= if 0 exit then
+	dup $1 rot substr ( str word )
+	swap $2 nip + ( word str+n )
+	swap ;
+
+: fl ( s -- s' )
+	"\t" swap s+ "\n" s+ s+ ;
+
+: add-func ( s -- )
+	#funcs 1+!
+	funcs @ swap s+ funcs ! ;
+
+: add-decl ( suffix -- )
+	"{\"0" pezname @ s+ swap s+ "\", " s+ fname @ s+ "},\n" s+
+	decls @ swap s+ decls ! ;
+
+: fn-prelude ( -- prelude )
+	"prim " fname @ s+ "(pez_instance *p)\n{\n" s+ ;
+
+: reader-fn ( -- )
+	"P_" cname @ s+ "_at" s+ fname ! 
+	"@" add-decl
+
+	fn-prelude
+	"\tSl(1);\n" s+
+	"\tHpc(S0);\n" s+
+	"\tS0 = *(" s+ ctype @ s+ " *)S0;\n}\n\n" s+
+	add-func ;
+
+: writer-fn ( -- )
+	"P_" cname @ s+ "_bang" s+ fname !
+	"!" add-decl
+
+	fn-prelude
+	"\tSl(2);\n" s+
+	"\tHpc(S0);\n" s+
+	"\t*(" s+ ctype @ s+ " *)S0 = (" s+ ctype @ s+ ")S1;\n" s+
+	"\tNpop(2);\n}\n\n" s+
+	add-func ;
+
+: size-fn ( -- )
+	"P_" cname @ s+ "_size" s+ fname !
+	"-size" add-decl
+
+	fn-prelude
+	"\tSo(1);\n" s+
+	"\tPush = sizeof(" s+ ctype @ s+ ");\n}\n\n" s+
+	add-func ;
+
+: size-mult ( -- )
+	"P_" cname @ s+ "s" s+ fname !
+	"s" add-decl
+	
+	fn-prelude
+	"\tSl(1);\n" s+
+	"\tS0 *= sizeof(" s+ ctype @ s+ ");\n}\n\n" s+
+	add-func ;
+
+# If you're reading along, be careful, because it's about to get uglier.
+: struct-member ( -- )
+	"P_" cname @ s+ "_colon" s+ fname !
+	":" add-decl
+	fn-prelude
+	"pez_dictword *offsetw = (pez_dictword *)p->hptr, *w;" fl
+	"pez_stackitem plus;" fl
+	"int namelen, token;" fl
+	"char *name, *buf;" fl
+	"" fl
+	"if(!p->createstruct) {" fl
+	"\ttrouble(p, \"Tried to define struct member outside struct \"" fl
+	"\t\t\"definition\");" fl
+	"\treturn;" fl
+	"}" fl
+	"plus = (pez_stackitem)lookup(p, \"+\");" fl
+	"" fl
+	"name = alloc(TOK_BUF_SZ);" fl
+	"token = lex(p, &p->instream, name);" fl
+	"if(token != TokWord) {" fl
+	"\ttrouble(p, \"Expected a word to follow '" pezname @ s+ 
+		":'\");" s+ fl
+	"\treturn;" fl
+	"}" fl
+	"namelen = strlen(name);" fl
+	"" fl
+	"// ( struct-addr -- member-addr ) The offset-adder:" fl
+	"Ho(Dictwordl);" fl
+	"p->hptr += Dictwordl;" fl
+	"buf = alloc(namelen + 2);" fl
+	"memcpy(buf + 1, name, namelen);" fl
+	"offsetw->wname = buf;" fl
+	"offsetw->wcode = P_nest;" fl
+	"offsetw->wnext = p->dict;" fl
+	"p->dict = offsetw;" fl
+	"if(p->createstruct->size) { // No point in adding zero." fl
+	"\tHsingle(s_lit);" fl
+	"\tHsingle(p->createstruct->size);" fl
+	"\tHsingle(plus);" fl
+	"}" fl
+	"Hsingle(s_exit);" fl
+	"" fl
+
+	"// ( struct-addr -- member ) The reader:" fl
+	"Ho(Dictwordl);" fl
+	"buf = alloc(namelen + 3);" fl
+	"sprintf(buf + 1, \"%s@\", name);" fl
+	"w = (pez_dictword *)p->hptr;" fl
+	"p->hptr += Dictwordl;" fl
+	"w->wname = buf;" fl
+	"w->wcode = P_nest;" fl
+	"w->wnext = p->dict;" fl
+	"p->dict = w;" fl
+	"if(p->createstruct->size) {" fl
+	"\tHsingle(s_lit);" fl
+	"\tHsingle(p->createstruct->size);" fl
+	"\tHsingle(plus);" fl
+	"}" fl
+	"Hsingle((pez_stackitem)lookup(p, \"" pezname @ s+ "@\"));" s+ fl
+	"Hsingle(s_exit);" fl
+	"" fl
+
+	"// ( val struct-addr -- ) The writer:" fl
+	"Ho(Dictwordl);" fl
+	"w = (pez_dictword *)p->hptr;" fl
+	"p->hptr += Dictwordl;" fl
+	"buf = alloc(namelen + 3);" fl
+	"sprintf(buf + 1, \"%s!\", name);" fl
+	"w->wname = buf;" fl
+	"w->wcode = P_nest;" fl
+	"w->wnext = p->dict;" fl
+	"p->dict = w;" fl
+	"if(p->createstruct->size) {" fl
+	"\tHsingle(s_lit);" fl
+	"\tHsingle(p->createstruct->size);" fl
+	"\tHsingle(plus);" fl
+	"}" fl
+	"Hsingle((pez_stackitem)lookup(p, \"" pezname @ s+ "!\"));" s+ fl
+	"Hsingle(s_exit);" fl
+	"" fl
+
+	"// And, finally, we add the size of a " pezname @ s+ 
+		" to the size of the struct." s+ fl
+	"p->createstruct->size += sizeof(" ctype @ s+ ");" s+ fl
+
+	"}\n\n" s+
+
+	add-func ;
+
+: plural-struct-member
+	"P_" cname @ s+ "s_colon" s+ fname !
+	"s:" add-decl
+	fn-prelude
+	
+	"pez_dictword *w = (pez_dictword *)p->hptr;" fl
+	"pez_stackitem plus;" fl
+	"int namelen, token;" fl
+	"char *name, *buf;" fl
+	"" fl
+
+	"if(!p->createstruct) {" fl
+	"\ttrouble(p, \"Tried to define struct member outside struct \"" fl
+	"\t\t\"definition\");" fl
+	"\treturn;" fl
+	"}" fl
+	"Sl(1);" fl
+	"" fl
+
+	"plus = (pez_stackitem)lookup(p, \"+\");" fl
+	"" fl
+
+	"name = alloc(TOK_BUF_SZ);" fl
+	"token = lex(p, &p->instream, name);" fl
+	"if(token != TokWord) {" fl
+	"\ttrouble(p, \"Expected a word to follow '" pezname @ s+ 
+		"s:'\");" s+ fl
+	"\treturn;" fl
+	"}" fl
+	"namelen = strlen(name);" fl
+	"" fl
+
+	"Ho(Dictwordl);" fl
+	"p->hptr += Dictwordl;" fl
+	"buf = alloc(namelen + 2);" fl
+	"memcpy(buf + 1, name, namelen);" fl
+	"w->wname = buf;" fl
+	"w->wcode = P_nest;" fl
+	"w->wnext = p->dict;" fl
+	"p->dict = w;" fl
+	"if(p->createstruct->size) { // No point in adding zero." fl
+	"\tHsingle(s_lit);" fl
+	"\tHsingle(p->createstruct->size);" fl
+	"\tHsingle(plus);" fl
+	"}" fl
+	"Hsingle(s_exit);" fl
+	"" fl
+
+	"p->createstruct->size += S0 * sizeof(" ctype @ s+ ");" s+ fl
+	"Pop;" fl
+
+	"}\n\n" s+
+
+	add-func ;
+
+: pline ( l -- )
+	tabtok swap tabtok swap tabtok nip ( ctype pezname cname )
+	cname !
+	pezname !
+	ctype !
+
+	reader-fn
+	writer-fn
+	size-fn
+	size-mult
+	struct-member
+	plural-struct-member
+;
+
+: process ( -- )
+	begin gets dup while
+		pline
+	repeat drop ;
+
+: write-file ( str fn -- )
+	o_creat o_wronly or 0666 open
+	dup 0< if drop 1 "Couldn't open file!" die! then
+	>output print output> close drop ;
+
+# Figures out what file has the types
+: types-fn ( -- fn )
+	argc 1 < if "type_names" exit then
+	argv @ ;
+
+: type_primitives.c ( -- fn )
+	argc 2 < if "type_primitives.c" exit then
+	argv cell-size + @ ;
+
+types-fn o_rdonly 0 open >input
+	process
+input> close drop
+
+"/* " type_primitives.c s+ "\n" s+
+"   This file has been automatically generated as part of the Pez build\n" s+
+"   process, by typegen.pez.  It defines a number of primitive functions\n" s+
+"   that help out with dealing with the variously sized types presented by\n" s+
+"   C, and including them in structs.\n" s+
+"\n" s+
+"   So editing this file is going to be unhelpful; you'd be better off\n" s+
+"   editing typegen.pez.  So that Pez can be built on machines that don't\n" s+
+"   already have Pez, this file is included in the repository and with\n" s+
+"   distribution tarballs.\n" s+
+"*/\n\n" s+
+funcs @ s+
+"struct primfcn memory_primitives[] = {" s+
+decls @ s+
+"{NULL, (pez_wordp)0}\n};" s+
+type_primitives.c write-file
+"Generated " print #funcs @ . "functions." puts
