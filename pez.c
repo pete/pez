@@ -451,7 +451,6 @@ static int lex(pez_instance *p, char **cp, char token_buffer[])
 }
 
 /*  LOOKUP  --	Look up token in the dictionary.  */
-
 static pez_dictword *lookup(pez_instance *p, char *tkname)
 {
 	pez_dictword *dw = p->dict;
