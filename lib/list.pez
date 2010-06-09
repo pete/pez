@@ -39,4 +39,4 @@ variable list-each-word'
 
 # Concatenates two lists, destructively plugging l2 to the end of l1.
 : list+ ( l1 l2 -- )
-	swap list-end cell-size + ! ;
+	swap list-end l>tail! ;
