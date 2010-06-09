@@ -1,2 +1,37 @@
-# Empty for now.  Intended as an automatically-loaded chunk of the core Pez
-# functionality.
+# This file is automatically loaded.  It consists of the pieces of Pez that are
+# intended to always be there, but which are written in Pez rather than C.  Some
+# of them will probably end up migrating to a C file to be built into Pez, and
+# some might move out of core and into another library.
+
+# read-input reads the entire input stream into a string in memory, and leaves
+# a pointer on the stack.
+4096 constant ri'chunk-size
+variable ri'allocated
+variable ri'ptr
+: read-input ( -- str )
+	# Allocate a chunk.
+	ri'chunk-size malloc ri'ptr !
+	ri'chunk-size ri'allocated !
+	0 ri'ptr @
+	begin ( bytes-read ptr )
+		# Read up to (allocd-read) bytes into (ptr+read).
+		2dup ri'allocated @ rot ( br ptr ptr allocd br )
+		- read dup 0>
+	while ( br ptr read-this-time )
+		# Add to read and the pointer.
+		swap over + -rot + swap
+		# If br == allocd, double allocd and realloc.
+		over ri'allocated @ >= if ( br ptr )
+			ri'allocated @ 1 shift dup ri'allocated ! ( br ptr sz )
+			ri'ptr @ realloc dup ri'ptr ! ( br ptr ptr' )
+			nip over +
+		then
+	repeat
+	drop 1+ ri'ptr @ realloc nip ;
+
+# Given a file name, this word opens the file and reads the whole thing into
+# memory.  Probably a good plan to use it with caution.
+: read-file ( fname -- str )
+	o_rdonly 0 open
+	dup 0 < if drop 0 then
+	>input read-input input> close drop ;
