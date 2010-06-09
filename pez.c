@@ -171,6 +171,19 @@ static char *alloc(unsigned long size)
 	return cp;
 }
 
+void *pez_realloc(void *ptr, long size)
+{
+	void *p = GC_REALLOC(ptr, size);
+
+	if(!p) {
+		fprintf(stderr, "\n\nOut of memory!  %lu bytes requested.\n",
+			size);
+		fflush(stderr);
+		abort();
+	}
+	return p;
+}
+
 static char *pez_strdup(char *s)
 {
 	char *dup = GC_STRDUP(s);
@@ -947,6 +960,18 @@ prim P_malloc(pez_instance *p)
 {
 	Sl(1);
 	S0 = (pez_stackitem)alloc(S0);
+}
+
+/*
+   ( n addr -- addr' )
+   Reallocates storage.
+*/
+prim P_realloc(pez_instance *p)
+{
+	Sl(2);
+	Hpc(S0);
+	S1 = (pez_stackitem)pez_realloc((void *)S0, S1);
+	Pop;
 }
 
 /*
@@ -2384,6 +2409,7 @@ prim P_gets(pez_instance *p)
 				fprintf(stderr, "Couldn't realloc.  Bad.\n");
 				abort();
 			}
+			buf = tmp;
 			c = buf + (max / 2);
 		}
 
@@ -4290,7 +4316,7 @@ prim P_align_struct(pez_instance *p)
 
 // I know what you're about to think when you read the next line, and I can
 // sympathize, but doing it otherwise presents the same issues that splitting
-// up this file presents.
+// up this file presents.  A sensible plan for fixing these issues is pending.
 #include "type_primitives.c"
 
 #ifdef FFI
@@ -4959,6 +4985,7 @@ static struct primfcn primt[] = {
 	{"0C,", P_ccomma},
 	{"0C=", P_cequal},
 	{"0MALLOC", P_malloc},
+	{"0realloc", P_realloc},
 	{"0memcpy", P_memcpy},
 	{"0HERE", P_here},
 
