@@ -890,6 +890,17 @@ prim P_shift(pez_instance *p)
 	Pop;
 }
 
+/*
+   ( -- random! )
+   Pushes a random number onto the stack.
+*/
+prim P_rand(pez_instance *p)
+{
+	Push = rand();
+	if(sizeof(int) < sizeof(pez_stackitem))
+		S0 |= (pez_stackitem)rand() << (sizeof(int) * 8);
+}
+
 prim P_1plus(pez_instance *p)
 {				/* Add one */
 	Sl(1);
@@ -4937,6 +4948,7 @@ static struct primfcn primt[] = {
 	{"0R>", P_rfrom},
 	{"0R@", P_rfetch},
 	{"0TIME", P_time},
+	{"0rand", P_rand},
 
 	{"01+", P_1plus},
 	{"02+", P_2plus},
