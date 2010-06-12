@@ -245,4 +245,7 @@ extern void pez_heap_float(pez_instance *p, pez_real f);
 extern void pez_heap_string(pez_instance *p, char *s);
 extern void pez_memstat(pez_instance *p);
 
+char *pez_strdup(char *s);
+char *alloc(unsigned long size);
+
 #endif

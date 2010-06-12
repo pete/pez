@@ -158,7 +158,7 @@ static void pwalkback(pez_instance *p);
 #endif
 
 /*  ALLOC  --  Allocate memory and error upon exhaustion.  */
-static char *alloc(unsigned long size)
+char *alloc(unsigned long size)
 {
 	char *cp = (char *)GC_MALLOC(size);
 
@@ -184,7 +184,7 @@ void *pez_realloc(void *ptr, long size)
 	return p;
 }
 
-static char *pez_strdup(char *s)
+char *pez_strdup(char *s)
 {
 	char *dup = GC_STRDUP(s);
 	if(dup == NULL) {
