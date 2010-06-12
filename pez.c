@@ -4592,9 +4592,9 @@ prim P_sleep(pez_instance *p)
 prim P_fsleep(pez_instance *p)
 {
 	Sl(Realsize);
-	double *t = REAL0;
+	double t = REAL0;
 	Realpop;
-	usleep((long)(t * 1000000));
+	usleep((long)(t * 1000000.0));
 }
 
    
