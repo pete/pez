@@ -24,10 +24,10 @@ AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
 	    "-DPEZCONF_CC=\"${CC}\""
 
 pez_CFLAGS = $(AM_CFLAGS)
-include_HEADERS = pez.h pezdef.h
+include_HEADERS = pez.h pezdef.h pez_sysconfig.h
 
 EXTRA_DIST = README doc/* lightning/* m4 \
-	     pez.h pezdef.h regress.pez \
+	     pez.h pezdef.h pez_sysconfig.h regress.pez \
 	     type_primitives.c typegen.pez type_names \
 	     $(pez_DATA)
 
@@ -36,6 +36,9 @@ lib_LTLIBRARIES = libpez.la
 libpez_la_SOURCES = pez.c pez.h st.c st.h
 # I swear, the docs say this works:
 # libpez_la_LIBTOOLFLAGS = -version-info 1:5:2
+
+pez_sysconfig.h: config.h
+	cp config.h pez_sysconfig.h
 
 repl: pez$(EXEEXT)
 	$(RLWRAP) ./pez$(EXEEXT)
