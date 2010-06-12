@@ -5247,7 +5247,6 @@ static struct primfcn primt[] = {
 	{"0FORK", P_fork},
 	{"0EXECV", P_execv},
 	{"0WAIT", P_wait},
-	{"0WAIT", P_wait},
 	{"0waitpid", P_waitpid},
 	{"0wait_untraced", P_wait_untraced},
 	{"0PID", P_pid},
