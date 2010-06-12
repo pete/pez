@@ -4584,6 +4584,19 @@ prim P_sleep(pez_instance *p)
 	sleep(S0);
 	Pop;
 }
+
+/*
+   ( seconds -- )
+   Sleeps the specified number of seconds, which are passed as a float.
+*/
+prim P_fsleep(pez_instance *p)
+{
+	Sl(Realsize);
+	double *t = REAL0;
+	Realpop;
+	usleep((long)(t * 1000000));
+}
+
    
 extern char **environ;
 /*
@@ -5162,6 +5175,7 @@ static struct primfcn primt[] = {
 
 #ifdef PROCESS
 	{"0sleep", P_sleep},
+	{"0fsleep", P_fsleep},
 	{"0ENVIRON", P_environ},
 	{"0GETENV", P_getenv},
 	{"0SETENV", P_setenv},
