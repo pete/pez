@@ -60,7 +60,7 @@
 #define MATH			// Math functions
 #define MEMMESSAGE		// Print message for stack/heap errors
 #define PROLOGUE		// Prologue processing and auto-init
-#define SYSTEM			// System command function
+#define SYSTEM			// System command functions
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
 
@@ -4109,6 +4109,47 @@ prim P_system(pez_instance *p)
 	Hpc(S0);
 	S0 = system((char *)S0);
 }
+
+/*
+   ( string -- fd pid )
+   Makes a system call, and leaves on the stack its pid and a file descriptor to
+   read its stdout from.
+*/
+prim P_money(pez_instance *p)
+{
+	Sl(1);
+	So(1);
+	Hpc(S0);
+
+	int pid;
+	int pipefd[2];
+	char *cmd = (char *)S0;
+	char *exec_argv[4] = { "sh", "-c", 0, 0 };
+
+	Pop;
+
+	if(pipe(pipefd) < 0) {
+		Push = -1;
+		Push = -1;
+		return;
+	}
+	
+	pid = fork();
+	if(pid < 0) {
+		Push = -1;
+		Push = -1;
+		return;
+	} else if(pid) {
+		close(pipefd[1]);
+		Push = pipefd[0];
+		Push = pid;
+	} else {
+		close(pipefd[0]);
+		dup2(pipefd[1], 1);
+		exec_argv[2] = (char *)cmd;
+		execv("/bin/sh", exec_argv);
+	}
+}
 #endif	// SYSTEM
 
 /*
@@ -4687,7 +4728,25 @@ prim P_wait(pez_instance *p)
 {
 	So(2);
 	Push = 0;
-	Push = wait((int *)(p->stk - 1));
+	Push = wait((int *)&S0);
+}
+
+PUSH_CONSTANT(P_wait_untraced, WUNTRACED)
+
+/*
+   ( pid flags -- status )
+   Waits for the pid to exit, and returns its status.
+*/
+prim P_waitpid(pez_instance *p)
+{
+	So(2);
+	int pid, status, options;
+
+	pid = (int)S1;
+	options = (int)S0;
+
+	waitpid(pid, &status, options);
+	S0 = (pez_stackitem)status;
 }
 
 /*
@@ -5148,6 +5207,7 @@ static struct primfcn primt[] = {
 
 #ifdef SYSTEM
 	{"0SYSTEM", P_system},
+	{"0$", P_money},
 #endif
 
 	{"0struct:", P_struct_colon},
@@ -5187,6 +5247,9 @@ static struct primfcn primt[] = {
 	{"0FORK", P_fork},
 	{"0EXECV", P_execv},
 	{"0WAIT", P_wait},
+	{"0WAIT", P_wait},
+	{"0waitpid", P_waitpid},
+	{"0wait_untraced", P_wait_untraced},
 	{"0PID", P_pid},
 	{"0KILL", P_kill},
 #endif
