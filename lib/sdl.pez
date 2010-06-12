@@ -1,0 +1,150 @@
+# Interface to libSDL.  It basically defines a number of structs, and then loads
+# the main code from the .so FFI file.
+
+struct: sdl-rect
+	int16: sdl-rect>x
+	int16: sdl-rect>y
+	uint16: sdl-rect>w
+	uint16: sdl-rect>h
+;struct
+
+struct: sdl-surface
+	uint32: sdl-surface>flags
+	cell-size align-struct cell: sdl-surface>format
+	c-int: sdl-surface>w
+	c-int: sdl-surface>h
+	uint16: sdl-surface>pitch
+	cell-size align-struct cell: sdl-surface>pixels
+	c-int: sdl-surface>offset
+
+	cell-size align-struct cell: sdl-surface>hwdata
+
+	sdl-rect-size int8s: sdl-surface>clip-rect
+	uint32: sdl-surface>unused1
+
+	uint32: sdl-surface>locked
+
+	cell-size align-struct cell: sdl-surface>map
+
+	c-uint: sdl-surface>format-version
+
+	c-int: sdl-surface>refcount
+;struct
+
+struct: sdl-keysym
+	uint8: sdl-ks>scancode
+	c-int-size align-struct uint16: sdl-ks>sym
+	c-int-size align-struct uint16: sdl-ks>mod
+	c-int-size align-struct uint16: sdl-ks>unicode
+	cell-size align-struct
+;struct
+
+# Events.  There are many, but they are stuffed into a union, with 'type' as the
+# first member.  It's an unsigned byte.
+
+0 ( To keep around for the purposes of the main event struct. )
+
+struct: sdl-active-event
+	uint8: sdl-ae>type
+	uint8: sdl-ae>gain
+	uint8: sdl-ae>state
+;struct
+sdl-active-event-size max
+
+struct: sdl-keyboard-event
+	uint8: sdl-kbe>type
+	uint8: sdl-kbe>which
+	uint8: sdl-kbe>state
+	c-int-size align-struct sdl-keysym-size uint8s: sdl-ev>keysym
+;struct
+sdl-keyboard-event-size max
+
+struct: sdl-mouse-motion-event
+	uint8: sdl-mme>type
+	uint8: sdl-mme>which
+	uint8: sdl-mme>state
+	c-int-size align-struct
+
+	uint16: sdl-mme>x
+	uint16: sdl-mme>y
+	int16: sdl-mme>xrel
+	int16: sdl-mme>yrel
+;struct
+sdl-mouse-motion-event-size max
+
+struct: sdl-mouse-button-event
+	uint8: sdl-mbe>type
+	uint8: sdl-mbe>which
+	uint8: sdl-mbe>button
+	uint8: sdl-mbe>state
+
+	uint16: sdl-ev>x
+	uint16: sdl-ev>y
+;struct
+sdl-mouse-button-event-size max
+
+struct: sdl-joy-axis-event
+	uint8: sdl-jae>type
+	uint8: sdl-jae>which
+	uint8: sdl-jae>axis
+	int16: sdl-jae>value
+;struct
+sdl-joy-axis-event-size max
+
+struct: sdl-joy-ball-event
+	uint8: sdl-jbe>type
+	uint8: sdl-jbe>which
+	uint8: sdl-jbe>ball
+	c-int-size align-struct
+
+	int16: sdl-jbe>xrel
+	int16: sdl-jbe>yrel
+;struct
+sdl-joy-ball-event-size max
+
+struct: sdl-joy-hat-event
+	uint8: sdl-jhe>type
+	uint8: sdl-jhe>which
+	uint8: sdl-jhe>hat
+	uint8: sdl-jhe>value
+;struct
+sdl-joy-hat-event-size max
+
+struct: sdl-joy-button-event
+	uint8: sdl-jhe>type
+	uint8: sdl-jhe>which
+	uint8: sdl-jhe>button
+	uint8: sdl-jhe>state
+;struct
+sdl-joy-button-event-size max
+
+struct: sdl-resize-event
+	uint8: sdl-re>type
+	c-int-size align-struct
+	c-int: sdl-re>w
+	c-int: sdl-re>h
+;struct
+sdl-resize-event-size max
+
+struct: sdl-expose-event
+	uint8: sdl-ee>type
+;struct
+
+struct: sdl-quit-event
+	uint8: sdl-qe>type
+;struct
+
+struct: sdl-user-event
+	uint8: sdl-ue>type
+	c-int-size align-struct
+	c-int: code
+	cell-size align-struct
+	cell: data1
+	cell: data2
+;struct
+sdl-user-event-size max
+
+struct: sdl-event
+	uint8: sdl-event>type
+	align-struct ( Using the value we've had on the stack this whole time. )
+;struct
