@@ -15,7 +15,7 @@
 #ifndef __PEZ_H
 #define __PEZ_H
 
-#include <config.h>
+#include <pez_sysconfig.h>
 
 #include <stdio.h>
 #include <regex.h>
@@ -236,6 +236,7 @@ extern int pez_push(pez_instance *p, long i);
 extern int pez_anticipating_token(pez_instance *p);
 extern char *pez_which_lib(pez_instance *p, char *libname);
 extern int pez_load(pez_instance *p, FILE *fp);
+extern int pez_ffi_load(pez_instance *p, char *libname);
 
 extern void pez_stack_int(pez_instance *p, pez_int i);
 extern void pez_stack_float(pez_instance *p, pez_real f);

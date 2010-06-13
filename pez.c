@@ -82,6 +82,10 @@
 #include <math.h>
 #endif
 
+#ifdef FFI
+#include <dlfcn.h>
+#endif
+
 // Macro for defining primitives that push constant values:
 #define PUSH_CONSTANT(fname, constant) prim fname(pez_instance *p) { So(1);\
 	Push = (pez_stackitem)constant; }
@@ -2710,9 +2714,16 @@ prim P_load_lib(pez_instance *p)
 		return;
 	}
 
+	// .so files are assumed to be Pez FFI libraries.
 	if(!strcmp(".so", which + strlen(which) - 3)) {
-		fprintf(stderr,
-			"Give me a minute, I'm not loading .so files yet.\n");
+		switch(pez_ffi_load(p, which)) {
+			case -1:
+				trouble(p, pez_strdup(dlerror()));
+				return;
+			case -2:
+				trouble(p, "Not a valid Pez FFI lib.");
+				return;
+		}
 		return;
 	}
 
@@ -4372,7 +4383,6 @@ prim P_align_struct(pez_instance *p)
 #include "type_primitives.c"
 
 #ifdef FFI
-#include <dlfcn.h>
 
 /*
    ( libname -- status )
@@ -4388,29 +4398,13 @@ prim P_align_struct(pez_instance *p)
 */
 prim P_ffi_load(pez_instance *p)
 {
-	void *lib;
-	void (*init)();
-	struct primfcn *defs;
-
 	Sl(1);
-	lib = dlopen((char *)S0, RTLD_NOW);
-	if(!lib) {
-		S0 = Falsity;
-		return;
+	char *libname = (char *)S0;
+	if(pez_ffi_load(p, libname) < 0) {
+		Push = 0;
+	} else {
+		Push = -1;
 	}
-
-	init = dlsym(lib, "pez_ffi_init");
-	defs = dlsym(lib, "pez_ffi_definitions");
-	if(!(init || defs)) {
-		S0 = Falsity;
-		return;
-	}
-	S0 = Truth;
-	dlerror();		// Which clears the last error.
-	if(init)
-		init();
-	if(defs)
-		pez_primdef(p, defs);
 }
 
 /*
@@ -5373,6 +5367,45 @@ static struct primfcn primt[] = {
 
 	{NULL, (pez_wordp)0}
 };
+
+/*
+   Loads a library on the fly.  The library is expected to export at least one
+   of two symbols:
+   	void pez_ffi_init(pez_instance *p)
+	struct primfcn pez_ffi_definitions[]
+   The initializer will be called first, and then the defs will be added to the
+   instance of Pez.
+
+   On success, 0 is returned.  If the library couldn't be opened, it returns -2
+   and dlerror() will return something appropriate.  If neither symbol could be
+   resolved, then the it returns -1.
+*/
+int pez_ffi_load(pez_instance *p, char *libname)
+{
+	void *lib;
+	void (*init)(pez_instance *p);
+	struct primfcn *defs;
+
+	// TODO:  Remembering libraries that have been loaded.
+	lib = dlopen(libname, RTLD_NOW);
+	if(!lib) {
+		return -2;
+	}
+
+	init = dlsym(lib, "pez_ffi_init");
+	defs = dlsym(lib, "pez_ffi_definitions");
+	if(!(init || defs)) {
+		return -1;
+	}
+
+	dlerror();		// Which clears the last error.
+	if(init)
+		init(p);
+	if(defs)
+		pez_primdef(p, defs);
+	return 0;
+}
+
 
 /*
    Initialise the dictionary with the built-in primitive words.
