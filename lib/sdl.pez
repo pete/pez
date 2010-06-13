@@ -148,3 +148,5 @@ struct: sdl-event
 	uint8: sdl-event>type
 	align-struct ( Using the value we've had on the stack this whole time. )
 ;struct
+
+"sdl-ffi" load-lib
