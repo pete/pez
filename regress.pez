@@ -782,6 +782,12 @@ variable k
         "Initial string to which we add" "" over s+ sok?
         "Initial string to which we add" " the final touch." s+
             "Initial string to which we add the final touch." sok?
+    
+    "CHOMP" tests:
+    	"one\n" dup chomp! "one" sok?
+	"two\r\n" chomp "two" sok?
+	"three\n" chomp "three" sok?
+	"four\njkl\n" chomp "four\njkl" sok?
 
     "STRLEN" tests:
         "" strlen 0 ok?

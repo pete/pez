@@ -1416,6 +1416,43 @@ prim P_splus(pez_instance *p)
 }
 
 /*
+   ( s -- )
+   Removes a trailing newline (with optional carriage return) from a string, in
+   place.
+*/
+prim P_chomp_bang(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+	char *s = (char *)S0, *nl;
+
+	Pop;
+
+	nl = strrchr(s, '\n');
+	if(!nl)
+		return;
+
+	*nl = 0;
+	if(nl[-1] == '\r')
+		nl[-1] = 0;
+}
+
+/*
+   ( s -- s' )
+   Removes a trailing newline, non-destructively.
+*/
+prim P_chomp(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+
+	char *s = pez_strdup((char *)S0);
+	S0 = (pez_stackitem)s;
+	P_chomp_bang(p);
+	Push = (pez_stackitem)s;
+}
+
+/*
    ( s1 s2 -- )
    Just like C's strcat, it copies s1 to the end of s2.
 */
@@ -2718,10 +2755,10 @@ prim P_load_lib(pez_instance *p)
 	if(!strcmp(".so", which + strlen(which) - 3)) {
 		switch(pez_ffi_load(p, which)) {
 			case -1:
-				trouble(p, pez_strdup(dlerror()));
+				trouble(p, "Not a valid Pez FFI lib");
 				return;
 			case -2:
-				trouble(p, "Not a valid Pez FFI lib.");
+				trouble(p, pez_strdup(dlerror()));
 				return;
 		}
 		return;
@@ -5088,6 +5125,8 @@ static struct primfcn primt[] = {
 	{"0STRCAT", P_strcat},
 	{"0sdup", P_sdup},
 	{"0S+", P_splus},
+	{"0chomp!", P_chomp_bang},
+	{"0chomp", P_chomp},
 	{"0STRLEN", P_strlen},
 	{"0STRCMP", P_strcmp},
 	{"0STRNCMP", P_strncmp},
