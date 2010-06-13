@@ -22,3 +22,4 @@ stamp-h1
 configure
 Makefile.in
 config.h.in
+pez_sysconfig.h
