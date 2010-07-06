@@ -13,8 +13,8 @@
 # sys     1m50.791s
 # (...Which also ate the expected chunk of RAM, ~480 MB, while running.)
 
-# We check all integers up to sieve-size * 2.
-500000 constant sieve-size
+10 6 ^ 1+ constant biggest
+biggest 2/ constant sieve-size
 sieve-size malloc constant sieve
 
 # A few words for address translation.  There's a minor optimization here:  we
@@ -27,7 +27,6 @@ sieve-size malloc constant sieve
 # they rely on not being asked about even numbers.
 : prime? ( n -- t|f )   >sa c@ 0= ;
 : not-prime! ( n -- )   >sa -1 swap c! ;
-: biggest ( -- n )   sieve-size sieve + 1- >n ;
 
 variable 2n
 : sieve-n ( n -- )
