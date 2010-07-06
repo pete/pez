@@ -1,0 +1,58 @@
+#! /usr/bin/env pez
+
+# A little sieve of Eratosthenes demonstration.  See the sieve-size constant if
+# you want to set a higher maximum.
+
+# On my machine, checking numbers less than 1,000,000 takes up this much time:
+# real    0m0.383s
+# user    0m0.228s
+# sys     0m0.160s
+# Checking numbers less than 1,000,000,000:
+# real    8m2.397s
+# user    6m10.707s
+# sys     1m50.791s
+# (...Which also ate the expected chunk of RAM, ~480 MB, while running.)
+
+# We check all integers up to sieve-size * 2.
+500000 constant sieve-size
+sieve-size malloc constant sieve
+
+# A few words for address translation.  There's a minor optimization here:  we
+# skip all of the even numbers and special-case 2.  These words are for
+# translating back and forth between numbers and addresses in the sieve pile.
+: >sa ( n -- sieve-address )   2/ 1- sieve + ;
+: >n ( sieve-address -- n )   sieve - 1+ 2* 1+ ;
+
+# As mentioned above, we totally ignore even numbers, including these words, so
+# they rely on not being asked about even numbers.
+: prime? ( n -- t|f )   >sa c@ 0= ;
+: not-prime! ( n -- )   >sa -1 swap c! ;
+: biggest ( -- n )   sieve-size sieve + 1- >n ;
+
+variable 2n
+: sieve-n ( n -- )
+	# From n*3 (the first odd composite that is a multiple of n) to biggest,
+	# stepping by n*2 (remember, we skip evens):
+	dup 1 shift 2n !
+	biggest swap 3 * do
+		i not-prime!
+	2n @ +loop ;
+
+: sieve-all ( -- )
+	biggest float sqrt ceil 3 do
+		i sieve-n
+	2 +loop ;
+
+variable #primes
+: print-primes ( -- )
+	"Primes from 2 to " print biggest 1- . "[pez]" puts
+	2 . cr
+	1 #primes !
+	biggest 3 do
+		i prime? if
+			i . cr
+			#primes 1+! then
+	2 +loop "(" print #primes @ . "primes.)" puts ;
+
+sieve-all
+print-primes
