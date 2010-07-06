@@ -75,6 +75,7 @@ void pezmain_load(char *fname, FILE *fp)
 	fclose(fp);
 	if(stat != PEZ_SNORM) {
 		printf("\nError %d in include file %s\n", stat, fname);
+		exit(1);
 	}
 }
 
