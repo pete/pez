@@ -12,7 +12,7 @@ bin_PROGRAMS = pez$(EXEEXT)
 
 pez_SOURCES = pez.c pez.h pezmain.c pezdef.h st.c st.h
 pezdir = $(libdir)/pez/$(pez_lib_version)
-pez_DATA = lib/*.pez
+pez_DATA = lib/*.pez lib/*.so
 
 AM_CPPFLAGS="-DPEZCONF_LIBDIR=\"${libdir}\"" \
 	    "-DPEZCONF_PEZ_LIBDIR=\"${pezdir}\"" \

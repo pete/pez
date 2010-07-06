@@ -8,6 +8,26 @@ struct: sdl-rect
 	uint16: sdl-rect>h
 ;struct
 
+struct: sdl-color
+	uint8: sdlc>r
+	uint8: sdlc>g
+	uint8: sdlc>b
+	uint8: sdlc>unused
+;struct
+
+# Packs RGB into a color struct.
+: rgb>sdl-color ( r g b -- sdl-color )
+	sdl-color
+	tuck sdlc>b!
+	tuck sdlc>g!
+	tuck sdlc>r! ;
+
+# Unpacks a color struct into RGB values.
+: sdl-color>rgb ( sdl-color -- r g b )
+	dup sdlc>r@ over ( c r c )
+	rot sdlc>g@ swap ( r g c )
+	sdlc>b@ ;
+
 struct: sdl-surface
 	uint32: sdl-surface>flags
 	cell-size align-struct cell: sdl-surface>format
