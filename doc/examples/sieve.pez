@@ -44,7 +44,7 @@ variable 2n
 
 variable #primes
 : print-primes ( -- )
-	"Primes from 2 to " print biggest 1- . "[pez]" puts
+	"Primes from 2 to " print biggest 1- . cr
 	2 . cr
 	1 #primes !
 	biggest 3 do
