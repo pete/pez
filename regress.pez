@@ -836,6 +836,10 @@ variable k
         "  0771234Octal!" tstr s! tstr strint tstr 9 + 258716  2 nok?
         "  0xBEEFABEGHex!" tstr s! tstr strint tstr 11 + 200211134  2 nok?
 
+    "ATOI" tests:
+    	"4" atoi 4 ok?
+	"-1" atoi -1 ok?
+
     "STRREAL" tests:
         "-99.1786X" tstr s! tstr strreal tstr 8 + -99.1786  1 floatcells + nok?
         "   1.234E2" tstr s! tstr strreal tstr 10 + 123.4  1 floatcells + nok?

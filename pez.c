@@ -1621,6 +1621,17 @@ prim P_strint(pez_instance *p)
 }
 
 /*
+   ( str -- i )
+   Like strint, but doesn't advance the pointer.
+*/
+prim P_atoi(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+	S0 = atol((char *)S0);
+}
+
+/*
    ( string -- string' float )
    Parses a floating point out of a string, and increments the string's pointer
    to the end of that float.
@@ -5136,6 +5147,7 @@ static struct primfcn primt[] = {
 	{"0format", P_format},
 	{"0FSTRFORM", P_fstrform},
 	{"0STRINT", P_strint},
+	{"0atoi", P_atoi},
 	{"0STRREAL", P_strreal},
 	{"0REGEX", P_regex},
 	{"0RMATCH", P_rmatch},
@@ -5932,7 +5944,8 @@ pez_dictword *pez_vardef(pez_instance *p, char *name, int size)
 {
 	pez_dictword *di;
 	char buf[TOK_BUF_SZ];
-	int isize = (size + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
+	int isize =
+		(size + (sizeof(pez_stackitem) - 1)) / sizeof(pez_stackitem);
 
 #undef Memerrs
 #define Memerrs NULL
