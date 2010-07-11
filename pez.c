@@ -1868,7 +1868,8 @@ prim P_htat(pez_instance *p)
 	key = (st_data_t)S1;
 
 	Pop;
-	st_lookup(table, key, (st_data_t *)&S0);
+	if(!st_lookup(table, key, (st_data_t *)&S0))
+		S0 = 0;
 }
 
 /*
@@ -1911,6 +1912,46 @@ prim P_ht_clear(pez_instance *p)
 	st_clear((st_table *)S0);
 	Pop;
 }
+
+/*
+   ( table -- size )
+   Returns the number of values in the hash table.
+*/
+prim P_ht_size(pez_instance *p)
+{
+	Sl(1);
+	Hpc(S0);
+	S0 = ((st_table *)S0)->num_entries;
+}
+
+static int ht_keys(pez_stackitem key, pez_stackitem val, pez_stackitem **ary)
+{
+	**ary = key;
+	(*ary)++;
+	return ST_CONTINUE;
+}
+
+/*
+   ( table -- keys size )
+   Leaves on the stack an array of keys, and the size of the array.  Note that
+   order is not guaranteed.  (It is a hash table, after all.)
+*/
+prim P_ht_keys(pez_instance *p)
+{
+	Sl(1);
+	So(1);
+	Hpc(S0);
+
+	st_table *t = (st_table *)S0;
+	pez_stackitem size, *a, *tmp;
+
+	size = t->num_entries;
+	a = tmp = (pez_stackitem *)alloc((size + 1) * sizeof(pez_stackitem));
+	st_foreach(t, ht_keys, (st_data_t)&tmp);
+	S0 = (pez_stackitem)a;
+	Push = size;
+}
+   
 
 /*  Floating point primitives  */
 
@@ -5182,6 +5223,8 @@ static struct primfcn primt[] = {
 	{"0ht?", P_htp},
 	{"0ht-dup", P_ht_dup},
 	{"0ht-clear", P_ht_clear},
+	{"0ht-size", P_ht_size},
+	{"0ht-keys", P_ht_keys},
 
 	{"0(FLIT)", P_flit},
 	{"0F+", P_fplus},

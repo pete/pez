@@ -1046,7 +1046,19 @@ variable tht
 		1 100 tht @ ht!
 		100 tht @ ht? -1 ok?
 		100 tht @ ht@ 1 ok?
+
+		tht @ ht-size 1 ok?
+		9 10 tht @ ht!
+		tht @ ht-size 2 ok?
+
+		tht @ ht-keys nip 2 ok?
+		# Some acrobatics, because key order isn't guaranteed.
+		tht @ ht-keys drop dup @ swap cell-size + @ 
+		2dup max -rot min   100 10 2 nok?
+
 		tht @ ht-clear
+		tht @ ht-size 0 ok?
+
 		100 tht @ ht? 0 ok?
 
 	"STR-HTABLE" tests:
