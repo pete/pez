@@ -1055,6 +1055,8 @@ variable tht
 		# Some acrobatics, because key order isn't guaranteed.
 		tht @ ht-keys drop dup @ swap cell-size + @ 
 		2dup max -rot min   100 10 2 nok?
+		tht @ ht-values drop dup @ swap cell-size + @ 
+		2dup max -rot min   9 1 2 nok?
 
 		tht @ ht-clear
 		tht @ ht-size 0 ok?

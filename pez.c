@@ -1952,6 +1952,33 @@ prim P_ht_keys(pez_instance *p)
 	Push = size;
 }
    
+static int ht_values(pez_stackitem key, pez_stackitem val, pez_stackitem **ary)
+{
+	**ary = val;
+	(*ary)++;
+	return ST_CONTINUE;
+}
+
+/*
+   ( table -- values size )
+   Leaves on the stack an array of values, and the size of the array.  Note that
+   order is not guaranteed.  (It is a hash table, after all.)
+*/
+prim P_ht_values(pez_instance *p)
+{
+	Sl(1);
+	So(1);
+	Hpc(S0);
+
+	st_table *t = (st_table *)S0;
+	pez_stackitem size, *a, *tmp;
+
+	size = t->num_entries;
+	a = tmp = (pez_stackitem *)alloc((size + 1) * sizeof(pez_stackitem));
+	st_foreach(t, ht_values, (st_data_t)&tmp);
+	S0 = (pez_stackitem)a;
+	Push = size;
+}
 
 /*  Floating point primitives  */
 
@@ -5225,6 +5252,7 @@ static struct primfcn primt[] = {
 	{"0ht-clear", P_ht_clear},
 	{"0ht-size", P_ht_size},
 	{"0ht-keys", P_ht_keys},
+	{"0ht-values", P_ht_values},
 
 	{"0(FLIT)", P_flit},
 	{"0F+", P_fplus},
