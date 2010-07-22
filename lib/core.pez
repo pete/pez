@@ -35,3 +35,13 @@ variable ri'ptr
 	o_rdonly 0 open
 	dup 0 < if drop 0 then
 	>input read-input input> close drop ;
+
+fvariable benchtime
+: bench: ( -- ) ftime benchtime f! ;
+: ;bench ( -- ) "  (Took " print ftime benchtime f@ f- f. "seconds.)" puts ;
+
+# Dumps a hash table.
+: ht. ( h -- )
+	dup ht-values drop swap ht-keys cells 0 do
+		2dup i + @ . i + @ . cr
+	cell-size +loop 2drop ;
