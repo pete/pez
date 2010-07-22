@@ -2878,15 +2878,18 @@ prim P_load_lib(pez_instance *p)
 prim P_load(pez_instance *p)
 {
 	FILE *f;
+	char *fn;
 
 	Sl(1);
-	f = fopen((char *)S0, "r");
+	fn = (char *)S0;
+	Pop;
+	f = fopen(fn, "r");
 	if(f) {
-		S0 = pez_load(p, f);
+		Push = pez_load(p, f);
 		fclose(f);
 	} else {
-		perror("P_load");
-		S0 = PEZ_BADFILE;
+		perror("load");
+		Push = PEZ_BADFILE;
 	}
 }
 
