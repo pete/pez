@@ -54,9 +54,11 @@ extern void P_create(pez_instance *p), P_dodoes(pez_instance *p);
 #ifdef EXPORT
 extern
 #endif
-void stakover(pez_instance *p), rstakover(pez_instance *p),
-     heapover(pez_instance *p), badpointer(pez_instance *p),
-     stakunder(pez_instance *p), rstakunder(pez_instance *p);
+void stakover(pez_instance *p), stakunder(pez_instance *p),
+     rstakover(pez_instance *p), rstakunder(pez_instance *p),
+     heapover(pez_instance *p),
+     badpointer(pez_instance *p),
+     fstakover(pez_instance *p), fstakunder(pez_instance *p);
 
 /* Functions called by exported extensions. */
 extern void pez_primdef(pez_instance *p, struct primfcn *pt),
@@ -70,14 +72,6 @@ extern int pez_exec(pez_instance *p, pez_dictword *dw);
 extern char *pez_fgetsp(pez_instance *p, char *s, int n, FILE *stream);
 #endif
 
-/*  If explicit alignment is not requested, enable it in any case for
-    known CPU types that require alignment.  */
-
-#ifndef ALIGNMENT
-#ifdef sparc
-#define ALIGNMENT
-#endif
-#endif
 #ifdef __TURBOC__
 #define  Keyhit()   (kbhit() ? getch() : 0)
 /* DOS needs poll to detect break */
@@ -244,33 +238,27 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 // How many cells a float takes up:
 #define Realsize (sizeof(pez_real)/sizeof(pez_stackitem))
 // Pop a float:
-#define Realpop  p->stk -= Realsize
+#define Realpop  p->fstk--
 // Pop two floats:
-#define Realpop2 p->stk -= (2 * Realsize)
+#define Realpop2 p->fstk -= 2
 
-#define REALSTACK ((pez_real *)p->stk)
-#ifdef ALIGNMENT
-#define REAL0 *((pez_real *)memcpy((char *)&rbuf0, (char *)(REALSTACK - 1), \
-			sizeof(pez_real)))
-#define REAL1 *((pez_real *)memcpy((char *)&rbuf1, (char *)(REALSTACK - 2), \
-			sizeof(pez_real)))
-#define REAL2 *((pez_real *)memcpy((char *)&rbuf2, (char *)(REALSTACK - 3), \
-			sizeof(pez_real)))
-#define SREAL0(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 1), \
-		(char *)&rbuf2, sizeof(pez_real))
-#define SREAL1(x) rbuf2=(x); (void)memcpy((char *)(REALSTACK - 2), \
-		(char *)&rbuf2, sizeof(pez_real))
-#else
+#define REALSTACK p->fstk
 #define REAL0 REALSTACK[-1]
 #define REAL1 REALSTACK[-2]
 #define REAL2 REALSTACK[-3]
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
+#define SREAL2(x) REAL2 = (x)
+#define Realpush(x) *p->fstk++ = x
+
+#ifdef BOUNDS_CHECK
+#define FSl(x) if((p->fstk - p->fstack)<(x)) {fstakunder(p); return Memerrs;}
+#define FSo(n) Msr(n) \
+	if((p->fstk + (n)) > p->fstacktop){fstakover(p); return Memerrs;}
+#else
+#define FSl(x)
+#define FSo(n)
 #endif
-#define Realpush(x) do { \
-	So(Realsize);\
-	p->stk += Realsize; SREAL0(x);\
-} while(0)
 
 #ifdef TRACE
 #define tracing if(p->trace)

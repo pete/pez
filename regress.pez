@@ -636,6 +636,10 @@ variable k
         3.7 fix 3 ok?
         -32767.0 fix -32767 ok?
         -32767.8 fix -32767 ok?
+
+    "FSTACK" tests:
+	0.1 0.0 fdrop 0.1 fok?
+    	0.0 0.1 fswap fdrop 0.1 fok?
 ;
 
 #   Mathematical functions
@@ -841,11 +845,10 @@ variable k
 	"-1" atoi -1 ok?
 
     "STRREAL" tests:
-        "-99.1786X" tstr s! tstr strreal tstr 8 + -99.1786  1 floatcells + nok?
-        "   1.234E2" tstr s! tstr strreal tstr 10 + 123.4  1 floatcells + nok?
-        "Bilge" tstr s! tstr strreal tstr 0.0   1 floatcells + nok?
-        "  0771234Real" tstr s! tstr strreal tstr 9 + 771234.0
-                1 floatcells + nok?
+        "-99.1786X" tstr s! tstr strreal tstr 8 + ok?  -99.1786 fok?
+        "   1.234E2" tstr s! tstr strreal tstr 10 + ok? 123.4 fok?
+        "Bilge" tstr s! tstr strreal tstr ok? 0.0 fok?
+        "  0771234Real" tstr s! tstr strreal tstr 9 + ok? 771234.0 fok?
 #       Following test disabled because some libraries permit hexadecimal
 #       floating point constants.
 #       "  0xBEEF0ABEGHex!" tstr s! tstr strreal tstr 3 + 0.0  3 nok?
@@ -960,9 +963,8 @@ variable fd1
 
 : testeval
     "EVALUATE" tests:
-        2.17 sin 0 
 	"2.17 sin" evaluate 
-	1 floatcells + nok?
+        2.17 sin 0 ok? fok?
 ;
 
 #   Test some of the process code.

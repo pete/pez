@@ -110,6 +110,14 @@ struct pez_inst {
 	pez_stackitem *stackmax;	// Max stack growth
 	pez_int stklen;			// Evaluation stack length
 
+	// The float stack:
+	pez_real *fstk;		// Pointer to the current position
+	pez_real *fstack;	// Beginning of the stack
+	pez_real *fstackbot;	// Stack bottom
+	pez_real *fstacktop;	// Stack top
+	pez_real *fstackmax;	// Max stack growth
+	pez_int fstklen;	// Float stack length
+
 	pez_int permissions;	// The Pez instance's permissions.
 
 	pez_int ltempstr;	// Temporary string buffer length
@@ -223,6 +231,8 @@ struct pez_inst {
 #define PEZ_DIVZERO	13	// Attempt to divide by zero
 #define PEZ_APPLICATION 14	// Application primitive pez_error()
 #define PEZ_BADFILE	15	// Attempt to load a bad file
+#define PEZ_FSTACKUNDER	16	// Float stack underflow
+#define PEZ_FSTACKOVER	17	// Float stack overflow
 
 //  Entry points
 extern pez_instance *pez_init(long flags);

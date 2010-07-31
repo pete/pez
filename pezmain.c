@@ -247,6 +247,11 @@ int main(int argc, char *argv[])
 					pez_anticipating_token(p))
 				printf(":> ");
 			else {
+				// If it's safe to eval and we're running in
+				// interactive mode, we show the user the stack
+				// and (unless it's empty) the float stack.
+				if(p->fstk != p->fstack)
+					pez_eval(p, "10 nf.s");
 				pez_eval(p, "10 n.s");
 				printf("-> ");
 			}

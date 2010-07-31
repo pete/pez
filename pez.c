@@ -32,9 +32,7 @@
 #endif
 #endif
 
-#ifdef ALIGNMENT
 #include <memory.h>
-#endif
 
 #ifdef Macintosh
 /* Macintoshes need 32K segments, else barfage ensues */
@@ -1568,6 +1566,9 @@ prim P_strform(pez_instance *p)
    team takes no responsibility if you decide to do bad things in the format
    string, like tell it "%ld%ld%ld%ld" (thus getting gibberish from effectively
    random argument registers and/or smashing the C stack).
+
+   (I may fix this with a trivial scan for exactly one '%' not followed by
+   another '%'.)
 */
 prim P_format(pez_instance *p)
 {
@@ -1595,11 +1596,13 @@ prim P_format(pez_instance *p)
 */
 prim P_fstrform(pez_instance *p)
 {
-	Sl(2 + Realsize);
+	Sl(2);
+	FSl(1);
 	Hpc(S0);
 	Hpc(S1);
-	sprintf((char *)S0, (char *)S1, ((pez_real *)(p->stk - 2))[-1]);
-	Npop(2 + Realsize);
+	sprintf((char *)S0, (char *)S1, REAL0);
+	Realpop;
+	Pop2;
 }
 
 /*
@@ -1632,27 +1635,21 @@ prim P_atoi(pez_instance *p)
 }
 
 /*
-   ( string -- string' float )
-   Parses a floating point out of a string, and increments the string's pointer
-   to the end of that float.
+   ( string -- string' f: float )
+   Parses a floating point number out of a string, and increments the string's
+   pointer to the end of that float.
 */
 prim P_strreal(pez_instance *p)
 {
-	int i;
-	union {
-		pez_real fs;
-		pez_stackitem fss[Realsize];
-	} fsu;
+	pez_real d;
 	char *eptr;
 
 	Sl(1);
-	So(Realsize);
+	FSo(1);
 	Hpc(S0);
-	fsu.fs = strtod((char *)S0, &eptr);
+	d = strtod((char *)S0, &eptr);
 	S0 = (pez_stackitem)eptr;
-	for(i = 0; i < Realsize; i++) {
-		Push = fsu.fss[i];
-	}
+	Realpush(d);
 }
 
 /*
@@ -1987,19 +1984,19 @@ prim P_ht_values(pez_instance *p)
 */
 prim P_flit(pez_instance *p)
 {
-	int i;
+	pez_real f;
 
-	So(Realsize);
+	FSo(1);
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		f = *(pez_real *)p->ip;
+	else
+		memcpy((void *)&f, (void *)p->ip, sizeof(pez_real));
+	p->ip += Realsize;
+	Realpush(f);
+
 	tracing {
-		pez_real tr;
-
-		memcpy((char *)&tr, (char *)p->ip, sizeof(pez_real));
-		printf("%g ", tr);
+		printf("%g ", f);
 		fflush(stdout);
-	}
-
-	for(i = 0; i < Realsize; i++) {
-		Push = (pez_stackitem) *p->ip++;
 	}
 }
 
@@ -2009,7 +2006,7 @@ prim P_flit(pez_instance *p)
 */
 prim P_fplus(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(REAL1 + REAL0);
 	Realpop;
 }
@@ -2020,7 +2017,7 @@ prim P_fplus(pez_instance *p)
 */
 prim P_fminus(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(REAL1 - REAL0);
 	Realpop;
 }
@@ -2031,7 +2028,7 @@ prim P_fminus(pez_instance *p)
 */
 prim P_ftimes(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(REAL1 * REAL0);
 	Realpop;
 }
@@ -2040,9 +2037,10 @@ prim P_ftimes(pez_instance *p)
    ( f1 f2 -- f1/f2 )
    Divides the second float on the stack by the first.
 */
+prim P_fdots(pez_instance *);
 prim P_fdiv(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 #ifdef MATH_CHECK
 	if(REAL0 == 0.0) {
 		divzero(p);
@@ -2059,7 +2057,7 @@ prim P_fdiv(pez_instance *p)
 */
 prim P_fmin(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(min(REAL1, REAL0));
 	Realpop;
 }
@@ -2070,7 +2068,7 @@ prim P_fmin(pez_instance *p)
 */
 prim P_fmax(pez_instance *p)
 {
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(max(REAL1, REAL0));
 	Realpop;
 }
@@ -2080,7 +2078,7 @@ prim P_fmax(pez_instance *p)
 */
 prim P_fneg(pez_instance *p)
 {
-	Sl(Realsize);
+	FSl(1);
 	SREAL0(-REAL0);
 }
 
@@ -2089,7 +2087,7 @@ prim P_fneg(pez_instance *p)
 */
 prim P_fabs(pez_instance *p)
 {
-	Sl(Realsize);
+	FSl(1);
 	SREAL0(abs(REAL0));
 }
 
@@ -2100,7 +2098,8 @@ prim P_fequal(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 == REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2113,7 +2112,8 @@ prim P_funequal(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 != REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2126,7 +2126,8 @@ prim P_fgtr(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 > REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2139,7 +2140,8 @@ prim P_flss(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 < REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2152,7 +2154,8 @@ prim P_fgeq(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 >= REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2165,7 +2168,8 @@ prim P_fleq(pez_instance *p)
 {
 	pez_stackitem t;
 
-	Sl(2 * Realsize);
+	FSl(2);
+	So(1);
 	t = (REAL1 <= REAL0) ? Truth : Falsity;
 	Realpop2;
 	Push = t;
@@ -2177,9 +2181,7 @@ prim P_fleq(pez_instance *p)
 */
 prim P_fdot(pez_instance *p)
 {
-	double f;
-	memcpy(&f, p->stk - 1, sizeof(double));
-	Sl(Realsize);
+	FSl(1);
 	printf("%f ", REAL0);
 	fflush(stdout);
 	Realpop;
@@ -2191,13 +2193,10 @@ prim P_fdot(pez_instance *p)
 */
 prim P_float(pez_instance *p)
 {
-	pez_real r;
-
 	Sl(1);
-	So(Realsize - 1);
-	r = S0;
-	p->stk += Realsize - 1;
-	SREAL0(r);
+	FSo(1);
+	Realpush((pez_real)S0);
+	Pop;
 }
 
 /*
@@ -2206,12 +2205,10 @@ prim P_float(pez_instance *p)
 */
 prim P_fix(pez_instance *p)
 {
-	pez_stackitem i;
-
-	Sl(Realsize);
-	i = (pez_stackitem)REAL0;
+	FSl(1);
+	So(1);
+	Push = REAL0;
 	Realpop;
-	Push = i;
 }
 
 /*
@@ -2220,10 +2217,10 @@ prim P_fix(pez_instance *p)
 */
 prim P_floor(pez_instance *p)
 {
-	pez_stackitem i;
-	i = floor(REAL0);
+	FSl(1);
+	So(1);
+	Push = floor(REAL0);
 	Realpop;
-	Push = i;
 }
 
 /*
@@ -2232,10 +2229,10 @@ prim P_floor(pez_instance *p)
 */
 prim P_ceil(pez_instance *p)
 {
-	pez_stackitem i;
-	i = ceil(REAL0);
+	FSl(1);
+	So(1);
+	Push = ceil(REAL0);
 	Realpop;
-	Push = i;
 }
 
 /*
@@ -2245,10 +2242,10 @@ prim P_ceil(pez_instance *p)
 */
 prim P_ftime(pez_instance *p)
 {
+	FSo(1);
 	struct timeval tv;
 	double d;
 
-	So(Realsize);
 	gettimeofday(&tv, 0);
 	d = (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
 	Realpush(d);
@@ -2256,7 +2253,7 @@ prim P_ftime(pez_instance *p)
 
 #ifdef MATH
 
-#define Mathfunc(x) do { Sl(Realsize); SREAL0(x(REAL0)); } while(0)
+#define Mathfunc(x) do { FSl(1); SREAL0(x(REAL0)); } while(0)
 
 prim P_acos(pez_instance *p)
 {				/* Arc cosine */
@@ -2273,9 +2270,11 @@ prim P_atan(pez_instance *p)
 	Mathfunc(atan);
 }
 
+
+/* Arc tangent:  y x -- atan */
 prim P_atan2(pez_instance *p)
-{				/* Arc tangent:  y x -- atan */
-	Sl(2 * Realsize);
+{
+	FSl(2);
 	SREAL1(atan2(REAL1, REAL0));
 	Realpop;
 }
@@ -2310,7 +2309,7 @@ prim P_ipow(pez_instance *p)
 
 prim P_pow(pez_instance *p)
 {				/* X ^ Y */
-	Sl(2 * Realsize);
+	FSl(2);
 	SREAL1(pow(REAL1, REAL0));
 	Realpop;
 }
@@ -2448,6 +2447,41 @@ prim P_dots(pez_instance *p)
 	So(1);
 	Push = p->stk - p->stack;
 	P_ndots(p);
+}
+
+/*
+   ( n -- )
+   Print the top n floats from the float stack.
+*/
+prim P_nfdots(pez_instance *p)
+{
+	pez_stackitem n, depth = p->fstk - p->fstack;
+	pez_real *tsp;
+
+	Sl(1);
+	n = S0;
+	Pop;
+
+	if(depth == 0) {
+		printf("Float stack is empty.\n");
+		return;
+	}
+	printf("Float stack:  ");
+	if(n >= depth)
+		n = depth;
+	else
+		printf("... ");
+	for(tsp = p->fstk - n; tsp < p->fstk; tsp++)
+		printf("%f ", *tsp);
+	printf("\n");
+	fflush(stdout);
+}
+
+prim P_fdots(pez_instance *p)
+{
+	So(1);
+	Push = p->fstk - p->fstack;
+	P_nfdots(p);
 }
 
 /*
@@ -3377,110 +3411,128 @@ prim P_2at(pez_instance *p)
 
 prim P_fover(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_over(p);
-		break;
-	case 2:
-		P_2over(p);
-		break;
-	}
+	FSl(2);
+	Realpush(REAL1);
 }
 
 prim P_fdrop(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_drop(p);
-		break;
-	case 2:
-		P_2drop(p);
-		break;
-	}
+	FSl(1);
+	Realpop;
 }
 
 prim P_fdup(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_dup(p);
-		break;
-	case 2:
-		P_2dup(p);
-		break;
-	}
+	FSl(1);
+	FSo(1);
+	Realpush(REAL0);
 }
 
 prim P_fswap(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_swap(p);
-		break;
-	case 2:
-		P_2swap(p);
-		break;
-	}
+	FSl(2);
+	pez_real d;
+
+	d = REAL1;
+	SREAL1(REAL0);
+	SREAL0(d);
 }
 
 prim P_frot(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_rot(p);
-		break;
-	case 2:
-		P_2rot(p);
-		break;
-	}
+	FSl(3);
+	pez_real d = REAL2;
+	SREAL2(REAL1);
+	SREAL1(REAL0);
+	SREAL0(d);
+}
+
+prim P_fvar(pez_instance *p)
+{
+	FSo(1);
+	pez_real d;
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		d = *(pez_real *)(p->curword + Dictwordl);
+	else
+		memcpy(&d, (((pez_stackitem *)p->curword) + Dictwordl),
+				sizeof(pez_real));
+	Realpush(d);
+}
+
+prim P_fcreate(pez_instance *p)
+{
+	p->defpend = True;
+	Ho(Dictwordl);
+	p->createword = (pez_dictword *)p->hptr;
+	p->createword->wname = NULL;
+	p->createword->wcode = P_var;
+	p->hptr += Dictwordl;
 }
 
 prim P_fvariable(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_variable(p);
-		break;
-	case 2:
-		P_2variable(p);
-		break;
+	FSo(1);
+	P_fcreate(p);
+	Ho(Realsize);
+	
+	switch (Realsize) {
+		case 2: Hstore = 0;
+		case 1: Hstore = 0;
 	}
+}
+
+prim P_fcon(pez_instance * p)
+{
+	FSo(1);
+	pez_real d;
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		d = *(pez_real *)((pez_stackitem *)p->curword + Dictwordl);
+	else
+		memcpy(&d, ((pez_stackitem *)p->curword + Dictwordl),
+				sizeof(pez_real));
+	Realpush(d);
 }
 
 prim P_fconstant(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_constant(p);
-		break;
-	case 2:
-		P_2constant(p);
-		break;
-	}
+	FSl(1);
+	P_create(p);
+	p->createword->wcode = P_fcon;
+	Ho(Realsize);
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		*(pez_real *)p->hptr = REAL0;
+	else
+		memcpy((void *)p->hptr, (void *)&REAL0, sizeof(pez_real));
+	p->hptr += Realsize;
+	Realpop;
 }
 
 prim P_fbang(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_bang(p);
-		break;
-	case 2:
-		P_2bang(p);
-		break;
-	}
+	Sl(1);
+	FSl(1);
+	Hpc(S0);
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		*(pez_real *)S0 = REAL0;
+	else
+		memcpy((void *)S0, &(REAL0), sizeof(pez_real));
+	Realpop;
+	Pop;
 }
 
 prim P_fat(pez_instance *p)
 {
-	switch (sizeof(double) / sizeof(long)) {
-	case 1:
-		P_at(p);
-		break;
-	case 2:
-		P_2at(p);
-		break;
-	}
+	Sl(1);
+	FSo(1);
+	Hpc(S0);
+	pez_real d;
+
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		d = *(pez_real *)S0;
+	else
+		memcpy((void *)&d, (void *)S0, sizeof(pez_real));
+	Pop;
+	Realpush(d);
 }
 
 /*  Data transfer primitives  */
@@ -4745,7 +4797,7 @@ prim P_sleep(pez_instance *p)
 */
 prim P_fsleep(pez_instance *p)
 {
-	Sl(Realsize);
+	FSl(1);
 	double t = REAL0;
 	Realpop;
 	usleep((long)(t * 1000000.0));
@@ -5440,6 +5492,8 @@ static struct primfcn primt[] = {
 	{"0CR", P_cr},
 	{"0.S", P_dots},
 	{"0n.s", P_ndots},
+	{"0f.s", P_fdots},
+	{"0nf.s", P_nfdots},
 	{"1.\"", P_dotquote},
 	{"1.(", P_dotparen},
 	{"0PRINT", P_print},
@@ -5670,6 +5724,18 @@ Exported void rstakunder(pez_instance *p)
 	p->evalstat = PEZ_RSTACKUNDER;
 }
 
+Exported void fstakover(pez_instance *p)
+{
+	trouble(p, "Float stack overflow");
+	p->evalstat = PEZ_FSTACKOVER;
+}
+
+Exported void fstakunder(pez_instance *p)
+{
+	trouble(p, "Float stack underflow");
+	p->evalstat = PEZ_FSTACKUNDER;
+}
+
 /*  HEAPOVER  --  Recover from heap overflow.  Note that a heap overflow does
  *  NOT wipe the heap; it's up to the user to do this manually with FORGET or
  *  some such.
@@ -5799,6 +5865,7 @@ extern pez_instance *pez_init(long flags)
 	p->errline = 0;
 	p->ntempstr = 8;
 	p->stklen = 10000;		// Evaluation stack length
+	p->fstklen = 5000;		// Float stack length
 	p->rstklen = 10000;		// Return stack length
 	p->heaplen = 200000;		// Heap length
 	p->ltempstr = max(PATH_MAX, 4096);// Temporary string buffer length
@@ -5861,6 +5928,7 @@ extern pez_instance *pez_init(long flags)
 
 #undef Cconst
 
+	// The Stack:
 	if(p->stack == NULL) {	// Allocate stack if needed
 		p->stack = (pez_stackitem *)alloc(
 			((unsigned int)p->stklen) * sizeof(pez_stackitem));
@@ -5870,6 +5938,19 @@ extern pez_instance *pez_init(long flags)
 	p->stackmax = p->stack;
 #endif
 	p->stacktop = p->stack + p->stklen;
+
+	// The float stack:
+	if(p->fstack == NULL) {	// Allocate float stack if needed
+		p->fstack = (pez_real *)alloc(
+			((unsigned int)p->fstklen) * sizeof(pez_real));
+	}
+	p->fstk = p->fstackbot = p->fstack;
+#ifdef MEMSTAT
+	p->fstackmax = p->fstack;
+#endif
+	p->fstacktop = p->fstack + p->fstklen;
+
+	// The return stack:
 	if(p->rstack == NULL) {	// Allocate return stack if needed
 		p->rstack = (pez_dictword ***)
 			alloc(((unsigned int)p->rstklen) *
@@ -5880,6 +5961,7 @@ extern pez_instance *pez_init(long flags)
 	p->rstackmax = p->rstack;
 #endif
 	p->rstacktop = p->rstack + p->rstklen;
+
 #ifdef WALKBACK
 	if(p->wback == NULL) {
 		p->wback = (pez_dictword **)alloc(((unsigned int)p->rstklen) *
@@ -6259,37 +6341,19 @@ void pez_stack_int(pez_instance *p, pez_int val)
 
 void pez_heap_float(pez_instance *p, pez_real val)
 {
-	int i;
-	union {
-		pez_real r;
-		pez_stackitem s[Realsize];
-	} tru;
-
 	Ho(Realsize + 1);
 	Hstore = s_flit;	// Push (flit) at execution
-
-	tru.r = val;
-
-	for(i = 0; i < Realsize; i++) {
-		Hstore = tru.s[i];
-	}
+	if(sizeof(pez_real) == sizeof(pez_stackitem))
+		*(pez_real *)p->hptr = val;
+	else
+		memcpy((void *)p->hptr, (void *)&val, sizeof(pez_real));
+	p->hptr += Realsize;
 }
 
 void pez_stack_float(pez_instance *p, pez_real val)
 {
-	int i;
-	union {
-		pez_real r;
-		pez_stackitem s[Realsize];
-	} tru;
-
-	fflush(stderr);
-
-	So(Realsize);
-	tru.r = val;
-	for(i = 0; i < Realsize; i++) {
-		Push = tru.s[i];
-	}
+	FSo(1);
+	Realpush(val);
 }
 
 void pez_heap_word(pez_instance *p, pez_dictword *di)
@@ -6518,7 +6582,7 @@ double pez_pop_float(pez_instance *p)
 {
 	double ret;
 
-	Sl(Realsize);
+	FSl(1);
 	ret = REAL0;
 	Realpop;
 	return ret;
