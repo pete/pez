@@ -233,7 +233,9 @@ static char *pez_strcat(char *a, char *b)
    \v -> vertical tab
 
    Every other character maps to a literal version of itself when prefixed with
-   a backslash.
+   a backslash.  Octal bytes (\0NNN) aren't going to be supported.  Sorry, kids.
+   Hex bytes (\xNN) probably will.
+   TODO:  The thing on the above line.
 */
 static char string_escape_table[256] = {
 	   0,    1,    2,    3,    4,    5,    6,    7,    8,    9,
@@ -1581,7 +1583,7 @@ prim P_substr(pez_instance *p)
 */
 prim P_strform(pez_instance *p)
 {
-	Sl(2);
+	Sl(3);
 	Hpc(S0);
 	Hpc(S1);
 	sprintf((char *)S0, (char *)S1, S2);
