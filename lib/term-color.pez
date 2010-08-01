@@ -1,0 +1,71 @@
+# Very, very simple (for now) terminal colors.  e.g.:
+# 	red on-white underline-mode "Hello, World!" color-puts
+# Values lifted from the colorize Ruby gem by Michal Kalbarczyk.
+variable cfg
+variable cbg
+variable cmode
+
+: fg-color: ( val -- )
+	create dup 10 > if 80 else 30 then + ,
+	does> @ cfg ! ;
+: bg-color: ( val -- )
+	create dup 10 > if 90 else 40 then + ,
+	does> @ cbg ! ;
+: cmode: ( val -- )
+	create , does> @ cmode ! ;
+
+ 0 dup fg-color: black
+       bg-color: on-black
+ 1 dup fg-color: red
+       bg-color: on-red
+ 2 dup fg-color: green
+       bg-color: on-green
+ 3 dup fg-color: yellow
+       bg-color: on-yellow
+ 4 dup fg-color: blue
+       bg-color: on-blue
+ 5 dup fg-color: magenta
+       bg-color: on-magenta
+ 6 dup fg-color: cyan
+       bg-color: on-cyan
+ 7 dup fg-color: white
+       bg-color: on-white
+ 9 dup fg-color: default
+       bg-color: on-default
+10 dup fg-color: light-black
+       bg-color: on-light-black
+11 dup fg-color: light-red
+       bg-color: on-light-red
+12 dup fg-color: light-green
+       bg-color: on-light-green
+13 dup fg-color: light-yellow
+       bg-color: on-light-yellow
+14 dup fg-color: light-blue
+       bg-color: on-light-blue
+15 dup fg-color: light-magenta
+       bg-color: on-light-magenta
+16 dup fg-color: light-cyan
+       bg-color: on-light-cyan
+17 dup fg-color: light-white
+       bg-color: on-light-white
+
+0 cmode: default-mode
+1 cmode: bright-mode
+4 cmode: underline-mode
+5 cmode: blink-mode
+7 cmode: reverse-mode
+8 cmode: hide-mode
+
+default on-default default-mode
+
+# 
+: colorize ( -- )
+	"\e[" print
+	cmode @ "%d;" format print
+	cbg @ "%d;" format print
+	cfg @ "%dm" format print ;
+
+: decolorize ( -- )   "\e[0m" print ;
+
+: color-print ( str -- )   colorize print decolorize ;
+: color-puts ( str -- )   color-print cr ;
