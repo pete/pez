@@ -1,0 +1,13 @@
+fvariable bench'
+
+# Start benchmarking:
+: bench: ( -- )
+	ftime bench' f! ;
+
+# Finish and print:
+: ;bench ( -- )
+	ftime bench' f@ f- "(" print f. "seconds.)" puts ;
+
+: bench-word ( w -- )
+	dup >name @ 1+ "Benchmarking " print print "..." print
+	bench: execute ;bench ;
