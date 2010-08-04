@@ -1,0 +1,231 @@
+#! /usr/bin/env pez
+
+# An implementation of Norvig's spell-checker, written in Pez.
+( http://norvig.com/spell-correct.html )
+# This is a fairly direct implementation of Norvig's method, although the Pez
+# implementation is definitely very different from Norvig's Python (and doesn't
+# have the defaultdict bugs).
+# In order to run it, you'll need a corpus to train the spell-checker.  You can
+# get big.txt from the above link (although any huge chunk of text ought to do).
+# After you have something to train the dictionary, you can run it and see
+# somethign liekk this:
+# 	$ ./speling.pez big.txt speling canoodling definately somethign liekk
+#	Training...(0.860381 seconds.)
+#	speling(1) -> spelling(5) (0.000280 seconds.)
+#	canoodling(1) -> NOT FOUND(1) (0.177549 seconds.)
+#	definately(1) -> definitely(36) (0.008880 seconds.)
+#	somethign(1) -> something(684) (0.000414 seconds.)
+#	liekk(1) -> like(1081) (0.034679 seconds.)
+# The numbers in parentheses after the words are the number of occurrences in
+# the text, and, as you may have guessed, the numbers left of the arrows are the
+# input and the numbers to the right are the proposed correction (followed by a
+# trivial benchmark).
+
+"core" load-lib
+"bench" load-lib
+
+# A few words for manipulating the case of strings.
+
+# Compiles a ( -- z a ) into the current word.
+: a>z  "z" c@ 1+ ['] (lit) , , "a" c@ ['] (lit) , , ; immediate
+# Danged case-insensitive word names, you're on THE LIST.
+: a>z-caps "Z" c@ 1+ ['] (lit) , , "A" c@ ['] (lit) , , ; immediate
+
+# Some of this will probably make its way into the standard library.
+
+# A lookup table of char->lower-case.
+256 malloc constant lower-table
+: init-lower-table ( -- )
+	256 0 do i lower-table i + c! loop
+	a>z-caps do i 32 + i lower-table + c! loop ;
+init-lower-table
+
+# Destructively lower-cases all of the 
+: downcase! ( str -- )
+	dup strlen over + swap do
+		i c@ lower-table + c@ i c!
+	loop ;
+
+# At time of writing, Pez doesn't give you strtok, although you can get it right
+# from libc via FFI:
+0 rtld_lazy dlopen constant this-proc
+"p" "strtok" "pp" this-proc ffi: strtok
+
+# Pulls a word (string of alphabetical characters) out of a string, and advances
+# the string past it.
+" \n\t`~!@#$%^&*()_-+=[]{}<>,./?\\;:|\"" constant delim
+: next-word ( str -- str+n|0 word|0 )
+	dup 0= if 0 exit then
+	delim strtok
+	dup 0= if 0 exit then
+	dup strlen 1+ over + swap ;
+
+# occurrences-table is the destination of everything we pull out of the
+# training file, a record of the number of times we saw a word.
+1 constant bias
+str-htable constant occurrences-table
+: occurs? ( str -- bool )
+	occurrences-table ht@ ;
+
+# The number of occurrences of a given string in the table.
+: #occurrences ( str -- n )
+	occurrences-table ht@ bias max ;
+
+: add-occurrence ( str -- )
+	dup occurrences-table ht@ bias max 1+ swap occurrences-table ht! ;
+
+variable rod'
+: read-or-die! ( fn -- contents )
+	dup rod' !
+	read-file dup 0= if "Couldn't read " rod' @ s+ "!" 1 die! then ;
+
+# Trains the spelling corrector with all of the data in a file.
+: train-file ( fname -- )
+	read-or-die! dup downcase!
+	begin next-word dup while add-occurrence repeat 2drop ;
+
+# This one's important!  Most of the words that produce a series of edits add
+# them to this table.
+str-htable constant edits-table
+
+# The Python code from Norvig is shown in the comments above the four types of
+# transformation.
+
+# Deletes a character from a string, gives you a new string.
+variable swdc
+: delete-char ( i str -- str' )
+	dup sdup swdc !
+	over + 1+ ( i s+i+1 )
+	swap swdc @ + swap over strlen ( str'+i s+i+1 len+1 )
+	memcpy swdc @ ;
+
+# Adds the deletes to edits-table.
+# deletes    = [a + b[1:] for a, b in splits if b]
+: deletes ( str -- )
+	dup strlen 0 do ( str )
+		i over delete-char ( str new-str )
+		1 swap edits-table ht!
+	loop drop ;
+
+# Transposes a character with the one before it in the string.  This was way
+# more complex than I expected it to be.
+: transpose-char ( i str -- str' )
+	sdup tuck + dup 1- ( s s+i s+i-1 )
+	2dup c@ swap c@ ( s s+i s+i-1 s[i-1] s[i] )
+	rot c! swap c! ;
+		
+# Adds the transpositions to the edits-table.
+# transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]
+: transposes ( str -- )
+	dup strlen 1 do ( str )
+		i over transpose-char ( str new-str )
+		1 swap edits-table ht!
+	loop drop ;
+
+variable rel
+# For each character in the alphabet and each character in the string, adds a
+# string with the replacement carried out into edits-table.
+# replaces   = [a + c + b[1:] for a, b in splits for c in alphabet if b]
+: replaces ( str -- )
+	dup strlen rel !
+	a>z do ( str )
+		rel @ 0 do
+			dup sdup j over i + c!
+			1 swap edits-table ht!
+		loop
+	loop drop ;
+
+# Inserts each character in the alphabet between each character in the string.
+# inserts    = [a + c + b     for a, b in splits for c in alphabet]
+variable iewl
+variable ies
+variable iewc
+: inserts ( str -- )
+	dup strlen iewl !
+	ies !
+	a>z do ( )
+		i iewc c! # We're going to pretend it's a string!
+		iewl @ 0 do
+			1
+			i 0 ies @ substr
+			iewc s+
+			iewl @ i - i ies @ substr s+
+			edits-table ht!
+		loop
+	loop ;
+
+# Adds all of the words that are an edit distance of 1 to the edits-table.
+: edits1 ( str -- )
+	dup deletes
+	dup transposes
+	dup replaces
+	inserts ;
+
+# Executes a word once for each edit in the edits table.
+variable eeword
+: each-edit ( word -- )
+	eeword !
+	edits-table ht-keys cells over + swap do
+		i @ eeword @ execute
+	cell-size +loop ;
+
+# Adds all of the words that are an edit distance of 2 to the edits-table.
+# return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in NWORDS)
+: edits2 ( str -- )
+	edits1 ['] edits1 each-edit ;
+
+# The body of the reduce step to determine the correct spelling.  Fills in the
+# last-str and last-occur if a word is in the occurrences-table and occurs more
+# often than the last one (so the initialization to zero is important).
+variable last-str "" last-str !
+variable last-occur 0 last-occur !
+: max-occur ( str -- )
+	dup occurs? 0= if drop exit then
+	dup #occurrences last-occur @ ( s # l# )
+	over < if last-occur ! last-str ! else 2drop then ;
+
+# This word expects a string on the stack, and leaves on the stack its best
+# attempt at the correct spelling.
+: correct ( str -- str' )
+	dup occurs? if sdup exit then
+
+	0 last-occur !
+	edits-table ht-clear
+
+	# Check words of edit distance 1:
+	edits1
+	['] max-occur each-edit
+	last-occur @ if last-str @ exit then
+
+	# Check edit distance 2:
+	['] edits1 each-edit
+	['] max-occur each-edit
+	last-occur @ if last-str @ exit then
+
+	"NOT FOUND" ;
+
+# Prints a word and the number of times it occurs.
+: word-stats ( str -- )
+	dup print #occurrences "(%ld) " format print ;
+
+# Given a string on the stack, pcorrect prints a correction and how long it took
+# to find.
+: pcorrect ( str -- )
+	bench: dup word-stats "-> " print correct word-stats ;bench ;
+
+# Given an array of strings, pcorrect-all prints a correction for each string.
+: pcorrect-all ( strs -- )
+	begin dup @ while
+		dup @ pcorrect
+		cell-size +
+	repeat ;
+
+"Usage:  speling.pez corpus [word1 [word2 [...]]]" constant usage
+
+: train-or-die! ( fname -- )
+	dup 0= if usage 2 die! then
+	"Training..." print 
+	bench: train-file ;bench ;
+
+argv @ train-or-die!
+argv cell-size + pcorrect-all
