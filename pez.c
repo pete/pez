@@ -4127,12 +4127,19 @@ prim P_bracktick(pez_instance *p)
 */
 prim P_execute(pez_instance *p)
 {
+	// You've got to be a bit more careful inside here than one might
+	// expect.
+	pez_dictword **ip = p->ip;
 	pez_dictword *wp;
 
 	Sl(1);
 	wp = (pez_dictword *)S0;
 	Pop;	// Pop the word off the stack *before* calling it.
+	// We have to save and restore the instruction pointer; otherwise,
+	// exword will punish the stack.
+	p->ip = NULL;
 	exword(p, wp);
+	p->ip = ip;
 }
 
 /*
@@ -4145,19 +4152,31 @@ prim P_wordp(pez_instance *p)
 	S0 = -is_word(p, (pez_dictword *)S0);
 }
 
+/*
+   FIXME: This is done, like, really poorly.
+*/
 prim P_tail_call(pez_instance *p)
 {
 	p->tail_call_pending = True;
 }
 
+/*
+   ( word -- body-addr )
+   Given a word, leaves the address of the word's body on the stack.  Don't do
+   this to built-ins, you'll get nothing useful.
+*/
 prim P_body(pez_instance *p)
-{				/* Get body address for word */
+{
 	Sl(1);
 	S0 += Dictwordl * sizeof(pez_stackitem);
 }
 
+/*
+   ( -- t|f )
+   Pushes the address of the interpreter's state (the 'compiling' flag).
+*/
 prim P_state(pez_instance *p)
-{				/* Get state of system */
+{
 	So(1);
 	Push = (pez_stackitem) &state;
 }
@@ -5819,9 +5838,12 @@ static void divzero(pez_instance *p)
 
 #endif
 
-/*  EXWORD  --	Execute a word (and any sub-words it may invoke). */
-
-static void exword(pez_instance *p, pez_dictword *wp)
+/*
+   Execute a word (and any sub-words it may invoke).  Note that it will continue
+   to execute until p->ip is NULL, so take care to save and restore it if you
+   don't want exword() to take over until you hit the toplevel again.
+*/
+static inline void exword(pez_instance *p, pez_dictword *wp)
 {
 	p->curword = wp;
 	tracing {
