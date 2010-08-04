@@ -33,12 +33,8 @@ variable ri'ptr
 # memory.  Probably a good plan to use it with caution.
 : read-file ( fname -- str )
 	o_rdonly 0 open
-	dup 0 < if drop 0 then
+	dup 0 < if drop 0 exit then
 	>input read-input input> close drop ;
-
-fvariable benchtime
-: bench: ( -- ) ftime benchtime f! ;
-: ;bench ( -- ) "  (Took " print ftime benchtime f@ f- f. "seconds.)" puts ;
 
 # Dumps a hash table.
 : ht. ( h -- )
