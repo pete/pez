@@ -17,7 +17,7 @@
 # http://esoteric.voxelperfect.net/wiki/BF .  http://github.com/pete/lbf should
 # also be good for a laugh, and it has a few examples.
 
-# This version of the language uses 10,000 1-byte cells, the cell pointer wraps
+# This version of the language uses 20,000 1-byte cells, the cell pointer wraps
 # around at the edges, there's no checking for mismatched brackets (in fact, it
 # will usually segfault or give a non-obvious error), and EOF on read is zero.
 
@@ -32,7 +32,7 @@
 "decompile" load-lib # To see the Pez code generated from the BF code.
 
 # Initialize the state.
-10000 constant worldsize
+20000 constant worldsize
 worldsize malloc constant world
 variable worldp  world worldp !
 256 cells malloc constant ctable
