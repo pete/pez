@@ -101,10 +101,10 @@ here 256 allot constant escapes
 		dup skip-newline "-n" option
 		dup use-escapes  "-e" option
 
-		# Pointers and items on the stack all take up cellsize bytes,
-		# so incrementing the pointer by cellsize jumps to the next
+		# Pointers and items on the stack all take up cell-size bytes,
+		# so incrementing the pointer by cell-size jumps to the next
 		# item in argv:
-		drop cellsize +
+		drop cell-size +
 	repeat ;
 
 # Populates a single field in the escapes table.
@@ -151,7 +151,7 @@ here 256 allot constant escapes
 		# call them with execute.
 		dup filter @ execute
 		printer @ execute
-		cellsize +
+		cell-size +
 	repeat ;
 
 argv parse
