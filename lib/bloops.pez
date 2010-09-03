@@ -1,0 +1,107 @@
+# This is an interface to _why the lucky stiff's fabulous Bloopsaphone library.
+# In order to use it, you'll need at PortAudio 1.9 and Bloopsaphone.  When you
+# have set everything up, though, your reward will be that this makes music:
+#   bloops-new constant b
+#   bloops-square constant p
+#   b p "f#5 c6 e4 b6 g5 d6 4  f#5 e5 c5 b6 c6 d6 4 "
+#   bloops-track drop
+#   b bloop&wait
+# ...And it sounds like a Game Boy.  In the words of _why:
+# 	"This is just a toy, I don't want it
+# 	 to be very big and comprehensive.
+# 	 Just to play little tunes with a
+# 	 nostalgic arcade sound rather than
+# 	 the CASIO-stylings of most MIDI."
+# Have a look at the README for bloopsaphone.
+#
+# Set-up:
+# You'll need to get and build Bloopsaphone.  It's here:
+# 	http://github.com/mental/bloopsaphone
+# Unfortunately, the manner in which you'll need Bloopsaphone is a .so file.  I
+# say "unfortunately" because this is not provided by the Bloopsaphone library.
+# It's easy to get, though.  Either edit the bloopsalib: target in the Makefile
+# by adding the following line:
+# 	@${LD} ${LDFLAGS} ${LIBS} -shared -o libbloopsaphone.so ${OBJ}
+# Or you can create it manually, like this:
+# 	ld  -lm -lportaudio -shared -o libbloopsaphone.so c/bloopsaphone.o \
+# 		c/notation.o
+# Then you'll need to install the shared library somewhere that dlopen can find
+# it, like /usr/local/lib.  Note that, on x86-64 you'll need to add "-DPIC
+# -fPIC" to the CFLAGS.
+#
+# Now you are bumping mad tunes.  (With memory leaks, but I plan to submit
+# patches to fix that.)
+"libbloopsaphone.so" rtld_lazy dlopen constant lib-bloop
+
+"p" "bloops_new" 0 lib-bloop ffi: bloops-new
+"p" "bloops_track2" "ppp" lib-bloop ffi: bloops-track
+"p" "bloops_square" 0 lib-bloop ffi: bloops-square
+"p" "bloops_sound_file" "pp" lib-bloop ffi: bloops-sound-file
+0 "bloops_play" "p" lib-bloop ffi: bloops-play
+
+"i" "bloops_is_done" "p" lib-bloop ffi: bloops-is-done
+: bloops-done? ( b -- t|f )   bloops-is-done 0<> ;
+
+"p" "bloops_track_str" "p" lib-bloop ffi: bloops-track-str
+
+: bloops-wait ( b -- )
+	begin dup bloops-is-done 0= while 0.1 fsleep repeat drop ;
+
+# Types:
+0 constant b-square
+1 constant b-sawtooth
+2 constant b-sine
+3 constant b-noise
+
+# An "instrument".
+struct: bloopsaphone
+	c-uint: bp>refcount
+	c-uint: bp>type
+	uint8: bp>pan
+	c-float-size align-struct
+	c-float: bp>volume
+	c-float: bp>punch
+	c-float: bp>attack
+	c-float: bp>sustain
+	c-float: bp>decay
+	c-float: bp>freq
+	c-float: bp>limit
+	c-float: bp>slide
+	c-float: bp>dslide
+	c-float: bp>square
+	c-float: bp>sweep
+	c-float: bp>vibe
+	c-float: bp>vspeed
+	c-float: bp>vdelay
+	c-float: bp>lpf
+	c-float: bp>lsweep
+	c-float: bp>resonance
+	c-float: bp>hpf
+	c-float: bp>hsweep
+	c-float: bp>arp
+	c-float: bp>aspeed
+	c-float: bp>phase
+	c-float: bp>psweep
+	c-float: bp>repeat
+;struct
+
+# The whole idea here is to play bloops.  Bloop bloop bloop.  Note that this
+# struct is incomplete, and so you shouldn't call "bloops" or "bloops-size"
+# directly or anything like that.  It's just here for those two accessors.
+# (What you actually want is "bloops-new".)
+struct: bloops
+	c-uint: b>refcount
+	c-int: b>tempo
+	c-float-size align-struct
+	c-float: b>volume
+	# The rest is "private".
+;struct
+
+# If you just want a song to play and you're okay waiting until it's done, have
+# one of these.
+: bloop&wait ( bloops -- )
+        dup bloops-play
+	begin dup bloops-done? 0= while
+		0.1 fsleep
+	repeat drop ;
+
