@@ -902,15 +902,19 @@ prim P_c_float_at(pez_instance *p)
 {
 	Sl(1);
 	Hpc(S0);
-	S0 = *(float *)S0;
+	FSo(1);
+	Realpush(*(float *)S0);
+	Pop;
 }
 
 prim P_c_float_bang(pez_instance *p)
 {
-	Sl(2);
+	Sl(1);
+	FSl(1);
 	Hpc(S0);
-	*(float *)S0 = (float)S1;
-	Npop(2);
+	*(float *)S0 = (float)REAL0;
+	Pop;
+	Realpop;
 }
 
 prim P_c_float_size(pez_instance *p)
@@ -1050,15 +1054,19 @@ prim P_c_double_at(pez_instance *p)
 {
 	Sl(1);
 	Hpc(S0);
-	S0 = *(double *)S0;
+	FSo(1);
+	Realpush(*(double *)S0);
+	Pop;
 }
 
 prim P_c_double_bang(pez_instance *p)
 {
-	Sl(2);
+	Sl(1);
+	FSl(1);
 	Hpc(S0);
-	*(double *)S0 = (double)S1;
-	Npop(2);
+	*(double *)S0 = (double)REAL0;
+	Pop;
+	Realpop;
 }
 
 prim P_c_double_size(pez_instance *p)

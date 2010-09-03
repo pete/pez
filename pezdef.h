@@ -249,7 +249,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define SREAL0(x) REAL0 = (x)
 #define SREAL1(x) REAL1 = (x)
 #define SREAL2(x) REAL2 = (x)
-#define Realpush(x) *p->fstk++ = x
+#define Realpush(x) *p->fstk++ = ((pez_real)x)
 
 #ifdef BOUNDS_CHECK
 #define FSl(x) if((p->fstk - p->fstack)<(x)) {fstakunder(p); return Memerrs;}

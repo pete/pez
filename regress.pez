@@ -646,6 +646,7 @@ variable k
 
 3.14159265358979323846 fconstant pi
 2.7182818284590452354 fconstant e
+c-float-size malloc constant a-c-float
 
 : testmath
     "^" tests:
@@ -666,6 +667,13 @@ variable k
         -9.3 floor -10 ok?
         -9.3 fix -9 ok?
         -9.3 ceil -9 ok?
+
+    "C-FLOATS" tests:
+	# Because we're casting it, we need a float that has a finite base-2
+	# representation, so as not to require a fuzzy comparison.
+    	1.5 a-c-float c-float!
+	a-c-float c-float@
+	1.5 fok?
 
     "ACOS" tests:
         0.0 acos pi 2.0 f/ fok?
