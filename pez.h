@@ -15,7 +15,11 @@
 #ifndef __PEZ_H
 #define __PEZ_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#else
 #include <pez_sysconfig.h>
+#end
 
 #include <stdio.h>
 #include <regex.h>

@@ -8,6 +8,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#else
+#include <pez_sysconfig.h>
 #endif
 
 #include <sys/types.h>
