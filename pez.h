@@ -19,7 +19,7 @@
 #include <config.h>
 #else
 #include <pez_sysconfig.h>
-#end
+#endif
 
 #include <stdio.h>
 #include <regex.h>
