@@ -4900,6 +4900,17 @@ prim P_unsetenv(pez_instance *p)
 }
 
 /*
+   ( status -- )
+   Just exits; no message.
+*/
+prim P_die(pez_instance *p)
+{
+	// No underflow-checking here.  die shouldn't fail, ever, even if it
+	// ends up segfaulting instead.
+	exit(S0);
+}
+
+/*
    ( message status -- )
    Prints a message to stderr with a \n, and dies with the specified status.
 */
@@ -4960,6 +4971,7 @@ prim P_waitpid(pez_instance *p)
 
 	pid = (int)S1;
 	options = (int)S0;
+	Pop;
 
 	waitpid(pid, &status, options);
 	S0 = (pez_stackitem)status;
@@ -5462,6 +5474,7 @@ static struct primfcn primt[] = {
 	{"0GETENV", P_getenv},
 	{"0SETENV", P_setenv},
 	{"0UNSETENV", P_unsetenv},
+	{"0DIE", P_die},
 	{"0DIE!", P_diebang},
 	// at-exit is going to have to wait until I figure out a good way to do
 	// it.  I am thinking a queue of words to push to
