@@ -2328,6 +2328,11 @@ prim P_log(pez_instance *p)
 	Mathfunc(log);
 }
 
+prim P_log10(pez_instance *p)
+{
+	Mathfunc(log10);
+}
+
 prim P_ipow(pez_instance *p)
 {
 	pez_stackitem  i, n;
@@ -5404,6 +5409,7 @@ static struct primfcn primt[] = {
 	{"0COS", P_cos},
 	{"0EXP", P_exp},
 	{"0LOG", P_log},
+	{"0log10", P_log10},
 	{"0^", P_ipow},
 	{"0F^", P_pow},
 	{"0SIN", P_sin},

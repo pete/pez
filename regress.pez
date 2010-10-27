@@ -714,6 +714,10 @@ c-float-size malloc constant a-c-float
         e log 1.0 fok?
         1.0 e f/ log -1.0 fok?
 
+    "LOG10" tests:
+        1.0 log10 0.0 fok?
+        10.0 log10 1.0 fok?
+
     "POW" tests:
         2.0 4.0 f^ 16.0 fok?
         2.0 -1.0 f^ 0.5 fok?
