@@ -640,6 +640,8 @@ variable k
     "FSTACK" tests:
 	0.1 0.0 fdrop 0.1 fok?
     	0.0 0.1 fswap fdrop 0.1 fok?
+	0.0 0.1 fnip 0.1 fok?
+	0.1 0.2 ftuck fdrop fdrop 0.2 fok?
 ;
 
 #   Mathematical functions

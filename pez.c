@@ -97,7 +97,11 @@
 #define abs(x)		((x) < 0    ? -(x) : (x))
 #define max(a,b)	((a) >  (b) ? (a) : (b))
 #define min(a,b)	((a) <= (b) ? (a) : (b))
-#define unit_scale(a)	((a) >= 1 ? 1 : ((a) % ((a) - 1)))
+// Because this one may be a little non-obvious, this expression is -1 if the
+// argument is less than zero, 0 if it is zero, and 1 if it is greater than
+// zero.  This version tests a little faster than a clearer one would, mostly
+// because it does not branch.
+#define unit_scale(a)	(((a) > 0) - (((a) < 0)))
 
 /*  Globals imported  */
 
@@ -595,6 +599,10 @@ void pez_memstat(pez_instance *p)
 		   ((long)(p->stk - p->stack)),
 		   ((long)(p->stackmax - p->stack)),
 		   p->stklen, (100L * (p->stk - p->stack)) / p->stklen);
+	printf(fmt, "Float stack",
+		   ((long)(p->fstk - p->fstack)),
+		   ((long)(p->fstackmax - p->fstack)),
+		   p->fstklen, (100L * (p->fstk - p->fstack)) / p->fstklen);
 	printf(fmt, "Return stack",
 		   ((long)(p->rstk - p->rstack)),
 		   ((long)(p->rstackmax - p->rstack)),
@@ -3099,6 +3107,10 @@ prim P_this_pez(pez_instance *p)
 
 /*  Stack mechanics  */
 
+/*
+   ( a1 ... an -- a1 ... an n )
+   Leaves on the stack a count of the number of elements on the stack.
+*/
 prim P_depth(pez_instance *p)
 {				// Push stack depth
 	pez_stackitem s = p->stk - p->stack;
@@ -3107,11 +3119,21 @@ prim P_depth(pez_instance *p)
 	Push = s;
 }
 
+/*
+   ( ... -- )
+   Wipes the stack and the float stack.  Usually shouldn't be used outside
+   interactive mode.
+*/
 prim P_clear(pez_instance *p)
-{				// Clear stack
+{
 	p->stk = p->stack;
+	p->fstk = p->fstack;
 }
 
+/*
+   ( a -- a a )
+   Duplicates the top item on the stack.
+*/
 prim P_dup(pez_instance *p)
 {				// Duplicate top of stack
 	pez_stackitem s;
@@ -3122,14 +3144,22 @@ prim P_dup(pez_instance *p)
 	Push = s;
 }
 
+/*
+   ( a -- )
+   Drops the top item on the stack.
+*/
 prim P_drop(pez_instance *p)
 {				// Drop top item on stack
 	Sl(1);
 	Pop;
 }
 
+/*
+   ( a b -- b a )
+   Swaps the first two items on the stack.
+*/
 prim P_swap(pez_instance *p)
-{				// Exchange two top items on stack
+{
 	pez_stackitem t;
 
 	Sl(2);
@@ -3138,8 +3168,12 @@ prim P_swap(pez_instance *p)
 	S0 = t;
 }
 
+/*
+   ( a b -- a b a )
+   Duplicates the second item on the stack.
+*/
 prim P_over(pez_instance *p)
-{				// Push copy of next to top of stack
+{
 	pez_stackitem s;
 
 	Sl(2);
@@ -3486,6 +3520,22 @@ prim P_frot(pez_instance *p)
 	SREAL0(d);
 }
 
+prim P_ftuck(pez_instance *p)
+{
+	pez_real d;
+	FSl(2);
+	FSo(1);
+	P_fswap(p);
+	Realpush(REAL1);
+}
+
+prim P_fnip(pez_instance *p)
+{
+	FSl(2);
+	SREAL1(REAL0);
+	Realpop;
+}
+
 prim P_fvar(pez_instance *p)
 {
 	FSo(1);
@@ -3634,10 +3684,9 @@ prim P_qbranch(pez_instance *p)
 {
 	Sl(1);
 	if(S0 == 0) {
-		p->ip += (pez_stackitem) *p->ip;
-	} else {
-		p->ip++;	// Skip the in-line address.
+		p->ip += (pez_stackitem) *p->ip - 1;
 	}
+	p->ip++;	// Skip the in-line address.
 	Pop;
 }
 
@@ -3753,8 +3802,8 @@ prim P_do(pez_instance *p)
 {				/* Compile DO */
 	Compiling;
 	Compconst(s_xdo);	// Compile runtime DO word
-	So(1);
 	Compconst(0);		// Reserve cell for LEAVE-taking
+	So(1);
 	Push = (pez_stackitem)p->hptr;	// Save jump back address on stack
 }
 
@@ -5286,6 +5335,8 @@ static struct primfcn primt[] = {
 	{"0FSWAP", P_fswap},
 	{"0FOVER", P_fover},
 	{"0FROT", P_frot},
+	{"0Fnip", P_fnip},
+	{"0Ftuck", P_ftuck},
 	{"0FVARIABLE", P_fvariable},
 	{"0FCONSTANT", P_fconstant},
 	{"0F!", P_fbang},
@@ -6064,12 +6115,6 @@ extern pez_instance *pez_init(long flags)
 		cp = alloc((p->heaplen * sizeof(pez_stackitem)) +
 				((p->ntempstr * p->ltempstr)));
 		p->heapbot = (pez_stackitem *)cp;
-		p->strbuf = (char **)alloc(p->ntempstr * sizeof(char *));
-		for(i = 0; i < p->ntempstr; i++) {
-			p->strbuf[i] = cp;
-			cp += p->ltempstr;
-		}
-		p->cstrbuf = 0;
 		// Available heap memory starts after the temp strings:
 		p->heap = (pez_stackitem *)cp;
 	}
@@ -6205,6 +6250,7 @@ pez_dictword *pez_vardef(pez_instance *p, char *name, int size)
 void pez_mark(pez_instance *p, pez_statemark *mp)
 {
 	mp->mstack = p->stk;	// Save stack position
+	mp->mfstack = p->fstk;	// Save float stack position
 	mp->mheap = p->hptr;	// Save heap allocation marker
 	mp->mrstack = p->rstk;	// Set return stack pointer
 	mp->mdict = p->dict;	// Save last item in dictionary
@@ -6226,6 +6272,7 @@ void pez_unwind(pez_instance *p, pez_statemark *mp)
 		return;		// Yes.  Cannot unwind past init
 
 	p->stk = mp->mstack;	// Roll back stack allocation
+	p->fstk = mp->mfstack;	// Roll back the float stack.
 	p->hptr = mp->mheap;	// Reset heap state
 	p->rstk = mp->mrstack;	// Reset the return stack
 

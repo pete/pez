@@ -54,6 +54,7 @@ typedef pez_dictword **rstackitem;
 typedef struct {
 	pez_int *mstack;	// Stack position marker
 	pez_int *mheap;		// Heap allocation marker
+	pez_real *mfstack;	// Float stack
 	pez_dictword ***mrstack;	// Return stack position marker
 	pez_dictword *mdict;	// Dictionary marker
 } pez_statemark;
@@ -122,6 +123,30 @@ struct pez_inst {
 	pez_real *fstackmax;	// Max stack growth
 	pez_int fstklen;	// Float stack length
 
+	// The return stack:
+	pez_int rstklen;	// Initial/current return stack length
+	pez_dictword ***rstack;
+	pez_dictword ***rstk;	// Return stack pointer
+	pez_dictword ***rstackbot;	// Return stack bottom
+	pez_dictword ***rstacktop;	// Return stack top
+	pez_dictword ***rstackmax;	// Max rstack growth
+
+	// The heap:
+	pez_int heaplen;	// Initial/current heap length
+	pez_stackitem *heap;	// Allocation heap
+	pez_stackitem *hptr;	// Heap allocation pointer
+	pez_stackitem *heapbot;	// Bottom of heap (temp string buffer)
+	pez_stackitem *heaptop;	// Top of heap
+	pez_stackitem *heapmax;	// Max heap growth
+
+	// Running code:
+	pez_dictword *curword;	// Current word being executed
+	pez_dictword **ip;	// Instruction pointer
+
+	// The walkback trace stack:
+	pez_dictword **wback;	// Walkback trace buffer
+	pez_dictword **wbptr;	// Walkback trace pointer
+
 	pez_int permissions;	// The Pez instance's permissions.
 
 	pez_int ltempstr;	// Temporary string buffer length
@@ -139,35 +164,6 @@ struct pez_inst {
 	char *instream;		// Current input stream line
 	pez_int tokint;		// Scanned integer
 	pez_real tokreal;	// Scanned real number
-
-	// Running code:
-	pez_dictword *curword;	// Current word being executed
-	pez_dictword **ip;	// Instruction pointer
-	pez_int base;
-
-	// The return stack:
-	pez_int rstklen;	// Initial/current return stack length
-	pez_dictword ***rstack;
-	pez_dictword ***rstk;	// Return stack pointer
-	pez_dictword ***rstackbot;	// Return stack bottom
-	pez_dictword ***rstacktop;	// Return stack top
-	pez_dictword ***rstackmax;	// Max rstack growth
-
-	// The heap:
-	pez_int heaplen;	// Initial/current heap length
-	pez_stackitem *heap;	// Allocation heap
-	pez_stackitem *hptr;	// Heap allocation pointer
-	pez_stackitem *heapbot;	// Bottom of heap (temp string buffer)
-	pez_stackitem *heaptop;	// Top of heap
-	pez_stackitem *heapmax;	// Max heap growth
-
-	// The temporary string buffers:
-	char **strbuf;	// Array of pointers to temp strings
-	int cstrbuf;	// Current temp string
-
-	// The walkback trace stack:
-	pez_dictword **wback;	// Walkback trace buffer
-	pez_dictword **wbptr;	// Walkback trace pointer
 
 	// Status, bookkeeping:
 	// TODO:  Most of these are booleans; make a flags field and add some
@@ -188,6 +184,8 @@ struct pez_inst {
 	pez_int ctickpend;	// Waiting for the object of a [']?
 	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
 
+	pez_int base;  // The current base, for formatting output of '.'.
+
 	pez_int argc;
 	char **argv;	// The argv that the pez program sees.
 
@@ -202,15 +200,6 @@ struct pez_inst {
 	// For both of these, offset is index 0, length is index 1.
 	pez_stackitem regex_prematch[2];
 	pez_stackitem regex_postmatch[2];
-
-	/* 
-	   These are temporary buffers, for the case where an architecture 
-	   1.  requires floats to be aligned
-	   2.  has floats that are larger than longs (as everything on the stack
-	       is long-aligned)
-	   We memcpy floats from the stack into the buffers before using them.
-	*/
-	pez_real rbuf0, rbuf1, rbuf2;	
 
 	// Library loading:
 	pez_load_path *load_path;
