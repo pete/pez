@@ -712,7 +712,7 @@ prim P_minus(pez_instance *p)
    ( a b -- a*b )
    Multiplies the two numbers at the top of the stack.
 */
-prim P_times(pez_instance *p)
+prim P_mul(pez_instance *p)
 {
 	Sl(2);
 	S1 *= S0;
@@ -969,7 +969,7 @@ prim P_2minus(pez_instance *p)
 	S0 -= 2;
 }
 
-prim P_2times(pez_instance *p)
+prim P_2mul(pez_instance *p)
 {				/* Multiply by two */
 	Sl(1);
 	S0 *= 2;
@@ -2068,7 +2068,7 @@ prim P_fminus(pez_instance *p)
    ( f1 f2 -- f1*f2 )
    Multiplies the two floats at the top of the stack.
 */
-prim P_ftimes(pez_instance *p)
+prim P_fmul(pez_instance *p)
 {
 	FSl(2);
 	SREAL1(REAL1 * REAL0);
@@ -4199,6 +4199,35 @@ prim P_execute(pez_instance *p)
 }
 
 /*
+   ( word n -- ... )
+   Executes the supplied word n times.
+   	' cr 5 times
+   is equivalent to
+   	cr cr cr cr cr
+   You will probably want to make sure that the word is careful with the stack.
+*/
+prim P_times(pez_instance *p)
+{
+	// You've got to be a bit more careful inside here than one might
+	// expect.
+	pez_dictword **ip = p->ip;
+	pez_dictword *wp;
+	pez_stackitem n, i;
+
+	Sl(2);
+	Rso(1);
+	n = S0;
+	wp = (pez_dictword *)S1;
+	Pop2;
+	// We have to save and restore the instruction pointer; otherwise,
+	// exword will punish the stack.
+	p->ip = NULL;
+	for(i = 0; i < n; i++)
+		exword(p, wp);
+	p->ip = ip;
+}
+
+/*
    ( pointer -- bool )
    True if the pointer is a valid word in the dictionary.
 */
@@ -5267,7 +5296,7 @@ static struct primfcn primt[] = {
 
 	{"0+", P_plus},
 	{"0-", P_minus},
-	{"0*", P_times},
+	{"0*", P_mul},
 	{"0/", P_div},
 	{"0MOD", P_mod},
 	{"0/MOD", P_divmod},
@@ -5310,7 +5339,7 @@ static struct primfcn primt[] = {
 	{"02+", P_2plus},
 	{"01-", P_1minus},
 	{"02-", P_2minus},
-	{"02*", P_2times},
+	{"02*", P_2mul},
 	{"02/", P_2div},
 
 	{"00=", P_0equal},
@@ -5433,7 +5462,7 @@ static struct primfcn primt[] = {
 	{"0(FLIT)", P_flit},
 	{"0F+", P_fplus},
 	{"0F-", P_fminus},
-	{"0F*", P_ftimes},
+	{"0F*", P_fmul},
 	{"0F/", P_fdiv},
 	{"0FMIN", P_fmin},
 	{"0FMAX", P_fmax},
@@ -5574,6 +5603,7 @@ static struct primfcn primt[] = {
 	{"0'", P_tick},
 	{"1[']", P_bracktick},
 	{"0EXECUTE", P_execute},
+	{"0times", P_times},
 	{"0word?", P_wordp},
 	{"0TAIL-CALL", P_tail_call},
 	{"0>BODY", P_body},

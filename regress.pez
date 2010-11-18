@@ -1237,6 +1237,8 @@ teststruct
 
 -198 flint f-198
 
+: push5 5 ;
+
 : testlctl
     ">MARK->RESOLVE" tests:
         99 0 xif negate xthen 99 ok?
@@ -1280,6 +1282,11 @@ teststruct
 
     "EXECUTE" tests:
         ['] + 4 5 rot execute 9 ok?
+
+    "TIMES" tests:
+    	['] push5 5 times
+	['] + 4 times
+	25 ok?
 
     "CREATE-DOES>" tests:
         f-198 -198.0 fok?
