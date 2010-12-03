@@ -823,7 +823,7 @@ prim P_abs(pez_instance *p)
 prim P_equal(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 == S0) ? Truth : Falsity;
+	S1 = -(S1 == S0);
 	Pop;
 }
 
@@ -834,7 +834,7 @@ prim P_equal(pez_instance *p)
 prim P_unequal(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 != S0) ? Truth : Falsity;
+	S1 = -(S1 != S0);
 	Pop;
 }
 
@@ -844,7 +844,7 @@ prim P_unequal(pez_instance *p)
 prim P_gtr(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 > S0) ? Truth : Falsity;
+	S1 = -(S1 > S0);
 	Pop;
 }
 
@@ -854,7 +854,7 @@ prim P_gtr(pez_instance *p)
 prim P_lss(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 < S0) ? Truth : Falsity;
+	S1 = -(S1 < S0);
 	Pop;
 }
 
@@ -864,7 +864,7 @@ prim P_lss(pez_instance *p)
 prim P_geq(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 >= S0) ? Truth : Falsity;
+	S1 = -(S1 >= S0);
 	Pop;
 }
 
@@ -874,7 +874,7 @@ prim P_geq(pez_instance *p)
 prim P_leq(pez_instance *p)
 {
 	Sl(2);
-	S1 = (S1 <= S0) ? Truth : Falsity;
+	S1 = -(S1 <= S0);
 	Pop;
 }
 
@@ -984,25 +984,25 @@ prim P_2div(pez_instance *p)
 prim P_0equal(pez_instance *p)
 {				/* Equal to zero ? */
 	Sl(1);
-	S0 = (S0 == 0) ? Truth : Falsity;
+	S0 = -(S0 == 0);
 }
 
 prim P_0notequal(pez_instance *p)
 {				/* Not equal to zero ? */
 	Sl(1);
-	S0 = (S0 != 0) ? Truth : Falsity;
+	S0 = -(S0 != 0);
 }
 
 prim P_0gtr(pez_instance *p)
 {				/* Greater than zero ? */
 	Sl(1);
-	S0 = (S0 > 0) ? Truth : Falsity;
+	S0 = -(S0 > 0);
 }
 
 prim P_0lss(pez_instance *p)
 {				/* Less than zero ? */
 	Sl(1);
-	S0 = (S0 < 0) ? Truth : Falsity;
+	S0 = -(S0 < 0);
 }
 
 /*  Storage allocation (mostly heap) primitives  */
@@ -2142,7 +2142,7 @@ prim P_fequal(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 == REAL0) ? Truth : Falsity;
+	t = -(REAL1 == REAL0);
 	Realpop2;
 	Push = t;
 }
@@ -2156,7 +2156,7 @@ prim P_funequal(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 != REAL0) ? Truth : Falsity;
+	t = -(REAL1 != REAL0);
 	Realpop2;
 	Push = t;
 }
@@ -2170,7 +2170,7 @@ prim P_fgtr(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 > REAL0) ? Truth : Falsity;
+	t = -(REAL1 > REAL0);
 	Realpop2;
 	Push = t;
 }
@@ -2184,7 +2184,7 @@ prim P_flss(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 < REAL0) ? Truth : Falsity;
+	t = -(REAL1 < REAL0);
 	Realpop2;
 	Push = t;
 }
@@ -2198,7 +2198,7 @@ prim P_fgeq(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 >= REAL0) ? Truth : Falsity;
+	t = -(REAL1 >= REAL0);
 	Realpop2;
 	Push = t;
 }
@@ -2212,7 +2212,7 @@ prim P_fleq(pez_instance *p)
 
 	FSl(2);
 	So(1);
-	t = (REAL1 <= REAL0) ? Truth : Falsity;
+	t = -(REAL1 <= REAL0);
 	Realpop2;
 	Push = t;
 }
