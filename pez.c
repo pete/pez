@@ -5055,6 +5055,7 @@ prim P_wait(pez_instance *p)
 }
 
 PUSH_CONSTANT(P_wait_untraced, WUNTRACED)
+PUSH_CONSTANT(P_wait_nohang, WNOHANG)
 
 /*
    ( pid flags -- status )
@@ -5584,6 +5585,7 @@ static struct primfcn primt[] = {
 	{"0WAIT", P_wait},
 	{"0waitpid", P_waitpid},
 	{"0wait_untraced", P_wait_untraced},
+	{"0wait_nohang", P_wait_nohang},
 	{"0PID", P_pid},
 	{"0KILL", P_kill},
 #endif
