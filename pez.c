@@ -611,6 +611,7 @@ void pez_memstat(pez_instance *p)
 		   ((long)(p->hptr - p->heap)),
 		   ((long)(p->heapmax - p->heap)),
 		   p->heaplen, (100L * (p->hptr - p->heap)) / p->heaplen);
+	fflush(stdout);
 }
 #endif				// MEMSTAT
 
@@ -3295,6 +3296,16 @@ prim P_rfetch(pez_instance *p)
 }
 
 /*
+   ( -- )
+   Drops the top item off the return stack.
+*/
+prim P_rdrop(pez_instance *p)
+{
+	Rsl(1);
+	Rpop;
+}
+
+/*
    ( -- time )
    Returns time as number of seconds since the epoch.
 */
@@ -5332,6 +5343,7 @@ static struct primfcn primt[] = {
 	{"0>R", P_tor},
 	{"0R>", P_rfrom},
 	{"0R@", P_rfetch},
+	{"0RDROP", P_rdrop},
 	{"0TIME", P_time},
 	{"0rand", P_rand},
 

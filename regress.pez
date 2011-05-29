@@ -469,6 +469,9 @@ variable k
     "R>" tests:
         r> r>   3 7   2 nok?
 
+    "RDROP" tests:
+	1984 >r 9001 >r rdrop r> 1984 ok?
+
     "TAIL-CALL" tests:
     	5 a-very-inefficient-zero 0 ok?
 ;
