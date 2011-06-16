@@ -5961,29 +5961,34 @@ static void divzero(pez_instance *p)
 */
 static inline void exword(pez_instance *p, pez_dictword *wp)
 {
-	p->curword = wp;
-	tracing {
-		printf("\nTrace: %s ", p->curword->wname + 1);
-		fflush(stdout);
-	}
-	p->curword->wcode(p);	 // Execute the first word
-	while(p->ip != NULL) {
-#ifdef BREAK
-		Keybreak();	// Poll for asynchronous interrupt
-		if(p->broken) {	// Did we receive a break signal
+	pez_dictword *nw = wp;
+	pez_wordp nwc;
+
+	while(1) {
+		nwc = nw->wcode;
+		p->curword = nw;
+
+		Keybreak();	// Check if we received an interrupt.
+		if(p->broken) {
 			trouble(p, "Break signal");
 			p->evalstat = PEZ_BREAK;
 			break;
 		}
-#endif				/* BREAK */
-		p->curword = *p->ip++;
+
 		tracing {
-			printf("\nTrace: %s ", p->curword->wname + 1);
+			printf("\nTrace: %s ", nw->wname + 1);
 			fflush(stdout);
 		}
-		p->curword->wcode(p);	// Execute the next word
+
+		nwc(p);
+
+		if(!p->ip) {
+			p->curword = NULL;
+			return;
+		}
+
+		nw = *p->ip++;
 	}
-	p->curword = NULL;
 }
 
 /*
@@ -6033,12 +6038,10 @@ extern pez_instance *pez_init(long flags)
 	p->comment = Falsity;
 	p->redef = Truth;
 	p->errline = 0;
-	p->ntempstr = 8;
 	p->stklen = 10000;		// Evaluation stack length
 	p->fstklen = 5000;		// Float stack length
 	p->rstklen = 10000;		// Return stack length
 	p->heaplen = 200000;		// Heap length
-	p->ltempstr = max(PATH_MAX, 4096);// Temporary string buffer length
 	p->base = 10;
 	p->broken = Falsity;
 	p->instream = NULL;
@@ -6103,7 +6106,7 @@ extern pez_instance *pez_init(long flags)
 		p->stack = (pez_stackitem *)alloc(
 			((unsigned int)p->stklen) * sizeof(pez_stackitem));
 	}
-	p->stk = p->stackbot = p->stack;
+	p->stk = p->stack;
 #ifdef MEMSTAT
 	p->stackmax = p->stack;
 #endif
@@ -6114,7 +6117,7 @@ extern pez_instance *pez_init(long flags)
 		p->fstack = (pez_real *)alloc(
 			((unsigned int)p->fstklen) * sizeof(pez_real));
 	}
-	p->fstk = p->fstackbot = p->fstack;
+	p->fstk = p->fstack;
 #ifdef MEMSTAT
 	p->fstackmax = p->fstack;
 #endif
@@ -6126,7 +6129,7 @@ extern pez_instance *pez_init(long flags)
 			alloc(((unsigned int)p->rstklen) *
 					sizeof(pez_dictword **));
 	}
-	p->rstk = p->rstackbot = p->rstack;
+	p->rstk = p->rstack;
 #ifdef MEMSTAT
 	p->rstackmax = p->rstack;
 #endif
@@ -6154,11 +6157,7 @@ extern pez_instance *pez_init(long flags)
 
 		/* Force length of temporary strings to even number of
 		   stackitems. */
-		p->ltempstr += sizeof(pez_stackitem) -
-			(p->ltempstr % sizeof(pez_stackitem));
-		cp = alloc((p->heaplen * sizeof(pez_stackitem)) +
-				((p->ntempstr * p->ltempstr)));
-		p->heapbot = (pez_stackitem *)cp;
+		cp = alloc((p->heaplen * sizeof(pez_stackitem)));
 		// Available heap memory starts after the temp strings:
 		p->heap = (pez_stackitem *)cp;
 	}
@@ -6439,8 +6438,6 @@ int pez_prologue(pez_instance *p, char *sp)
 		{"STACK ", &p->stklen},
 		{"RSTACK ", &p->rstklen},
 		{"HEAP ", &p->heaplen},
-		{"TEMPSTRL ", &p->ltempstr},
-		{"TEMPSTRN ", &p->ntempstr},
 	};
 
 	if(strncmp(sp, "# *", 3) == 0) {
@@ -6486,9 +6483,7 @@ void pez_stack_string(pez_instance *p, char *str)
 {
 	char *stacked;
 	So(1);
-	stacked = alloc(p->ltempstr);
-	strncpy(stacked, str, p->ltempstr - 1);
-	Push = (pez_stackitem)stacked;
+	Push = (pez_stackitem)pez_strdup(str);
 }
 
 void pez_heap_int(pez_instance *p, pez_int val)

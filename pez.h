@@ -109,48 +109,49 @@ typedef struct {
 struct pez_inst {
 	// The evaluation stack:
 	pez_stackitem *stk;		// Pointer to the current position
-	pez_stackitem *stack;		// Beginning of the stack
-	pez_stackitem *stackbot;	// Stack bottom
+	pez_stackitem *stack;		// Stack bottom
 	pez_stackitem *stacktop;	// Stack top
-	pez_stackitem *stackmax;	// Max stack growth
-	pez_int stklen;			// Evaluation stack length
+
+	// The return stack:
+	pez_dictword ***rstk;	// Return stack pointer
+	pez_dictword ***rstack;	// Return stack bottom
+	pez_dictword ***rstacktop;	// Return stack top
+
+	// The heap:
+	pez_stackitem *hptr;	// Heap allocation pointer
+	pez_stackitem *heap;	// Bottom of heap (temp string buffer)
+	pez_stackitem *heaptop;	// Top of heap
+
+	// Running code:
+	pez_int broken;		// Break?
+	pez_int trace;		// Tracing?
+	pez_dictword *curword;	// Current word being executed
+	pez_dictword **ip;	// Instruction pointer
 
 	// The float stack:
 	pez_real *fstk;		// Pointer to the current position
-	pez_real *fstack;	// Beginning of the stack
-	pez_real *fstackbot;	// Stack bottom
-	pez_real *fstacktop;	// Stack top
-	pez_real *fstackmax;	// Max stack growth
+	pez_real *fstack;	// Beginning of the float stack
+	pez_real *fstacktop;	// Float stack top
+
+	// Bookkeeping for the three stacks plus heap:
+
+	// Lengths:
+	pez_int heaplen;	// Initial/current heap length
+	pez_int rstklen;	// Initial/current return stack length
+	pez_int stklen;		// Evaluation stack length
 	pez_int fstklen;	// Float stack length
 
-	// The return stack:
-	pez_int rstklen;	// Initial/current return stack length
-	pez_dictword ***rstack;
-	pez_dictword ***rstk;	// Return stack pointer
-	pez_dictword ***rstackbot;	// Return stack bottom
-	pez_dictword ***rstacktop;	// Return stack top
-	pez_dictword ***rstackmax;	// Max rstack growth
-
-	// The heap:
-	pez_int heaplen;	// Initial/current heap length
-	pez_stackitem *heap;	// Allocation heap
-	pez_stackitem *hptr;	// Heap allocation pointer
-	pez_stackitem *heapbot;	// Bottom of heap (temp string buffer)
-	pez_stackitem *heaptop;	// Top of heap
-	pez_stackitem *heapmax;	// Max heap growth
-
-	// Running code:
-	pez_dictword *curword;	// Current word being executed
-	pez_dictword **ip;	// Instruction pointer
+	// Max growth:
+	pez_stackitem *heapmax;
+	pez_dictword ***rstackmax;
+	pez_stackitem *stackmax;
+	pez_real *fstackmax;
 
 	// The walkback trace stack:
 	pez_dictword **wback;	// Walkback trace buffer
 	pez_dictword **wbptr;	// Walkback trace pointer
 
 	pez_int permissions;	// The Pez instance's permissions.
-
-	pez_int ltempstr;	// Temporary string buffer length
-	pez_int ntempstr;	// Number of temporary string buffers
 
 	// The dictionary:
 	pez_dictword *dict;		// Dictionary chain head
@@ -171,13 +172,11 @@ struct pez_inst {
 	pez_int evalstat;	// Evaluation status
 	pez_int forgetpend;	// Is a "forget" pending?
 	pez_int defpend;	// Definition pending?
-	pez_int trace;		// Tracing?
 	pez_int walkback;	// Walkback enabled?
 	pez_int comment;	// Ignoring a comment?
 	pez_int redef;		// Allow redefinition without issuing
 				// the "not unique" message?
 	pez_int errline;	// Line where last pez_load failed
-	pez_int broken;		// Break?
 	pez_int stringlit;	// Waiting for a string literal?
 	pez_int tail_call_pending;	// Did we get a tail-call?
 	pez_int tickpend;	// Waiting for the object of a '?
