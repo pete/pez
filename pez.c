@@ -5063,7 +5063,7 @@ PUSH_CONSTANT(P_wait_nohang, WNOHANG)
 */
 prim P_waitpid(pez_instance *p)
 {
-	So(2);
+	Sl(2);
 	int pid, status, options;
 
 	pid = (int)S1;
