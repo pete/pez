@@ -65,10 +65,28 @@ struct pez_load_path {
 	char *path;
 };
 
+// For handling structs:
 typedef struct {
 	char *name;
 	long size;
 } pez_struct;
+
+// FFI libraries have gotten slightly more complicated than "pointer returned by
+// dlopen()".
+
+// Yet another linked list type.  CS101, keepin' it real fo lyfe.
+typedef struct pez_ffi_include pez_ffi_include;
+struct pez_ffi_include {
+	char *fname;
+	pez_ffi_include *next;
+};
+
+// The lib type:
+typedef struct {
+	char *name;
+	pez_ffi_include *includes;
+	void *sofile;
+} pez_ffi_lib;
 
 /* Permissions for instances of Pez: */
 

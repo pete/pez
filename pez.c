@@ -26,13 +26,7 @@
 #include <limits.h>
 #include <gc/gc.h>
 
-#ifdef HAVE_LIGHTNING_H
-#include <lightning.h>
-#else
-#ifdef HAVE_LIGHTNING_LIGHTNING_H
-#include <lighting/lightning.h>
-#endif
-#endif
+#include <libtcc.h>
 
 #include <memory.h>
 
@@ -285,7 +279,7 @@ Boolean get_quoted_string(pez_instance *p, char **strbuf, char token_buffer[])
 
 	sp++;
 	while(True) {
-		char c = *sp++;
+		unsigned char c = *sp++;
 
 		if(c == '"') {
 			sp++;
@@ -3533,7 +3527,6 @@ prim P_frot(pez_instance *p)
 
 prim P_ftuck(pez_instance *p)
 {
-	pez_real d;
 	FSl(2);
 	FSo(1);
 	P_fswap(p);
@@ -4702,6 +4695,22 @@ prim P_align_struct(pez_instance *p)
 
 #ifdef FFI
 
+static char *ffi_types_table[256] = {
+	"void", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	"unsigned char", 0, 0, 0, 0, 0, "unsigned int", 0, 0, 0, 0, 0, 0, 0,
+	0, 0, "unsigned short", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	"char", "double", 0, "float", 0, 0, "int", 0, 0, "long", 0, 0, 0,
+	"void *", 0, 0, "short", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
 /*
    ( libname -- status )
    Loads a .so file that must contain at least one of the following in order
@@ -4772,111 +4781,257 @@ prim P_dlerror(pez_instance *p)
 }
 
 /*
+   Loads a library!
+*/
+prim P_ffi_lib_colon(pez_instance *p)
+{
+	pez_ffi_lib *lib = GC_MALLOC(sizeof(pez_ffi_lib));
+	char *dlname, *tmp;
+
+	Sl(1);
+	if(S0) // NULL is fine.  See dlopen(3).
+		Hpc(S0);
+
+	lib->sofile = dlopen((char *)S0, RTLD_LAZY);
+	lib->name = S0 ? pez_strdup((char *)S0) : "[current process]";
+
+	if(!lib->sofile) {
+		trouble(p, "Error opening shared library!");
+		tmp = dlerror();
+		if(tmp)
+			trouble(p, tmp);
+		return;
+	}
+
+	S0 = (pez_stackitem)lib;
+	P_constant(p);
+}
+
+/*
+   Adds a file to be #include'd for ffi functions.
+*/
+prim P_ffi_include(pez_instance *p)
+{
+	pez_ffi_lib *l;
+	pez_ffi_include *i;
+
+	Sl(2);
+	Hpc(S0);
+	Hpc(S1);
+
+	l = (pez_ffi_lib *)S0;
+	i = (pez_ffi_include *)alloc(sizeof(pez_ffi_include));
+	i->fname = S1;
+	i->next = l->includes;
+	l->includes = i;
+
+	Npop(2);
+}
+
+// Just a few macros for the somewhat complicated FFI call generator:
+#define tbsz 1024
+#define RETFLOAT 1
+#define RETINT 2
+#define emit(s) (ccode = pez_strcat(ccode, (s)))
+/*
    Define an FFI call.
 */
 prim P_ffi_colon(pez_instance *p)
 {
-	jit_insn *codebuf;
-	int i, arglen;
-	char *args, *ret, *fname;
-	void *lib, *f;
+	// Only ~17 local vars and only ~200 lines!  Brevity, clean design, this
+	// function has it al--oh, who am I kidding, FIXME all over this chunk.
+	TCCState *s;
+	long fsz;
+	int i, arglen, nstackitems = 0, rs, nfstackitems = 0, fs, retstack = 0;
+	unsigned char *args, *ret;
+	char *fname, *ccode, tmpbuf[tbsz];
+	pez_ffi_lib *lib;
+	pez_ffi_include *inc;
+	void *f;
 
 	Sl(4);
-	codebuf = GC_malloc(1024); // TODO:  Put a real number in there.
-
-	ret = (char *)S3;
+	ret = (unsigned char *)S3;
+	Hpc(S3);
 	fname = (char *)S2;
-	args = (char *)S1;
-	lib = (char *)S0;
-	f = dlsym(lib, fname);
+	Hpc(S2);
+	args = (unsigned char *)S1;
+	Hpc(S1);
+	lib = (pez_ffi_lib *)S0;
+	Hpc(S0);
 	Npop(4);
 
+	if(ret && !*ret) ret = 0;
+	if(args && !*args) args = 0;
+
+	f = dlsym(lib->sofile, fname);
+
 	if(!f) {
-		pez_error(p, "Function not found when compiling ffi: call");
+		pez_error(p, pez_strcat("Function \"",
+			pez_strcat(fname,
+				"\" not found when compiling ffi: call!")));
+			
 		return;
 	}
 
 	P_create(p);
-	p->createword->wcode =
-		(void (*)(pez_instance *p))(jit_set_ip(codebuf).vptr);
 
-	// The generated code:
-	jit_prolog(1); // We take one arg, although we ignore it.
+	ccode = "#include <pez.h>\n"
+		"#include <pezdef.h>\n";
 
-	// Write the call:
-	if(args) {
-		arglen = strlen(args);
-		jit_prepare(arglen);
-		for(i = 0; i < arglen; i++) {
-			switch(args[i]) {
-			case 'p':
-			case 'l':
-				jit_ld_S0(JIT_R0);
-				jit_pusharg_l(JIT_R0);
-				jit_Pop(JIT_R0);
-				break;
-			case 'i':
-				jit_ld_S0(JIT_R0);
-				jit_pusharg_i(JIT_R0);
-				jit_Pop(JIT_R0);
-				break;
-			case 's':
-				jit_ld_S0(JIT_R0);
-				jit_pusharg_s(JIT_R0);
-				jit_Pop(JIT_R0);
-				break;
-			case 'c':
-				jit_ld_S0(JIT_R0);
-				jit_pusharg_c(JIT_R0);
-				jit_Pop(JIT_R0);
-				break;
-			case 'f':
-				// TODO
-				break;
-			case 'd':
-				// TODO
-				break;
-			default:
-				trouble(p,
-					"Unknown argument type in ffi: call");
-				return;
-			}
-		}
+	inc = lib->includes;
+	while(inc) {
+		snprintf(tmpbuf, tbsz, "#include <%s>\n", inc->fname);
+		emit(tmpbuf);
+		inc = inc->next;
 	}
-	jit_finish(f);
 
-	if(ret && ret[0]) {
-		switch(ret[0]) {
-		// TODO:  I think these should probably work
-		// differently...maybe?
-		case 'p':
-		case 'l':
-		case 'i':
-		case 's':
-		case 'c':
-			jit_retval(JIT_R0);
-			jit_Pushr(JIT_R0, JIT_R1);
+	emit("\n"
+	     "void ffi_call(pez_instance *p)\n"
+	     "{\n");
+
+	// Figure out the stack that the return value goes onto:
+	if(ret) {
+		switch(*ret) {
+		// Return values pushed onto the regular stack:
+		case 'p': case 'i': case 'c': case 'l': case 's':
+			retstack = RETINT;
+			emit("pez_stackitem ret;\n\n");
 			break;
-		case 'f':
-			// TODO
-			break;
-		case 'd':
-			// TODO
+		// Return values pushed onto the float stack:
+		case 'f': case 'd':
+			retstack = RETFLOAT;
+			emit("pez_real ret;\n\n");
 			break;
 		default:
-			// TODO:  Error handling?  Bueller?
-			trouble(p, "Unknown return value type in ffi: call");
+			snprintf(tmpbuf, tbsz,
+				"Unrecognized return type \"%c\" in ffi: call "
+				"for \"%s\"!", *ret, fname);
+			pez_error(p, tmpbuf);
 			return;
 		}
 	}
-	jit_ret();
 
-	jit_flush_code(codebuf, jit_get_ip().ptr);
-	/*
-	fprintf(stderr, "Compiled call to %s, %d bytes.\n", fname,
-			(long)jit_get_ip().ptr - (long)codebuf);
-	*/
+	// Check to see how many arguments we have, and which stack they come
+	// from:
+	if(args) {
+		arglen = strlen((char *)args);
+		for(i = 0; i < arglen; i++) {
+			switch(args[i]) {
+			// Args that come off the regular stack:
+			case 'p': case 'i': case 'c': case 'l': case 's':
+				nstackitems++;
+				break;
+			// Args that come off the float stack:
+			case 'f': case 'd':
+				nfstackitems++;
+				break;
+			default:
+				snprintf(tmpbuf, tbsz,
+					"Unrecognized arg type \"%c\" in ffi: "
+					"call for \"%s\"!", args[i], fname);
+				pez_error(p, tmpbuf);
+				return;
+			}
+		}
+
+		if(nstackitems > 0) {
+			snprintf(tmpbuf, tbsz, "Sl(%d);\nNpop(%d);\n",
+					nstackitems, nstackitems);
+			emit(tmpbuf);
+		}
+		if(nfstackitems > 0) {
+			snprintf(tmpbuf, tbsz, "FSl(%d);\nNRealpop(%d);\n",
+					nfstackitems, nfstackitems);
+			emit(tmpbuf);
+		}
+	}
+
+	// If nothing was popped, we need to check overflow before pushing:
+	if(retstack == RETINT && !nstackitems) {
+		emit("So(1);\n");
+	} else if(retstack == RETFLOAT && !nfstackitems) {
+		emit("FSo(1);\n");
+	}
+
+	if(ret)
+		emit("ret = ");
+
+	emit(fname);
+	emit("(");
+	if(*args) {
+		rs = fs = 0;
+		for(i = 0; i < arglen; i++) {
+			switch(args[i]) {
+			// Args that come off the regular stack:
+			case 'p': case 'i': case 'c': case 'l': case 's':
+				snprintf(tmpbuf, tbsz, "%s(%s)(p->stk[%d])",
+					i ? ", " : "",
+					ffi_types_table[args[i]], rs++);
+				emit(tmpbuf);
+				break;
+			// Args that come off the float stack:
+			case 'f': case 'd':
+				snprintf(tmpbuf, tbsz, "%s(%s)p->fstk[%d]",
+					i ? ", " : "",
+					ffi_types_table[args[i]], fs++);
+				emit(tmpbuf);
+				break;
+			// We've already checked above that the types are sane.
+			}
+		}
+	}
+	emit(");\n");
+
+	if(retstack == RETINT) {
+		emit("Push = ret;\n");
+	} else if(retstack == RETFLOAT && !nfstackitems) {
+		emit("Realpush(ret);\n");
+	}
+
+	emit("\nreturn;\n}\n");
+
+	puts(ccode);
+	// Compile it, finally, damn!
+	s = tcc_new();
+	if(!s) {
+		trouble(p, "Could not create a new TCC state when compiling FFI"
+			"call!");
+		return;
+	}
+
+	if(tcc_set_output_type(s, TCC_OUTPUT_MEMORY) == -1) {
+		trouble(p, "Couldn't set TCC output type to \"memory\".");
+		return;
+	}
+
+	if(tcc_compile_string(s, ccode) == -1) {
+		trouble(p, "Couldn't compile FFI call!");
+		return;
+	}
+
+	tcc_add_symbol(s, fname, f);
+
+	fsz = tcc_relocate(s, 0);
+	if(fsz < 0) {
+		trouble(p, "Couldn't relocate ffi function!");
+		return;
+	}
+
+	f = (void *)alloc(fsz);
+	tcc_relocate(s, f);
+	p->createword->wcode = tcc_get_symbol(s, "ffi_call");
+	if(!p->createword->wcode) {
+		p->createword->wcode = P_var;
+		trouble(p, "Error getting symbol from compiled FFI function!");
+		return;
+	}
+
+	tcc_delete(s);
 }
+#undef emit
+#undef tbsz
+#undef RETFLOAT
+#undef RETINT
 
 /*
    Calls a void (*)() from the top of the stack.
@@ -5556,6 +5711,8 @@ static struct primfcn primt[] = {
 	{"0DLOPEN", P_dlopen},
 	{"0DLSYM", P_dlsym},
 	{"0DLERROR", P_dlerror},
+	{"0ffi-lib:", P_ffi_lib_colon},
+	{"0ffi-include", P_ffi_include},
 	{"0ffi:", P_ffi_colon},
 
 	// dl* flags:
@@ -6143,16 +6300,13 @@ extern pez_instance *pez_init(long flags)
 	p->wbptr = p->wback;
 #endif
 	if(p->heap == NULL) {
-
 		/*
 		   The temporary string buffers are placed at the start
 		   of the heap, which permits us to pointer-check
 		   pointers into them as within the heap extents.
 		   Hence, the size of the buffer we acquire for the heap
 		   is the sum of the heap and temporary string requests.
-		 */
-
-		int i;
+		*/
 		char *cp;
 
 		/* Force length of temporary strings to even number of
@@ -6166,7 +6320,7 @@ extern pez_instance *pez_init(long flags)
 	   so that pointer checking doesn't bounce references to it.
 	   When creating the heap, we preallocate this word and
 	   initialise the state to the interpretive state.
-	 */
+	*/
 	p->hptr = p->heap + 1;
 	state = Falsity;
 #ifdef MEMSTAT
@@ -6481,7 +6635,6 @@ void pez_heap_string(pez_instance *p, char* str)
 */
 void pez_stack_string(pez_instance *p, char *str)
 {
-	char *stacked;
 	So(1);
 	Push = (pez_stackitem)pez_strdup(str);
 }

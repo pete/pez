@@ -241,6 +241,7 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Realpop  p->fstk--
 // Pop two floats:
 #define Realpop2 p->fstk -= 2
+#define NRealpop(n) p->fstk -= n;
 
 #define REALSTACK p->fstk
 #define REAL0 REALSTACK[-1]
