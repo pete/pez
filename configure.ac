@@ -36,12 +36,13 @@ AC_CHECK_LIB([dl], [dlopen], [],
 	      exit 1])
 AC_CHECK_LIB([gc], [GC_malloc], [],
 	     [echo "Missing the Boehm GC library, -lgc" >&2; exit 1])
+AC_CHECK_LIB([tcc], [tcc_new], [],
+	     [echo "Missing libtcc, -ltcc" >&2; exit 1])
 
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-LIGHTNING_CONFIGURE_IF_NOT_FOUND
-AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h gc.h lightning.h lightning/lightning.h inttypes.h types.h])
+AC_CHECK_HEADERS([memory.h stdlib.h string.h sys/time.h unistd.h limits.h gc/gc.h gc.h libtcc.h inttypes.h types.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
