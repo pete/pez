@@ -4990,7 +4990,6 @@ prim P_ffi_colon(pez_instance *p)
 
 	emit("\nreturn;\n}\n");
 
-	puts(ccode);
 	// Compile it, finally, damn!
 	s = tcc_new();
 	if(!s) {
