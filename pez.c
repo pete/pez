@@ -97,8 +97,6 @@
 // because it does not branch.
 #define unit_scale(a)	(((a) > 0) - (((a) < 0)))
 
-/*  Globals imported  */
-
 /*  Data types  */
 
 typedef enum { False = 0, True = 1 } Boolean;
@@ -4958,7 +4956,7 @@ prim P_ffi_colon(pez_instance *p)
 
 	emit(fname);
 	emit("(");
-	if(*args) {
+	if(args && *args) {
 		rs = fs = 0;
 		for(i = 0; i < arglen; i++) {
 			switch(args[i]) {
@@ -6164,6 +6162,8 @@ static inline void exword(pez_instance *p, pez_dictword *wp)
 
    These flags are documented a bit more in-depth in pez.h, where they are
    defined.
+
+   TODO:  
 */
 extern pez_instance *pez_init(long flags)
 {
@@ -6375,11 +6375,11 @@ pez_stackitem *pez_body(pez_instance *p, pez_dictword *dw)
 	return ((pez_stackitem *)dw) + Dictwordl;
 }
 
-/*  PEZ_EXEC  --  Execute a word, given its dictionary address.  The
-				  evaluation status for that word's execution is
-		  returned.  The in-progress evaluation status is
-		  preserved. */
-
+/*  
+    Execute a word, given an instance of Pez and its dictionary address.  The
+    evaluation status for that word's execution is returned.  The in-progress
+    evaluation status is preserved.
+*/
 int pez_exec(pez_instance *p, pez_dictword *dw)
 {
 	int sestat = p->evalstat, restat;
