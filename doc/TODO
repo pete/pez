@@ -1,8 +1,11 @@
-This is a sort of unordered roadmap for Pez.
+This is a sort of unordered roadmap for Pez.  Pez is a side project of a side
+project, so this isn't strict.  I don't expect anyone is running Pez in
+production anywhere, so usually the author throws features around with no regard
+for the roadmap.
 
 NOW (1.6.0 release)
 
-* Finish up missing pieces of ffi: and load-lib.
+* Finish up missing pieces of load-lib.
 
 * Finish up the socket library, now that structs are solidified.
 
@@ -22,17 +25,23 @@ NOW (1.6.0 release)
 
 * Fix up size limiting.
 
+* Un-break BSD.  This involves un-breaking TinyCC for BSD, or selectively
+  disabling FFI/JIT where TinyCC isn't found.
+
 ONGOING
 
 * Misc cleanup
 
-* Include more batteries.  Flesh out the standard library.
+* Include more batteries.  Flesh out the standard library.  Have a look at Lua
+  for this.
 
 LATER
 
 * Serialization of the dictionary/code/etc.
 	* I expect text to be easier than binary images.
 	* Also, do both if possible.
+	* Also, binary images are likely to be better supported by the OS than
+	  by the language proper.  For example, DragonFly's checkpt feature.
 
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
   depends on how much of a pain that turns out to be.
@@ -46,17 +55,25 @@ LATER
 * Mailboxes for communicating between Pez instances, when a concurrency model
   is implemented.
 
-* Look into separating the float stack from the data stack, as some
-  implementations do; this would greatly simplify things, and shouldn't break
-  existing code if written portably per the current rules.  It should also
-  speed Pez up a bit.
+* Un-break HaikuOS.  I want to use Pez there!
+
+* Possibly add lambdas.  They're not extremely useful in a Forth-like language,
+  but it would be simple to add.  (A function with an empty name, address pushed
+  onto the stack when ';' is executed.)
+
+* Determine if we can determine (using the public API) whether a pointer falls
+  within memory allocated by BoehmGC, so that pointer safety can be reintroduced
+  without limiting things to the heap.
+
+* Compilation to a executable or library.  This recently began to look like it
+  might be easier than it previously looked.
 
 MUCH LATER
 
-* Investigate a few key optimizations, as I'm planning on using Pez as a VM
-  language, especially for Roboto.
+* Come up with a plan for handling strings differently, maybe.  Pez is extra
+  slow for string-heavy code, due to the relentless copying (and BoehmGC's
+  zero'ing of memory).  This may introduce too big a gap between Pez and the
+  underlying C runtime, so it may not be worth the effort.  Pez isn't really
+  a string-heavy language, but a solution would be nice.
 
-* Along those lines, there are a few Roboto features that may be pushed down to
-  Pez, although this will only happen where it does not interfere with Pez as a
-  general-purpose standalone language or embedded scripting language.
-
+* Investigate a few key optimizations, to speed up the language overall.
