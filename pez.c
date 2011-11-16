@@ -30,18 +30,14 @@
 
 #include <memory.h>
 
-#ifdef Macintosh
-/* Macintoshes need 32K segments, else barfage ensues */
-#pragma segment seg2a
-#endif				//Macintosh
-
-/*  Subpackage configuration.  If INDIVIDUALLY is defined, the inclusion
-	of subpackages is based on whether their compile-time tags are
-	defined.  Otherwise, we automatically enable all the subpackages.  */
-
-// TODO:  These are all going away.  Some of them to config.h, and the rest to
-// be made into initialization flags for interpreters (which, of course, depends
-// on interpreter instances being implemented first).
+/*
+   Subpackage configuration.  If INDIVIDUALLY is defined, the inclusion
+   of subpackages is based on whether their compile-time tags are
+   defined.  Otherwise, we automatically enable all the subpackages.
+   TODO:  These are all going away.  Some of them to config.h, and the rest to
+   be made into initialization flags for interpreters (which, of course, depends
+   on interpreter instances being implemented first).
+*/
 #ifndef INDIVIDUALLY
 
 #define ARRAY			// Array subscripting words
@@ -58,14 +54,13 @@
 #define FFI			// Foreign function interface
 #define PROCESS			// Process-level facilities
 
-#define BOUNDS_CHECK		// For the stack, heap, return stack, and arrays
+// #define NO_BOUNDS_CHECK	// For the stack, heap, return stack, and arrays
 #define UNRESTRICTED_POINTERS	// Pointers anywhere, not just inside the heap.
 #define MATH_CHECK		// x/0 errors.
 #define COMPILATION_SAFETY	// The Compiling macro.
 #define TRACE			// Execution tracing
 #define WALKBACK		// Walkback trace
 #define WORDSUSED		// Logging of words used and unused
-
 
 #endif				// !INDIVIDUALLY
 
@@ -1312,13 +1307,13 @@ prim P_arraysub(pez_instance *p)
 	Hpc(array);
 	nsubs = *array++;	// Load number of subscripts
 	esize = *array++;	// Load element size
-#ifndef BOUNDS_CHECK
+#ifndef NO_BOUNDS_CHECK
 	isp = &S0;
 	for(i = 0; i < nsubs; i++) {
 		pez_stackitem subn = *isp--;
 
 		if(subn < 0 || subn >= array[i])
-			trouble("Subscript out of range");
+			trouble(p, "Subscript out of range");
 	}
 #endif
 	isp = &S0;
@@ -2484,8 +2479,10 @@ prim P_ndots(pez_instance *p)
 */
 prim P_dots(pez_instance *p)
 {
+	pez_stackitem i;
 	So(1);
-	Push = p->stk - p->stack;
+	i = p->stk - p->stack;
+	Push = i;
 	P_ndots(p);
 }
 
@@ -3487,8 +3484,10 @@ prim P_2at(pez_instance *p)
 
 prim P_fover(pez_instance *p)
 {
+	pez_real r;
 	FSl(2);
-	Realpush(REAL1);
+	r = REAL1;
+	Realpush(r);
 }
 
 prim P_fdrop(pez_instance *p)
@@ -3499,9 +3498,11 @@ prim P_fdrop(pez_instance *p)
 
 prim P_fdup(pez_instance *p)
 {
+	pez_real r;
 	FSl(1);
 	FSo(1);
-	Realpush(REAL0);
+	r = REAL0;
+	Realpush(r);
 }
 
 prim P_fswap(pez_instance *p)
@@ -3525,10 +3526,12 @@ prim P_frot(pez_instance *p)
 
 prim P_ftuck(pez_instance *p)
 {
+	pez_real r;
 	FSl(2);
 	FSo(1);
 	P_fswap(p);
-	Realpush(REAL1);
+	r = REAL1;
+	Realpush(r);
 }
 
 prim P_fnip(pez_instance *p)
@@ -4784,7 +4787,7 @@ prim P_dlerror(pez_instance *p)
 prim P_ffi_lib_colon(pez_instance *p)
 {
 	pez_ffi_lib *lib = GC_MALLOC(sizeof(pez_ffi_lib));
-	char *dlname, *tmp;
+	char *tmp;
 
 	Sl(1);
 	if(S0) // NULL is fine.  See dlopen(3).
@@ -4819,7 +4822,7 @@ prim P_ffi_include(pez_instance *p)
 
 	l = (pez_ffi_lib *)S0;
 	i = (pez_ffi_include *)alloc(sizeof(pez_ffi_include));
-	i->fname = S1;
+	i->fname = (char *)S1;
 	i->next = l->includes;
 	l->includes = i;
 
@@ -6011,10 +6014,9 @@ Exported void pez_error(pez_instance *p, char *kind)
 	p->evalstat = PEZ_APPLICATION;	// Signify application-detected error
 }
 
-#ifdef BOUNDS_CHECK
+#ifndef NO_BOUNDS_CHECK
 
 /*  STAKOVER  --  Recover from stack overflow.	*/
-
 Exported void stakover(pez_instance *p)
 {
 	trouble(p, "Stack overflow");
@@ -6022,7 +6024,6 @@ Exported void stakover(pez_instance *p)
 }
 
 /*  STAKUNDER  --  Recover from stack underflow.  */
-
 Exported void stakunder(pez_instance *p)
 {
 	trouble(p, "Stack underflow");
@@ -6030,7 +6031,6 @@ Exported void stakunder(pez_instance *p)
 }
 
 /*  RSTAKOVER  --  Recover from return stack overflow.	*/
-
 Exported void rstakover(pez_instance *p)
 {
 	trouble(p, "Return stack overflow");
@@ -6038,19 +6038,16 @@ Exported void rstakover(pez_instance *p)
 }
 
 /*  RSTAKUNDER	--  Recover from return stack underflow.  */
-
 Exported void rstakunder(pez_instance *p)
 {
 	trouble(p, "Return stack underflow");
 	p->evalstat = PEZ_RSTACKUNDER;
 }
-
 Exported void fstakover(pez_instance *p)
 {
 	trouble(p, "Float stack overflow");
 	p->evalstat = PEZ_FSTACKOVER;
 }
-
 Exported void fstakunder(pez_instance *p)
 {
 	trouble(p, "Float stack underflow");
@@ -6067,7 +6064,7 @@ Exported void heapover(pez_instance *p)
 	p->evalstat = PEZ_HEAPOVER;
 }
 
-#endif				// BOUNDS_CHECK
+#endif				// !NO_BOUNDS_CHECK
 
 
 #ifdef RESTRICTED_POINTERS

@@ -178,15 +178,15 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define Msh(n)
 #endif
 
-#ifdef BOUNDS_CHECK
+#ifdef NO_BOUNDS_CHECK
+#define Sl(x)
+#define So(n)
+#else
 #define Memerrs
 #define Sl(x) if ((p->stk - p->stack)<(x)) {stakunder(p); return Memerrs;}
 #define So(n) do {\
 	Mss(n); if((p->stk+(n)) > p->stacktop){stakover(p); return Memerrs;} \
 } while(0)
-#else
-#define Sl(x)
-#define So(n)
 #endif
 
 /*  Return stack access definitions  */
@@ -196,23 +196,23 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define R2  p->rstk[-3]		      /* Third on return stack */
 #define Rpop p->rstk--		      /* Pop return stack */
 #define Rpush *p->rstk++		      /* Push return stack */
-#ifdef BOUNDS_CHECK
+#ifdef NO_BOUNDS_CHECK
+#define Rsl(x)
+#define Rso(n)
+#else
 #define Rsl(x) if((p->rstk - p->rstack)<(x)) {rstakunder(p); return Memerrs;}
 #define Rso(n) Msr(n) \
 	if((p->rstk + (n)) > p->rstacktop){rstakover(p); return Memerrs;}
-#else
-#define Rsl(x)
-#define Rso(n)
 #endif
 
 /*  Heap access definitions  */
 
-#ifdef BOUNDS_CHECK
+#ifdef NO_BOUNDS_CHECK
+#define Ho(n)
+#else
 #define Ho(n) do { \
 	Msh(n); if((p->hptr+(n)) > p->heaptop){heapover(p); return Memerrs;} \
 } while(0);
-#else
-#define Ho(n)
 #endif
 
 #ifdef RESTRICTED_POINTERS
@@ -252,13 +252,13 @@ pragma On(PCC_msgs);		      /* High C compiler is brain-dead */
 #define SREAL2(x) REAL2 = (x)
 #define Realpush(x) *p->fstk++ = ((pez_real)x)
 
-#ifdef BOUNDS_CHECK
+#ifdef NO_BOUNDS_CHECK
+#define FSl(x)
+#define FSo(n)
+#else
 #define FSl(x) if((p->fstk - p->fstack)<(x)) {fstakunder(p); return Memerrs;}
 #define FSo(n) Msr(n) \
 	if((p->fstk + (n)) > p->fstacktop){fstakover(p); return Memerrs;}
-#else
-#define FSl(x)
-#define FSo(n)
 #endif
 
 #ifdef TRACE
