@@ -2897,7 +2897,7 @@ prim P_load_lib(pez_instance *p)
 	// Try to find it:
 	which = pez_which_lib(p, path);
 	if(!which) {
-		trouble(p, tmp);
+		pez_error(p, tmp);
 		return;
 	}
 
@@ -2905,10 +2905,10 @@ prim P_load_lib(pez_instance *p)
 	if(!strcmp(".so", which + strlen(which) - 3)) {
 		switch(pez_ffi_load(p, which)) {
 			case -1:
-				trouble(p, "Not a valid Pez FFI lib");
+				pez_error(p, "Not a valid Pez FFI lib");
 				return;
 			case -2:
-				trouble(p, pez_strdup(dlerror()));
+				pez_error(p, pez_strdup(dlerror()));
 				return;
 		}
 		return;
@@ -4782,7 +4782,9 @@ prim P_dlerror(pez_instance *p)
 }
 
 /*
-   Loads a library!
+   ( libname -- )
+   Defines an FFI library.  The .so filename is expected to be on the stack, and
+   it reads the next word to use as the name of the library.
 */
 prim P_ffi_lib_colon(pez_instance *p)
 {
@@ -4829,11 +4831,31 @@ prim P_ffi_include(pez_instance *p)
 	Npop(2);
 }
 
-// Just a few macros for the somewhat complicated FFI call generator:
-#define tbsz 1024
+// Just a few macros for the somewhat complicated FFI stuff:
+#define emit(s) (ccode = pez_strcat(ccode, (s)))
 #define RETFLOAT 1
 #define RETINT 2
-#define emit(s) (ccode = pez_strcat(ccode, (s)))
+
+/*
+   Adds the includes from lib to the C code, returns the result as a GC'd
+   string.
+*/
+static char *add_ffi_includes(pez_ffi_lib *lib, char *ccode)
+{
+	pez_ffi_include *inc;
+
+	inc = lib->includes;
+	while(inc) {
+		emit("#include <");
+		emit(inc->fname);
+		emit(">\n");
+		inc = inc->next;
+	}
+
+	return ccode;
+}
+
+#define tbsz 1024
 /*
    Define an FFI call.
 */
@@ -4847,7 +4869,6 @@ prim P_ffi_colon(pez_instance *p)
 	unsigned char *args, *ret;
 	char *fname, *ccode, tmpbuf[tbsz];
 	pez_ffi_lib *lib;
-	pez_ffi_include *inc;
 	void *f;
 
 	Sl(4);
@@ -4876,15 +4897,9 @@ prim P_ffi_colon(pez_instance *p)
 
 	P_create(p);
 
-	ccode = "#include <pez.h>\n"
-		"#include <pezdef.h>\n";
-
-	inc = lib->includes;
-	while(inc) {
-		snprintf(tmpbuf, tbsz, "#include <%s>\n", inc->fname);
-		emit(tmpbuf);
-		inc = inc->next;
-	}
+	ccode = add_ffi_includes(lib,
+			"#include <pez.h>\n"
+			"#include <pezdef.h>\n");
 
 	emit("\n"
 	     "void ffi_call(pez_instance *p)\n"
@@ -4948,14 +4963,18 @@ prim P_ffi_colon(pez_instance *p)
 	}
 
 	// If nothing was popped, we need to check overflow before pushing:
-	if(retstack == RETINT && !nstackitems) {
-		emit("So(1);\n");
-	} else if(retstack == RETFLOAT && !nfstackitems) {
-		emit("FSo(1);\n");
+	if(retstack == RETINT) {
+		if(!nstackitems)
+			emit("So(1);\n");
+		emit("ret = (pez_stackitem)");
+	} else if(retstack == RETFLOAT) {
+		if(!nfstackitems)
+			emit("FSo(1);\n");
 	}
 
-	if(ret)
+	if(ret) {
 		emit("ret = ");
+	}
 
 	emit(fname);
 	emit("(");
@@ -4994,26 +5013,28 @@ prim P_ffi_colon(pez_instance *p)
 	// Compile it, finally, damn!
 	s = tcc_new();
 	if(!s) {
-		trouble(p, "Could not create a new TCC state when compiling FFI"
-			"call!");
+		pez_error(p, "Could not create a new TCC state when "
+			"compiling FFI call!");
 		return;
 	}
 
 	if(tcc_set_output_type(s, TCC_OUTPUT_MEMORY) == -1) {
-		trouble(p, "Couldn't set TCC output type to \"memory\".");
+		pez_error(p, "Couldn't set TCC output type to \"memory\".");
 		return;
 	}
 
 	if(tcc_compile_string(s, ccode) == -1) {
-		trouble(p, "Couldn't compile FFI call!");
+		pez_error(p, pez_strcat("Couldn't compile FFI call to ",
+					fname));
 		return;
 	}
 
 	tcc_add_symbol(s, fname, f);
+	tcc_add_symbol(s, "trouble", trouble);
 
 	fsz = tcc_relocate(s, 0);
 	if(fsz < 0) {
-		trouble(p, "Couldn't relocate ffi function!");
+		pez_error(p, "Couldn't relocate ffi function!");
 		return;
 	}
 
@@ -5022,14 +5043,131 @@ prim P_ffi_colon(pez_instance *p)
 	p->createword->wcode = tcc_get_symbol(s, "ffi_call");
 	if(!p->createword->wcode) {
 		p->createword->wcode = P_var;
-		trouble(p, "Error getting symbol from compiled FFI function!");
+		pez_error(p, "Error getting symbol from compiled FFI function!");
 		return;
 	}
 
 	tcc_delete(s);
 }
-#undef emit
 #undef tbsz
+
+/*
+   ( type name lib -- )
+   Define a value to push.  Useful for, e.g., using macros that resolve to
+   literals by name.  For example:
+   	"i" "O_RDONLY" libc ffi-const: o_rdonly
+   	"i" "O_WRONLY" libc ffi-const: o_wronly
+*/
+prim P_ffi_const(pez_instance *p)
+{
+	TCCState *s;
+	pez_ffi_lib *lib;
+	long fsz;
+	char *cname, *ccode, *c;
+	int ctype;
+	void *f;
+	
+	Sl(3);
+	Hpc(S0);
+	Hpc(S1);
+	Hpc(S2);
+
+	lib = (pez_ffi_lib *)S0;
+	cname = (char *)S1;
+	ctype = *((unsigned char *)S2);
+
+	Npop(3);
+
+	if(!ffi_types_table[ctype]) {
+		pez_error(p,
+			pez_strcat("Could not determine return type of ",
+				pez_strcat(cname, "!")));
+		return;
+	}
+
+	for(c = cname; *c; c++) {
+		if(!((*c >= 'a' && *c <= 'z') ||
+		     (*c >= 'A' && *c <= 'Z') ||
+		     (*c >= '0' && *c <= '9') ||
+		     *c == '_')) {
+			pez_error(p,
+				pez_strcat("Invalid identifier name \"",
+				pez_strcat(cname,
+					"\" when defining FFI constant.")));
+			return;
+		}
+	}
+
+	P_create(p);
+	ccode = add_ffi_includes(lib,
+			"#include <pez.h>\n"
+			"#include <pezdef.h>\n");
+
+	emit("\n"
+	     "void ffi_call(pez_instance *p)\n"
+	     "{\n");
+
+	switch(ctype) {
+	// Return values pushed onto the regular stack:
+	case 'p': case 'i': case 'c': case 'l': case 's':
+		emit("So(1);\n"
+		     "Push = ");
+		emit(cname);
+		emit(";\n");
+		break;
+	case 'f': case 'd':
+		emit("FSo(1);\n"
+		     "Realpush(");
+		emit(cname);
+		emit(";\n");
+		break;
+	default:
+		pez_error(p, "Programmer error in P_ffi_const!");
+		return;
+	}
+
+	emit("}\n");
+
+	// Compile it, finally, damn!
+	s = tcc_new();
+	if(!s) {
+		pez_error(p, "Could not create a new TCC state when "
+			"compiling FFI call!");
+		return;
+	}
+
+	if(tcc_set_output_type(s, TCC_OUTPUT_MEMORY) == -1) {
+		pez_error(p, "Couldn't set TCC output type to \"memory\".");
+		return;
+	}
+
+	if(tcc_compile_string(s, ccode) == -1) {
+		pez_error(p, "Couldn't compile FFI call!");
+		return;
+	}
+
+	tcc_add_symbol(s, "trouble", trouble);
+
+	fsz = tcc_relocate(s, 0);
+	if(fsz < 0) {
+		pez_error(p, "Couldn't relocate ffi function!");
+		return;
+	}
+
+	f = (void *)alloc(fsz);
+	tcc_relocate(s, f);
+	p->createword->wcode = tcc_get_symbol(s, "ffi_call");
+	if(!p->createword->wcode) {
+		p->createword->wcode = P_var;
+		pez_error(p,
+			"Error getting symbol from compiled FFI function!");
+		return;
+	}
+
+	tcc_delete(s);
+}
+
+#undef emit
 #undef RETFLOAT
 #undef RETINT
 
@@ -5714,6 +5852,7 @@ static struct primfcn primt[] = {
 	{"0ffi-lib:", P_ffi_lib_colon},
 	{"0ffi-include", P_ffi_include},
 	{"0ffi:", P_ffi_colon},
+	{"0ffi-const:", P_ffi_const},
 
 	// dl* flags:
 	{"0RTLD_LAZY", P_rtld_lazy},
@@ -6013,59 +6152,6 @@ Exported void pez_error(pez_instance *p, char *kind)
 	trouble(p, kind);
 	p->evalstat = PEZ_APPLICATION;	// Signify application-detected error
 }
-
-#ifndef NO_BOUNDS_CHECK
-
-/*  STAKOVER  --  Recover from stack overflow.	*/
-Exported void stakover(pez_instance *p)
-{
-	trouble(p, "Stack overflow");
-	p->evalstat = PEZ_STACKOVER;
-}
-
-/*  STAKUNDER  --  Recover from stack underflow.  */
-Exported void stakunder(pez_instance *p)
-{
-	trouble(p, "Stack underflow");
-	p->evalstat = PEZ_STACKUNDER;
-}
-
-/*  RSTAKOVER  --  Recover from return stack overflow.	*/
-Exported void rstakover(pez_instance *p)
-{
-	trouble(p, "Return stack overflow");
-	p->evalstat = PEZ_RSTACKOVER;
-}
-
-/*  RSTAKUNDER	--  Recover from return stack underflow.  */
-Exported void rstakunder(pez_instance *p)
-{
-	trouble(p, "Return stack underflow");
-	p->evalstat = PEZ_RSTACKUNDER;
-}
-Exported void fstakover(pez_instance *p)
-{
-	trouble(p, "Float stack overflow");
-	p->evalstat = PEZ_FSTACKOVER;
-}
-Exported void fstakunder(pez_instance *p)
-{
-	trouble(p, "Float stack underflow");
-	p->evalstat = PEZ_FSTACKUNDER;
-}
-
-/*  HEAPOVER  --  Recover from heap overflow.  Note that a heap overflow does
- *  NOT wipe the heap; it's up to the user to do this manually with FORGET or
- *  some such.
- */
-Exported void heapover(pez_instance *p)
-{
-	trouble(p, "Heap overflow");
-	p->evalstat = PEZ_HEAPOVER;
-}
-
-#endif				// !NO_BOUNDS_CHECK
-
 
 #ifdef RESTRICTED_POINTERS
 

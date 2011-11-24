@@ -51,14 +51,40 @@ extern void P_create(pez_instance *p), P_dodoes(pez_instance *p);
 #define Exported static
 #endif /* EXPORT */
 
-#ifdef EXPORT
-extern
+#ifndef NO_BOUNDS_CHECK
+// Various macros for indicating overflow and underflow for the stacks:
+#define stakover(p) { \
+	trouble(p, "Stack overflow"); \
+	p->evalstat = PEZ_STACKOVER; \
+} while(0)
+#define stakunder(p) do { \
+	trouble(p, "Stack underflow"); \
+	p->evalstat = PEZ_STACKUNDER; \
+} while(0)
+
+#define rstakover(p) do { \
+	trouble(p, "Return stack overflow"); \
+	p->evalstat = PEZ_RSTACKOVER; \
+} while(0)
+#define rstakunder(p) do { \
+	trouble(p, "Return stack underflow"); \
+	p->evalstat = PEZ_RSTACKUNDER; \
+} while(0)
+
+#define fstakover(p) do { \
+	trouble(p, "Float stack overflow"); \
+	p->evalstat = PEZ_FSTACKOVER; \
+} while(0)
+#define fstakunder(p) do { \
+	trouble(p, "Float stack underflow"); \
+	p->evalstat = PEZ_FSTACKUNDER; \
+} while(0)
+
+#define heapover(p) do { \
+	trouble(p, "Heap overflow"); \
+	p->evalstat = PEZ_HEAPOVER; \
+} while(0)
 #endif
-void stakover(pez_instance *p), stakunder(pez_instance *p),
-     rstakover(pez_instance *p), rstakunder(pez_instance *p),
-     heapover(pez_instance *p),
-     badpointer(pez_instance *p),
-     fstakover(pez_instance *p), fstakunder(pez_instance *p);
 
 /* Functions called by exported extensions. */
 extern void pez_primdef(pez_instance *p, struct primfcn *pt),
