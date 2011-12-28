@@ -48,8 +48,10 @@ init-lower-table
 
 # At time of writing, Pez doesn't give you strtok, although you can get it right
 # from libc via FFI:
-0 rtld_lazy dlopen constant this-proc
-"p" "strtok" "pp" this-proc ffi: strtok
+
+0 ffi-lib: libc
+	"string.h" libc ffi-include
+	"p" "strtok" "pp" libc ffi: strtok
 
 # Pulls a word (string of alphabetical characters) out of a string, and advances
 # the string past it.
