@@ -3,11 +3,13 @@ project, so this isn't strict.  I don't expect anyone is running Pez in
 production anywhere, so usually the author throws features around with no regard
 for the roadmap.
 
+Incidentally, I have been running Pez for a number of programs for a couple of
+years now.  It is fairly stable, and there are no bugs for the use cases that I
+run into, but there are relatively few eyes on the code, and I believe myself to
+be the only heavy user.  The activity on the repo may be low, but the good news
+is that this is largely because Pez works well.
+
 NOW (1.6.0 release)
-
-* Finish up missing pieces of load-lib.
-
-* Finish up the socket library, now that structs are solidified.
 
 * Use flags in the interpreter struct instead of #define's for features
   to support or disallow.  The basics have been set up, but are not
@@ -23,17 +25,31 @@ NOW (1.6.0 release)
 
 * Clean up command-line parsing!
 
-* Fix up size limiting.
+* Fix up size limits on instantiation.
 
 * Un-break BSD.  This involves un-breaking TinyCC for BSD, or selectively
-  disabling FFI/JIT where TinyCC isn't found.
+  disabling FFI/JIT where TinyCC isn't found.  This involves some autotools
+  headaches.
+
+* Clean up FFI somewhat.  The #defines that have lingered are causing
+  intermittent issues, but so far it seems this is only the case when the code
+  calling FFI-defined functions is buggy.  The FFI also needs its own test
+  suite, so that the standard test suite can run without requiring FFI.
+
+* Add some features to the FFI.  Namely, some (at least rudimentary) support for
+  structs defined in C headers, and perhaps some riskier operations than are now
+  allowed.  Using TinyCC for the FFI, access to struct members, macros, etc., is
+  fairly straightforward.
 
 ONGOING
 
-* Misc cleanup
+* Misc cleanup and simplification.
 
 * Include more batteries.  Flesh out the standard library.  Have a look at Lua
-  for this.
+  for this.  Sockets (but with a good API) are near the top of the list,
+  although there is a fairly complete SQLite3 implementation, and TokyoCabinet
+  would be nice to add.  I've plans to fix and release the SDL FFI; Pez has
+  some potential (being both speedy and fun) for game development.
 
 LATER
 
@@ -44,16 +60,28 @@ LATER
 	  by the language proper.  For example, DragonFly's checkpt feature.
 
 * Maybe get rid of the case-insensitivity and turn everything lower-case;
-  depends on how much of a pain that turns out to be.
+  depends on how much of a pain that turns out to be.  This is low-priority;
+  currently, the case-insensitivity hasn't caused any problems, but does incur a
+  minor speed hit for compilation (strcasecmp versus strcmp), and there are
+  personal aesthetic reasons.
 
-* Bolt down the security model.
+* Maybe, to decrease the amount of pointer-chasing required, just store function
+  pointers (rather than dictword pointers) on the heap.  This is actually no
+  less safe than the current approach, but does involve touching several parts
+  of the code.  In particular (and among other things), direct access to curword
+  needs to be cut off, and replaced with a function.  Compilation would take
+  another speed hit, but this would be more than offset by a decrease in memory
+  traffic when executing, which would speed things up dramatically.
 
-* Tweak the I/O so that interpreter-generated messages can be sent, through a
+* Bolt down the security model, and perhaps handle segfaults a bit more
+  gracefully.
+
+* Tweak the I/O so that interpreter-generated messages can be sent through a
   pipe or arbitrary FD (as opposed to talking to stderr, etc., directly), so
   that the UI can be interacted with.
 
 * Mailboxes for communicating between Pez instances, when a concurrency model
-  is implemented.
+  is implemented.  I hesitate to use pthreads, but that may be the best option.
 
 * Un-break HaikuOS.  I want to use Pez there!
 
@@ -65,8 +93,9 @@ LATER
   within memory allocated by BoehmGC, so that pointer safety can be reintroduced
   without limiting things to the heap.
 
-* Compilation to a executable or library.  This recently began to look like it
-  might be easier than it previously looked.
+* Compilation of Pez code to a executable or library.  Getting linkable or
+  executable code written in Pez recently began to look like it might be easier
+  than it previously looked.
 
 MUCH LATER
 
