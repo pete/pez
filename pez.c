@@ -2819,6 +2819,70 @@ prim P_tell(pez_instance *p)
 }
 
 /*
+   ( -- read-fd|-1 write-fd|-1 )
+   Opens a pipe, provides read and write FDs, which are both -1 on failure.  See
+   pipe(2).
+*/
+prim P_pipe(pez_instance *p)
+{
+	int fds[2];
+
+	So(2);
+
+	if(pipe(fds) < 0) {
+		Push = -1;
+		Push = -1;
+		return;
+	}
+
+	Push = fds[0];
+	Push = fds[1];
+}
+
+/*
+   ( old-fd -- new-fd|-1 )
+   Duplicates a file descriptor.  See dup(2).
+*/
+prim P_fddup(pez_instance *p)
+{
+	Sl(1);
+
+	int fd = Pop;
+	fd = dup(fd);
+
+	if(fd < -2)
+		fd = -1;
+
+	Push = fd;
+}
+
+/*
+   ( old-fd new-fd -- 0|-1 )
+   Makes new-fd a copy of old-fd, closing new-fd first if necessary.  See
+   dup2(2).
+*/
+prim P_fddup2(pez_instance *p)
+{
+	Sl(2);
+	int s = 0;
+
+	if(dup2(S1, S0) < 0)
+		s = -1;
+
+	Pop;
+	S0 = s;
+}
+
+/*
+	TODO:  connect, send, recv, accept, socket, umask, select, probably
+	others.
+
+	It may be more desirable for most of this stuff to get defined in a
+	library (that thinly wraps libc via the FFI).
+	
+*/
+
+/*
    ( -- load-paths count )
    Push onto the stack an array of the current load paths and the number of load
    paths.
@@ -2965,12 +3029,6 @@ prim P_load(pez_instance *p)
 }
 
 PUSH_CONSTANT(P_pathmax, PATH_MAX)
-
-/*
-	TODO:  connect, send, recv, accept, socket, umask, dup, dup2, pipe,
-	select
-	probably others.
-*/
 
 #endif				// FILEIO
 
@@ -4462,7 +4520,9 @@ prim P_money(pez_instance *p)
 		Push = -1;
 		Push = -1;
 		return;
-	} else if(pid) {
+	}
+	
+	if(pid) {
 		close(pipefd[1]);
 		Push = pipefd[0];
 		Push = pid;
@@ -5991,6 +6051,9 @@ static struct primfcn primt[] = {
 	{"0SEEK_END", P_seek_end},
 	{"0SEEK_SET", P_seek_set},
 	{"0TELL", P_tell},
+	{"0pipe", P_pipe},
+	{"0fddup", P_fddup},
+	{"0fddup2", P_fddup2},
 	{"0load-paths", P_load_paths},
 	{"0add-load-path", P_add_load_path},
 	{"0which-lib", P_which_lib},
