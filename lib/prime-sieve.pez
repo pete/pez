@@ -1,0 +1,71 @@
+# A little sieve of Eratosthenes library.  Note that two is special-cased
+# throughout.  It is assumed that you won't ask about the primality of any even
+# numbers, or numbers greater than defined by 'biggest'.
+#
+# Usage:
+# 	10 6 ^ biggest! ( Sets limits before running the sieve. )
+#	biggest . cr ( This number is the largest one checked for primality. )
+#	sieve-all ( This actually fills in the sieve. )
+#	sieve-size . cr ( Prints how much memory the sieve takes up, in bytes. )
+# 	55 prime? . cr ( 0 )
+# 	59 prime? . cr ( -1 )
+#	59 next-prime . cr ( 61 )
+#	29 prev-prime . cr ( 23 )
+# 	
+# Don't call prime? with even arguments; the answer will often be wrong.  You
+# can iterate over primes by starting at sieve and running until
+# (sieve+(sieve-size)-1), using >n to translate the address to a number, and c@
+# to check the address.  It will be zero if prime and nonzero if composite.
+# If you care about primes larger than 10e6, use biggest!, like this:
+# 	1000000000 biggest! sieve-all ( This takes a few minutes and ~480MB )
+
+0 constant biggest
+0 constant sieve-size
+0 constant sieve
+
+# Sets the limits and allocates memory.
+: biggest! ( n -- )
+	['] biggest >body !
+	biggest 2/ ['] sieve-size >body !
+	sieve-size malloc ['] sieve >body ! ;
+
+10 6 ^ biggest!
+
+# A few words for address translation.  There's a minor optimization here:  we
+# skip all of the even numbers and special-case 2.  These words are for
+# translating back and forth between numbers and addresses in the sieve.
+: >sa ( n -- sieve-address )   2/ 1- sieve + ;
+: >n ( sieve-address -- n )   sieve - 1+ 2* 1+ ;
+
+# As mentioned above, we totally ignore even numbers, including these words, so
+# they rely on not being asked about even numbers.
+: prime? ( n -- t|f )   >sa c@ 0= ;
+: composite? ( n -- t|f )   >sa c@ ;
+: not-prime! ( n -- )   >sa -1 swap c! ;
+
+variable 2n
+: sieve-n ( n -- )
+	# From n*3 (the first odd composite that is a multiple of n) to biggest,
+	# stepping by n*2 (remember, we skip evens):
+	dup 1 shift 2n !
+	biggest swap dup * do
+		i not-prime!
+	2n @ +loop ;
+
+: sieve-all ( -- )
+	biggest float sqrt ceil 3 do
+		i prime? if i sieve-n then
+	2 +loop ;
+
+variable [primedo]
+: next-prime ( n -- n' )
+	-1 [primedo] !
+	sieve sieve-size + swap >sa 1+ do
+		i c@ 0= if i >n [primedo] ! leave then
+	loop [primedo] @ ;
+
+: prev-prime ( n -- n' )
+	-1 [primedo] !
+	sieve swap >sa 1- do
+		i c@ 0= if i >n [primedo] ! leave then
+	-1 +loop [primedo] @ ;
