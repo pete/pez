@@ -10,6 +10,9 @@ The current state of the codebase (the bugs fixed, the features added
 or removed, the refactoring, redesigning, etc.) is due to the efforts of
 Pete Elmore and Matthew King, who are currently the principal authors.
 
+Ryan Wolf ( https://github.com/thebigbad ) has been using Pez some, and
+has been kind enough to complain when he finds bugs.
+
 Jeff Hodges was invaluable in helping to get autotools working properly.
 
 Support for hash tables made it into the codebase with just a couple of
