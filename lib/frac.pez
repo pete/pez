@@ -1,0 +1,24 @@
+"math" load-lib
+
+: reduce ( frac -- reduced )
+	2dup gcd tuck / -rot / swap ;
+
+: frac* ( frac1 frac2 -- prod )
+	rot * -rot * swap ;
+
+: frac+ ( frac1 frac2 -- frac3 )
+	rot 2dup lcm ( n1 n2 d1 d2 lcm )
+	>r r@ swap / ( n1 n2 d2 f1 )
+	swap r@ swap / ( n1 n2 f1 f2 )
+	rot * ( n1 d1 n2' )
+	-rot * ( n2' n1' )
+	+ r> ;
+
+: frac/ ( frac1 frac2 -- quot )
+	swap frac* ;
+	
+: frac- ( frac1 frac2 -- diff )
+	swap negate swap frac+ ;
+
+: frac>dec ( frac -- f:dec )
+	swap float float f/ ;
