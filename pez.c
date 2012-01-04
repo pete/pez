@@ -2601,7 +2601,7 @@ prim P_gets(pez_instance *p)
 
 	// TODO:  This is horribly inefficient, but will have to stay until we
 	// do internal buffering.
-	while((more_input = read(input_stream, c++, 1))) {
+	while((more_input = read(input_stream, c++, 1)) > 0) {
 		i--;
 		if(!i) {
 			i = max;
@@ -2649,12 +2649,27 @@ prim P_read(pez_instance *p)
 */
 prim P_write(pez_instance *p)
 {
-	int len;
+	long len, r, acc = 0;
+	char *s;
+
 	Sl(2);
 	Hpc(S1);
+
 	len = S0;
-	S1 = write(output_stream, (char *)S1, len);
+	s = (char *)S1;
 	Pop;
+
+	while(len > 0) {
+		r = write(output_stream, s, len);
+		if(r < 1)
+			break;
+
+		s += r;
+		acc += r;
+		len -= r;
+	}
+
+	S0 = acc;
 }
 
 /*
