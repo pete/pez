@@ -187,19 +187,19 @@ struct pez_inst {
 	// Status, bookkeeping:
 	// TODO:  Most of these are booleans; make a flags field and add some
 	// support macros.
-	pez_int evalstat;	// Evaluation status
-	pez_int forgetpend;	// Is a "forget" pending?
-	pez_int defpend;	// Definition pending?
-	pez_int walkback;	// Walkback enabled?
-	pez_int comment;	// Ignoring a comment?
-	pez_int redef;		// Allow redefinition without issuing
+	short evalstat;	// Evaluation status
+	pez_int forgetpend:1;	// Is a "forget" pending?
+	pez_int defpend:1;	// Definition pending?
+	pez_int walkback:1;	// Walkback enabled?
+	pez_int comment:1;	// Ignoring a comment?
+	pez_int redef:1;		// Allow redefinition without issuing
 				// the "not unique" message?
-	pez_int errline;	// Line where last pez_load failed
-	pez_int stringlit;	// Waiting for a string literal?
-	pez_int tail_call_pending;	// Did we get a tail-call?
-	pez_int tickpend;	// Waiting for the object of a '?
-	pez_int ctickpend;	// Waiting for the object of a [']?
-	pez_int cbrackpend;	// Waiting for the object of a [COMPILE]?
+	pez_int errline:1;	// Line where last pez_load failed
+	pez_int stringlit:1;	// Waiting for a string literal?
+	pez_int tail_call_pending:1;	// Did we get a tail-call?
+	pez_int tickpend:1;	// Waiting for the object of a '?
+	pez_int ctickpend:1;	// Waiting for the object of a [']?
+	pez_int cbrackpend:1;	// Waiting for the object of a [COMPILE]?
 
 	pez_int base;  // The current base, for formatting output of '.'.
 

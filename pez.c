@@ -4155,8 +4155,8 @@ prim P_does(pez_instance *p)
 */
 prim P_colon(pez_instance *p)
 {
-	state = Truth;	// Set compilation underway
-	P_create(p);		// Create conventional word
+	state = Truth;  // Set compilation underway
+	P_create(p);    // Create conventional word
 }
 
 /*
@@ -6333,12 +6333,91 @@ extern pez_instance *pez_init(long flags)
 	int i;
 	char *pathtmp;
 
+	// To (hopefully) increase cache hits, we allocate the interpreter and the
+	// fixed buffers as a chunk of contiguous memory, and set pointers.
+	long stklen = 5000, fstklen = 3500, rstklen = 5000, heaplen = 25000;
+	long allocsz =
+		sizeof(pez_instance) +
+		(stklen * sizeof(pez_stackitem)) + (sizeof(pez_stackitem) - 1) +
+		(fstklen * sizeof(pez_real)) + (sizeof(pez_real) - 1) +
+		(rstklen * sizeof(pez_dictword **)) + (sizeof(pez_dictword **) - 1) +
+		(heaplen * sizeof(pez_stackitem)) + (sizeof(pez_stackitem) - 1);
+#ifdef WALKBACK
+	allocsz += rstklen * sizeof(pez_dictword *) + (sizeof(pez_dictword *) - 1);
+#endif
+
 	if(!gc_already_inited) {
 		GC_INIT();
 		gc_already_inited = 1;
 	}
 
-	p = (pez_instance *)alloc(sizeof(pez_instance));
+	char *cmem = (char *)alloc(allocsz);
+#define ALIGN_CMEM(x, n) do { \
+		cmem += ((n) - 1); \
+		cmem = (char *)(((long)cmem) & (~((n) - 1))); \
+	} while(0)
+
+	p = (pez_instance *)cmem;
+	cmem += sizeof(pez_instance);
+
+	p->stklen = stklen;    // Evaluation stack length
+	p->fstklen = fstklen;  // Float stack length
+	p->rstklen = rstklen;  // Return stack length
+	p->heaplen = heaplen;  // Heap length
+
+	ALIGN_CMEM("STACK", sizeof(pez_stackitem));
+	p->stk = p->stack = (pez_stackitem *)cmem;
+	cmem += sizeof(pez_stackitem) * stklen;
+#ifdef MEMSTAT
+	p->stackmax = p->stack;
+#endif
+	p->stacktop = p->stack + p->stklen;
+
+	ALIGN_CMEM("RSTACK", sizeof(pez_dictword **));
+	p->rstk = p->rstack = (pez_dictword ***)cmem;
+	cmem += sizeof(pez_dictword **) * rstklen;
+	// The return stack:
+	if(p->rstack == NULL) {	// Allocate return stack if needed
+		p->rstack = (pez_dictword ***)alloc(((unsigned int)p->rstklen) *
+					sizeof(pez_dictword **));
+	}
+#ifdef MEMSTAT
+	p->rstackmax = p->rstack;
+#endif
+	p->rstacktop = p->rstack + p->rstklen;
+
+#ifdef WALKBACK
+	ALIGN_CMEM("WALKBACK", sizeof(pez_dictword *));
+	p->wbptr = p->wback = (pez_dictword **)cmem;
+	cmem += sizeof(pez_dictword **) * rstklen;
+#endif
+
+	ALIGN_CMEM("REAL", sizeof(pez_real));
+	p->fstk = p->fstack = (pez_real *)cmem;
+	cmem += sizeof(pez_real) * fstklen;
+#ifdef MEMSTAT
+	p->fstackmax = p->fstack;
+#endif
+	p->fstacktop = p->fstack + p->fstklen;
+
+	ALIGN_CMEM("HEAP", sizeof(pez_stackitem));
+	p->heap = (pez_stackitem *)cmem;
+	cmem += sizeof(pez_stackitem) * heaplen;
+	/*
+	   The system state word is kept in the first word of the heap
+	   so that pointer checking doesn't bounce references to it.
+	   When creating the heap, we preallocate this word and
+	   initialise the state to the interpretive state.
+	*/
+	p->hptr = p->heap + 1;
+	state = Falsity;
+#ifdef MEMSTAT
+	p->heapmax = p->hptr;
+#endif
+	p->heaptop = p->heap + p->heaplen;
+
+#undef ALIGN_CMEM
+	
 	p->evalstat = PEZ_SNORM;
 	p->forgetpend = 0;
 	p->defpend = False;
@@ -6355,10 +6434,6 @@ extern pez_instance *pez_init(long flags)
 	p->comment = Falsity;
 	p->redef = Truth;
 	p->errline = 0;
-	p->stklen = 10000;		// Evaluation stack length
-	p->fstklen = 5000;		// Float stack length
-	p->rstklen = 10000;		// Return stack length
-	p->heaplen = 200000;		// Heap length
 	p->base = 10;
 	p->broken = Falsity;
 	p->instream = NULL;
@@ -6374,7 +6449,6 @@ extern pez_instance *pez_init(long flags)
 	p->already_loaded->path = alloc(1);
 	p->already_loaded->path[0] = '\0';
 	p->already_loaded->next = NULL;
-
 
 	for(i = 0; i < MAX_IO_STREAMS; i++) {
 		p->output_stk[i] = 1;
@@ -6417,76 +6491,6 @@ extern pez_instance *pez_init(long flags)
 	Cconst(s_abortq, "ABORT\"");
 
 #undef Cconst
-
-	// The Stack:
-	if(p->stack == NULL) {	// Allocate stack if needed
-		p->stack = (pez_stackitem *)alloc(
-			((unsigned int)p->stklen) * sizeof(pez_stackitem));
-	}
-	p->stk = p->stack;
-#ifdef MEMSTAT
-	p->stackmax = p->stack;
-#endif
-	p->stacktop = p->stack + p->stklen;
-
-	// The float stack:
-	if(p->fstack == NULL) {	// Allocate float stack if needed
-		p->fstack = (pez_real *)alloc(
-			((unsigned int)p->fstklen) * sizeof(pez_real));
-	}
-	p->fstk = p->fstack;
-#ifdef MEMSTAT
-	p->fstackmax = p->fstack;
-#endif
-	p->fstacktop = p->fstack + p->fstklen;
-
-	// The return stack:
-	if(p->rstack == NULL) {	// Allocate return stack if needed
-		p->rstack = (pez_dictword ***)
-			alloc(((unsigned int)p->rstklen) *
-					sizeof(pez_dictword **));
-	}
-	p->rstk = p->rstack;
-#ifdef MEMSTAT
-	p->rstackmax = p->rstack;
-#endif
-	p->rstacktop = p->rstack + p->rstklen;
-
-#ifdef WALKBACK
-	if(p->wback == NULL) {
-		p->wback = (pez_dictword **)alloc(((unsigned int)p->rstklen) *
-				sizeof(pez_dictword *));
-	}
-	p->wbptr = p->wback;
-#endif
-	if(p->heap == NULL) {
-		/*
-		   The temporary string buffers are placed at the start
-		   of the heap, which permits us to pointer-check
-		   pointers into them as within the heap extents.
-		   Hence, the size of the buffer we acquire for the heap
-		   is the sum of the heap and temporary string requests.
-		*/
-		char *cp;
-
-		/* Force length of temporary strings to even number of
-		   stackitems. */
-		cp = alloc((p->heaplen * sizeof(pez_stackitem)));
-		// Available heap memory starts after the temp strings:
-		p->heap = (pez_stackitem *)cp;
-	}
-	/*
-	   The system state word is kept in the first word of the heap
-	   so that pointer checking doesn't bounce references to it.
-	   When creating the heap, we preallocate this word and
-	   initialise the state to the interpretive state.
-	*/
-	p->hptr = p->heap + 1;
-	state = Falsity;
-#ifdef MEMSTAT
-	p->heapmax = p->hptr;
-#endif
-	p->heaptop = p->heap + p->heaplen;
 
 	// Now that dynamic memory is up and running, allocate constants and
 	// variables built into the system.
