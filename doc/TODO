@@ -41,6 +41,9 @@ NOW (1.6.0 release)
   allowed.  Using TinyCC for the FFI, access to struct members, macros, etc., is
   fairly straightforward.
 
+* Fix interrupts; currently the sighandler sets a flag and we just poll, so a
+  lengthy call continues before we actually handle the interrupt.
+
 ONGOING
 
 * Misc cleanup and simplification.
